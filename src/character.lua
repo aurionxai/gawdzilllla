@@ -44,11 +44,6 @@ function Character:spendPower(amount)
   if self.onPowerChanged then self.onPowerChanged(self.power) end
 end
 
-function Character:restoreHealth(percent)
-  self.health = math.min(self.stats.maxHealth, self.health + self.stats.maxHealth * percent)
-  if self.onHealthChanged then self.onHealthChanged(self.health) end
-end
-
 function Character:resetForNewRound()
   self.health        = self.stats.maxHealth
   self.power         = 0
