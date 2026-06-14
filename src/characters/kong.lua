@@ -39,7 +39,6 @@ function Kong:triggerUnleash()
 end
 
 function Kong:update(dt)
-  self.attacks:update(dt, 0, true)
   if self._rageTimer > 0 then self._rageTimer = self._rageTimer - dt end
 end
 

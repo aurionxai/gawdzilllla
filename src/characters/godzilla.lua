@@ -42,7 +42,6 @@ function Godzilla:triggerUnleash()
 end
 
 function Godzilla:update(dt)
-  self.attacks:update(dt, 0, true)
   if self._flashTimer > 0 then self._flashTimer = self._flashTimer - dt end
 end
 

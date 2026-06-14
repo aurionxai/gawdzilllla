@@ -39,7 +39,6 @@ function Ghidorah:triggerUnleash()
 end
 
 function Ghidorah:update(dt)
-  self.attacks:update(dt, 0, true)
   if self._beamTimer > 0 then self._beamTimer = self._beamTimer - dt end
 end
 

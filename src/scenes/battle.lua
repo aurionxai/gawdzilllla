@@ -199,7 +199,6 @@ function Battle:draw()
   self._pool:draw()
 
   -- Characters
-  self._p1.attacks:getHitboxes(self._ctrl1.x, self._ctrl1.y, self._ctrl1.facingRight)  -- (no-op draw)
   self._ctrl1:draw(self._p1.stats.color)
   self._p1:drawExtra(self._ctrl1)
 
