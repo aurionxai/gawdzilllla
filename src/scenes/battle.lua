@@ -8,6 +8,7 @@ local Spawner  = require("src/npc_spawner")
 local Pool     = require("src/blood_pool")
 local AS       = require("src/attack_system")
 local AM       = require("src/audio_manager")
+local City     = require("src/city")
 
 local Battle   = {}
 Battle.__index = Battle
@@ -32,6 +33,7 @@ function Battle.new(p1Info, p2Info)
   self._spawner = Spawner.new()
   self._spawner:spawnBatch(60, 480, GROUND_Y)
   self._pool    = Pool.new()
+  self._city    = City.new()
 
   -- HUD
   self._hud = HUD.new(self._p1.character, self._p2.character, self._spawner)
@@ -99,6 +101,9 @@ function Battle:update(dt)
   -- Hit detection: P1 attacks hitting P2 and vice-versa
   self:_checkHits(self._p1.attacks, self._ctrl1, self._p2.character, self._ctrl2)
   self:_checkHits(self._p2.attacks, self._ctrl2, self._p1.character, self._ctrl1)
+
+  self._city:checkHits(self._p1.attacks, self._ctrl1, self._spawner)
+  self._city:checkHits(self._p2.attacks, self._ctrl2, self._spawner)
 
   -- NPC stomp: characters walking over NPCs
   self:_checkStomps(self._ctrl1)
@@ -170,21 +175,8 @@ function Battle:draw()
   love.graphics.setColor(0.08, 0.1, 0.2)
   love.graphics.rectangle("fill", 0, 0, 480, 270)
 
-  -- City silhouette (placeholder buildings)
-  love.graphics.setColor(0.12, 0.12, 0.2)
-  local buildings = { {40,180,30,80},{90,160,50,100},{160,150,40,110},{220,170,60,90},
-                      {300,155,35,105},{350,165,50,95},{410,145,40,115},{450,175,25,85} }
-  for _, b in ipairs(buildings) do
-    love.graphics.rectangle("fill", b[1], b[2], b[3], b[4])
-    -- Windows
-    love.graphics.setColor(0.9, 0.85, 0.4, 0.4)
-    for wy = b[2]+6, b[2]+b[4]-10, 10 do
-      for wx = b[1]+4, b[1]+b[3]-8, 7 do
-        love.graphics.rectangle("fill", wx, wy, 4, 5)
-      end
-    end
-    love.graphics.setColor(0.12, 0.12, 0.2)
-  end
+  -- City (destructible)
+  self._city:draw()
 
   -- Ground
   love.graphics.setColor(0.22, 0.2, 0.18)
