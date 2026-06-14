@@ -9,6 +9,7 @@ local Pool     = require("src/blood_pool")
 local AS       = require("src/attack_system")
 local AM       = require("src/audio_manager")
 local City     = require("src/city")
+local CitiesData = require("src/cities_data")
 
 local Battle   = {}
 Battle.__index = Battle
@@ -33,7 +34,8 @@ function Battle.new(p1Info, p2Info)
   self._spawner = Spawner.new()
   self._spawner:spawnBatch(60, 480, GROUND_Y)
   self._pool    = Pool.new()
-  self._city    = City.new()
+  local cityDef = CitiesData[math.random(#CitiesData)]
+  self._city    = City.new(cityDef)
 
   -- HUD
   self._hud = HUD.new(self._p1.character, self._p2.character, self._spawner)
@@ -171,17 +173,19 @@ function Battle:keypressed(key)
 end
 
 function Battle:draw()
-  -- Sky
-  love.graphics.setColor(0.08, 0.1, 0.2)
+  -- Sky (city-specific)
+  local sc = self._city.skyC
+  love.graphics.setColor(sc[1], sc[2], sc[3])
   love.graphics.rectangle("fill", 0, 0, 480, 270)
 
   -- City (destructible)
   self._city:draw()
 
-  -- Ground
-  love.graphics.setColor(0.22, 0.2, 0.18)
+  -- Ground (city-specific)
+  local gc = self._city.gndC
+  love.graphics.setColor(gc[1], gc[2], gc[3])
   love.graphics.rectangle("fill", 0, GROUND_Y, 480, 270 - GROUND_Y)
-  love.graphics.setColor(0.35, 0.3, 0.28)
+  love.graphics.setColor(gc[1]+0.12, gc[2]+0.10, gc[3]+0.08)
   love.graphics.rectangle("fill", 0, GROUND_Y, 480, 2)
 
   -- NPCs
@@ -214,6 +218,10 @@ function Battle:draw()
     love.graphics.setColor(1, 0.85, 0.1)
     love.graphics.printf(self._resultText, 80, 108, 320, "center")
   end
+
+  -- City name (small, bottom right)
+  love.graphics.setColor(0.45, 0.45, 0.55)
+  love.graphics.printf(self._city.name, 0, 258, 474, "right")
 end
 
 return Battle

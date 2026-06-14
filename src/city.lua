@@ -4,26 +4,20 @@ local AS = require("src/attack_system")
 local City = {}
 City.__index = City
 
-local DEFS = {
-  { x=40,  y=180, w=30, h=80  },
-  { x=90,  y=160, w=50, h=100 },
-  { x=160, y=150, w=40, h=110 },
-  { x=220, y=170, w=60, h=90  },
-  { x=300, y=155, w=35, h=105 },
-  { x=350, y=165, w=50, h=95  },
-  { x=410, y=145, w=40, h=115 },
-  { x=450, y=175, w=25, h=85  },
-}
-
-function City.new()
+function City.new(cityDef)
   local self = setmetatable({ buildings = {} }, City)
-  for _, d in ipairs(DEFS) do
-    local hp = d.w * 2   -- health scales with width: small=50hp, large=120hp
+  self.name  = cityDef and cityDef.name or "Unknown City"
+  self.skyC  = cityDef and cityDef.skyC or {0.08, 0.10, 0.20}
+  self.gndC  = cityDef and cityDef.gndC or {0.22, 0.20, 0.18}
+
+  local defs = cityDef and cityDef.buildings or {}
+  for _, d in ipairs(defs) do
+    local hp = d.w * 2
     table.insert(self.buildings, {
-      x = d.x, y = d.y, w = d.w, h = d.h,
-      health = hp, maxHealth = hp,
-      isDestroyed = false,
-      dollarsValue = 5000000,   -- $5M per building
+      x=d.x, y=d.y, w=d.w, h=d.h,
+      health=hp, maxHealth=hp,
+      isDestroyed=false,
+      dollarsValue=5000000,
     })
   end
   return self
