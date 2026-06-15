@@ -31,7 +31,13 @@ function PlayerState.new(kaijuName)
     maxHp = 100,
     hp    = 100,
     cooldowns    = { ranged=0, claw=0, bite=0, tail=0, special=0 },
-    cooldownMax  = COOLDOWN_MAX,
+    cooldownMax  = {
+      ranged  = COOLDOWN_MAX.ranged,
+      claw    = COOLDOWN_MAX.claw,
+      bite    = COOLDOWN_MAX.bite,
+      tail    = COOLDOWN_MAX.tail,
+      special = COOLDOWN_MAX.special,
+    },
   }, PlayerState)
 end
 
@@ -44,6 +50,7 @@ function PlayerState:canUse(moveName)
 end
 
 function PlayerState:useMove(moveName)
+  assert(COOLDOWN_MAX[moveName], "useMove: unknown move '" .. tostring(moveName) .. "'")
   self.cooldowns[moveName] = self.cooldownMax[moveName]
 end
 
