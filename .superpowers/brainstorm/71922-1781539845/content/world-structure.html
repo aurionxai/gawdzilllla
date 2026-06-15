@@ -1,0 +1,150 @@
+<h2>How are the 22 cities connected?</h2>
+<p class="subtitle">This shapes the whole game flow. How do you move from city to city as a defender?</p>
+
+<div class="cards">
+
+  <!-- Option A: Linear Story Campaign -->
+  <div class="card" data-choice="linear" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0a0a1a;height:190px;font-family:monospace;border-radius:4px;padding:10px;overflow:hidden">
+        <div style="font-size:8px;color:#888;letter-spacing:1px;margin-bottom:8px;text-align:center">── MISSION SELECT ──</div>
+        <!-- Linear chain of cities -->
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <div style="display:flex;align-items:center;gap:6px">
+            <div style="background:#0d2a0d;border:2px solid #0f5;border-radius:3px;padding:3px 8px;font-size:7px;color:#0f5;min-width:70px">✓ TOKYO</div>
+            <div style="font-size:6px;color:#3a8a3c">COMPLETE · S RANK</div>
+          </div>
+          <div style="font-size:8px;color:#333;margin-left:10px">↓</div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <div style="background:#0d2a0d;border:2px solid #0f5;border-radius:3px;padding:3px 8px;font-size:7px;color:#0f5;min-width:70px">✓ SEOUL</div>
+            <div style="font-size:6px;color:#3a8a3c">COMPLETE · A RANK</div>
+          </div>
+          <div style="font-size:8px;color:#333;margin-left:10px">↓</div>
+          <div style="display:flex;align-items:center;gap:6px;background:#0f0f1e;border-radius:3px;padding:2px 4px;border:1px solid #2a2a5a">
+            <div style="background:#0a1a2a;border:2px solid #5af;border-radius:3px;padding:3px 8px;font-size:7px;color:#5af;min-width:70px">▶ HONG KONG</div>
+            <div style="font-size:6px;color:#5af">CURRENT · GHIDORAH ATTACK</div>
+          </div>
+          <div style="font-size:8px;color:#222;margin-left:10px">↓</div>
+          <div style="display:flex;align-items:center;gap:6px;opacity:0.4">
+            <div style="background:#0a0a15;border:2px dashed #333;border-radius:3px;padding:3px 8px;font-size:7px;color:#555;min-width:70px">🔒 BANGKOK</div>
+            <div style="font-size:6px;color:#444">LOCKED</div>
+          </div>
+          <div style="font-size:8px;color:#1a1a1a;margin-left:10px">↓</div>
+          <div style="display:flex;align-items:center;gap:6px;opacity:0.3">
+            <div style="background:#0a0a15;border:2px dashed #222;border-radius:3px;padding:3px 8px;font-size:7px;color:#444;min-width:70px">🔒 SYDNEY</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Linear Story</h3>
+      <p>Titan attacks escalate city to city in a fixed order. Beat Tokyo → Seoul unlocks. Each city has a scripted threat and story beat. The restaurant cinema and food reward come at the end of each. Powers unlock at story milestones.</p>
+    </div>
+  </div>
+
+  <!-- Option B: World Map (Recommended) -->
+  <div class="card recommended" data-choice="worldmap" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0a0a1a;height:190px;font-family:monospace;border-radius:4px;overflow:hidden;position:relative">
+        <!-- World map feel -->
+        <div style="position:absolute;inset:0;background:#080812"></div>
+        <!-- "Continents" suggestion -->
+        <div style="position:absolute;top:30px;left:10px;width:80px;height:50px;background:#0d1a0d;border-radius:30px;opacity:0.4"></div>
+        <div style="position:absolute;top:20px;left:110px;width:100px;height:70px;background:#0d1a0d;border-radius:20px;opacity:0.3"></div>
+        <div style="position:absolute;top:40px;left:230px;width:60px;height:80px;background:#0d1a0d;border-radius:15px;opacity:0.3"></div>
+
+        <!-- City nodes -->
+        <!-- Completed -->
+        <div style="position:absolute;top:42px;left:240px;text-align:center">
+          <div style="width:12px;height:12px;background:#0f5;border-radius:50%;margin:0 auto;box-shadow:0 0 6px #0f5"></div>
+          <div style="font-size:5px;color:#0f5;margin-top:1px">TOKYO ✓</div>
+        </div>
+        <div style="position:absolute;top:58px;left:185px;text-align:center">
+          <div style="width:10px;height:10px;background:#0f5;border-radius:50%;margin:0 auto;box-shadow:0 0 4px #0f5"></div>
+          <div style="font-size:5px;color:#0f5;margin-top:1px">SEOUL ✓</div>
+        </div>
+        <!-- Active / available -->
+        <div style="position:absolute;top:70px;left:210px;text-align:center">
+          <div style="width:13px;height:13px;background:#f55;border-radius:50%;margin:0 auto;box-shadow:0 0 8px #f55;animation:pulse 1s infinite"></div>
+          <div style="font-size:5px;color:#f55;margin-top:1px;white-space:nowrap">HK ⚠ ATTACK</div>
+        </div>
+        <div style="position:absolute;top:90px;left:120px;text-align:center">
+          <div style="width:11px;height:11px;background:#f80;border-radius:50%;margin:0 auto;box-shadow:0 0 5px #f80"></div>
+          <div style="font-size:5px;color:#f80;margin-top:1px">MUMBAI ⚠</div>
+        </div>
+        <div style="position:absolute;top:50px;left:70px;text-align:center">
+          <div style="width:11px;height:11px;background:#f80;border-radius:50%;margin:0 auto;box-shadow:0 0 5px #f80"></div>
+          <div style="font-size:5px;color:#f80;margin-top:1px">LONDON ⚠</div>
+        </div>
+        <!-- Locked -->
+        <div style="position:absolute;top:80px;left:45px;text-align:center;opacity:0.3">
+          <div style="width:8px;height:8px;background:#333;border-radius:50%;margin:0 auto"></div>
+          <div style="font-size:5px;color:#444;margin-top:1px">NYC 🔒</div>
+        </div>
+        <div style="position:absolute;top:110px;left:95px;text-align:center;opacity:0.3">
+          <div style="width:8px;height:8px;background:#333;border-radius:50%;margin:0 auto"></div>
+          <div style="font-size:5px;color:#444;margin-top:1px">RIO 🔒</div>
+        </div>
+
+        <!-- "YOU" marker -->
+        <div style="position:absolute;top:62px;left:205px;font-size:8px">📍</div>
+
+        <!-- Legend -->
+        <div style="position:absolute;bottom:6px;left:8px;right:8px;display:flex;gap:10px;font-size:6px">
+          <span><span style="color:#0f5">●</span> Defended</span>
+          <span><span style="color:#f55">●</span> ACTIVE ATTACK</span>
+          <span><span style="color:#f80">●</span> Incoming threat</span>
+          <span><span style="color:#555">●</span> Locked</span>
+        </div>
+
+        <div style="position:absolute;top:6px;left:8px;font-size:7px;color:#888">MONARCH GLOBAL ALERT NETWORK</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — World Map <span style="color:#f5c842;font-size:11px">(Recommended)</span></h3>
+      <p>After each city, 2–3 new attacks appear on the globe. You choose which crisis to respond to next. Story still has a main thread (Monarch updates you on the big villain) but you pick the order. Unlock new cities by defeating enough titans in a region.</p>
+    </div>
+  </div>
+
+  <!-- Option C: Chapters / Acts -->
+  <div class="card" data-choice="chapters" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0a0a1a;height:190px;font-family:monospace;border-radius:4px;padding:10px;overflow:hidden">
+        <div style="font-size:8px;color:#888;letter-spacing:1px;margin-bottom:8px;text-align:center">── ACT SELECT ──</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <!-- Act 1 complete -->
+          <div style="background:#0a1a0a;border:1px solid #0f5;border-radius:4px;padding:6px 8px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+              <span style="font-size:8px;color:#0f5">ACT 1 — PACIFIC RIM</span>
+              <span style="font-size:7px;color:#3a7a3c">✓ COMPLETE</span>
+            </div>
+            <div style="font-size:6px;color:#555">Tokyo · Seoul · Hong Kong · Manila · Sydney</div>
+          </div>
+          <!-- Act 2 active -->
+          <div style="background:#0d0d1e;border:1px solid #5af;border-radius:4px;padding:6px 8px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+              <span style="font-size:8px;color:#5af">ACT 2 — EURASIA ▶</span>
+              <span style="font-size:7px;color:#5af">2 / 5</span>
+            </div>
+            <div style="font-size:6px;color:#888">Mumbai ✓ · London ✓ · Moscow · Paris · Cairo</div>
+            <div style="height:3px;background:#111;border-radius:1px;margin-top:3px"><div style="width:40%;height:100%;background:#5af"></div></div>
+          </div>
+          <!-- Act 3 locked -->
+          <div style="background:#080810;border:1px dashed #222;border-radius:4px;padding:6px 8px;opacity:0.4">
+            <div style="font-size:8px;color:#444">ACT 3 — AMERICAS 🔒</div>
+            <div style="font-size:6px;color:#333">Complete Act 2 to unlock</div>
+          </div>
+          <!-- Final act -->
+          <div style="background:#080810;border:1px dashed #333;border-radius:4px;padding:6px 8px;opacity:0.3">
+            <div style="font-size:8px;color:#555">ACT 4 — FINAL THREAT 🔒</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Acts / Chapters</h3>
+      <p>Cities grouped into 4 acts by region (Pacific, Eurasia, Americas, Final). Beat all cities in an act to unlock the next. Each act ends with a major boss titan. Clear story structure — feels like a movie in chapters.</p>
+    </div>
+  </div>
+
+</div>

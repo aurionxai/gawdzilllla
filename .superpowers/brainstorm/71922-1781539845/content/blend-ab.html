@@ -1,0 +1,179 @@
+<h2>Evolution Tree + Stats — blended system</h2>
+<p class="subtitle">Your form unlocks through the tree. Your stats grow within each form. Does this feel right?</p>
+
+<div class="mockup">
+  <div class="mockup-header">CHARACTER SCREEN — Press TAB in-game to open</div>
+  <div class="mockup-body" style="background:#08080f;padding:0;border-radius:4px;overflow:hidden;font-family:monospace">
+
+    <!-- Top bar -->
+    <div style="background:#0f0f1e;border-bottom:1px solid #222;padding:6px 12px;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:9px;color:#f5c842;letter-spacing:2px">GODZILLA · LVL 8</div>
+      <div style="display:flex;gap:12px">
+        <span style="font-size:7px;color:#888">XP: <span style="color:#f5c842">2,840 / 4,000</span></span>
+        <span style="font-size:7px;color:#888">CITIES: <span style="color:#0f0">3 / 10</span></span>
+        <span style="font-size:7px;color:#888">FORM PROGRESS: <span style="color:#5af">65%</span></span>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1.2fr;gap:0">
+
+      <!-- LEFT: Evolution Tree -->
+      <div style="padding:10px;border-right:1px solid #1a1a2a">
+        <div style="font-size:7px;color:#888;letter-spacing:1px;margin-bottom:8px">FORM PATH</div>
+
+        <!-- Hatchling - unlocked -->
+        <div style="text-align:center;margin-bottom:4px">
+          <div style="display:inline-block;background:#0a1a0c;border:2px solid #2a5a2c;border-radius:4px;padding:4px 10px;position:relative">
+            <div style="font-size:8px;color:#5f5">HATCHLING · Lv1</div>
+            <div style="font-size:6px;color:#3a7a3c">■ COMPLETE</div>
+          </div>
+        </div>
+        <div style="text-align:center;color:#333;font-size:8px;margin:2px">│</div>
+
+        <!-- Classic - current -->
+        <div style="text-align:center;margin-bottom:4px">
+          <div style="display:inline-block;background:#0d220f;border:2px solid #0f0;border-radius:4px;padding:5px 12px;box-shadow:0 0 8px #0f03;position:relative">
+            <div style="font-size:9px;color:#0f0">CLASSIC · Lv5 ◄ YOU ARE HERE</div>
+            <div style="font-size:6px;color:#5f5">Atomic Breath · Dorsal Pulse</div>
+            <!-- Progress to next form -->
+            <div style="margin-top:3px;height:3px;background:#111;border-radius:2px">
+              <div style="width:65%;height:100%;background:linear-gradient(to right,#0f0,#5af);border-radius:2px"></div>
+            </div>
+            <div style="font-size:5px;color:#5af;margin-top:1px">65% → NEXT FORM</div>
+          </div>
+        </div>
+        <div style="text-align:center;color:#333;font-size:8px;margin:2px">│ │</div>
+
+        <!-- Branch -->
+        <div style="display:flex;gap:6px;justify-content:center">
+          <!-- Burning branch -->
+          <div style="flex:1;background:#120808;border:1px solid #5a1a00;border-radius:4px;padding:4px;text-align:center;opacity:0.7">
+            <div style="font-size:7px;color:#f80">🔥 BURNING</div>
+            <div style="font-size:5px;color:#555">Lv12 · Destroy path</div>
+            <div style="font-size:5px;color:#f55">Nuclear Pulse<br>Meltdown Aura</div>
+          </div>
+          <!-- Armored branch -->
+          <div style="flex:1;background:#08080f;border:1px solid #2a2a6a;border-radius:4px;padding:4px;text-align:center;opacity:0.7">
+            <div style="font-size:7px;color:#88f">🛡 ARMORED</div>
+            <div style="font-size:5px;color:#555">Lv12 · Spare path</div>
+            <div style="font-size:5px;color:#aaf">Scale Shield<br>Seismic Slam</div>
+          </div>
+        </div>
+        <div style="text-align:center;color:#222;font-size:8px;margin:2px">│ │</div>
+        <!-- Final forms locked -->
+        <div style="display:flex;gap:6px;justify-content:center">
+          <div style="flex:1;background:#0a0505;border:1px dashed #330a00;border-radius:4px;padding:3px;text-align:center;opacity:0.4">
+            <div style="font-size:7px;color:#f55">??? Lv25</div>
+          </div>
+          <div style="flex:1;background:#05050a;border:1px dashed #0a0a33;border-radius:4px;padding:3px;text-align:center;opacity:0.4">
+            <div style="font-size:7px;color:#55f">??? Lv25</div>
+          </div>
+        </div>
+
+        <!-- How path is chosen -->
+        <div style="margin-top:8px;padding:5px;background:#0d0d15;border-radius:3px;border-left:2px solid #f5c842">
+          <div style="font-size:6px;color:#f5c842;margin-bottom:2px">HOW YOU EVOLVE</div>
+          <div style="font-size:6px;color:#888;line-height:1.5">
+            Destroy buildings → 🔥 Burning path<br>
+            Spare survivors → 🛡 Armored path<br>
+            Mix → unlocks both at lower power<br>
+            Evolution point every 3 cities
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Stats within current form -->
+      <div style="padding:10px">
+        <div style="font-size:7px;color:#888;letter-spacing:1px;margin-bottom:8px">STATS — CLASSIC FORM <span style="color:#f5c842">· 2 POINTS TO SPEND</span></div>
+
+        <!-- Stat bars -->
+        <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px">
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:1px">
+              <span style="font-size:7px;color:#f55">⚔ STRENGTH</span>
+              <span style="font-size:7px;color:#f55">14 <button style="background:#1a0505;border:1px solid #f55;color:#f55;font-size:6px;padding:0 3px;cursor:pointer;border-radius:2px">+</button></span>
+            </div>
+            <div style="height:5px;background:#111;border-radius:2px"><div style="width:70%;height:100%;background:#f55;border-radius:2px"></div></div>
+            <div style="font-size:5px;color:#555">Melee damage · Building smash speed</div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:1px">
+              <span style="font-size:7px;color:#5af">🛡 DEFENSE</span>
+              <span style="font-size:7px;color:#5af">10 <button style="background:#05101a;border:1px solid #5af;color:#5af;font-size:6px;padding:0 3px;cursor:pointer;border-radius:2px">+</button></span>
+            </div>
+            <div style="height:5px;background:#111;border-radius:2px"><div style="width:50%;height:100%;background:#5af;border-radius:2px"></div></div>
+            <div style="font-size:5px;color:#555">Tank shots · Resist missiles</div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:1px">
+              <span style="font-size:7px;color:#5f5">⚡ SPEED</span>
+              <span style="font-size:7px;color:#5f5">8</span>
+            </div>
+            <div style="height:5px;background:#111;border-radius:2px"><div style="width:40%;height:100%;background:#5f5;border-radius:2px"></div></div>
+            <div style="font-size:5px;color:#555">Movement · Dodge roll</div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:1px">
+              <span style="font-size:7px;color:#f80">🔥 RAGE</span>
+              <span style="font-size:7px;color:#f80">18 <button style="background:#1a0800;border:1px solid #f80;color:#f80;font-size:6px;padding:0 3px;cursor:pointer;border-radius:2px">+</button></span>
+            </div>
+            <div style="height:5px;background:#111;border-radius:2px"><div style="width:90%;height:100%;background:#f80;border-radius:2px"></div></div>
+            <div style="font-size:5px;color:#555">Atomic breath power · Special cooldown</div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:1px">
+              <span style="font-size:7px;color:#a5f">🧠 INSTINCT</span>
+              <span style="font-size:7px;color:#a5f">6</span>
+            </div>
+            <div style="height:5px;background:#111;border-radius:2px"><div style="width:30%;height:100%;background:#a5f;border-radius:2px"></div></div>
+            <div style="font-size:5px;color:#555">Sense survivors · Detect boss weak spots</div>
+          </div>
+        </div>
+
+        <!-- Equipped abilities (from form) -->
+        <div style="font-size:7px;color:#888;letter-spacing:1px;margin-bottom:5px">FORM ABILITIES</div>
+        <div style="display:flex;flex-direction:column;gap:3px;margin-bottom:8px">
+          <div style="background:#0d1a0d;border:1px solid #2a4a2a;border-radius:3px;padding:4px 6px;display:flex;justify-content:space-between">
+            <div>
+              <span style="font-size:7px;color:#0f0">🔥 Atomic Breath</span>
+              <div style="font-size:5px;color:#555">Hold Q · RAGE cost: 25</div>
+            </div>
+            <span style="font-size:6px;color:#3a7a3c">CLASSIC</span>
+          </div>
+          <div style="background:#0d1a0d;border:1px solid #2a4a2a;border-radius:3px;padding:4px 6px;display:flex;justify-content:space-between">
+            <div>
+              <span style="font-size:7px;color:#0f0">💥 Dorsal Pulse</span>
+              <div style="font-size:5px;color:#555">Press E · Pushes all enemies back</div>
+            </div>
+            <span style="font-size:6px;color:#3a7a3c">CLASSIC</span>
+          </div>
+          <div style="background:#0a0a12;border:1px dashed #222;border-radius:3px;padding:4px 6px;opacity:0.5">
+            <span style="font-size:7px;color:#444">[ EVOLVE TO UNLOCK 3rd ABILITY ]</span>
+          </div>
+        </div>
+
+        <!-- Food → stats reminder -->
+        <div style="padding:5px;background:#0d0d15;border-radius:3px;border-left:2px solid #0f0">
+          <div style="font-size:6px;color:#0f0;margin-bottom:2px">FOOD BOOSTS STATS</div>
+          <div style="font-size:6px;color:#888;line-height:1.5">
+            🍖 Meat/protein → STR +1<br>
+            🍜 Noodles/carbs → SPEED +1<br>
+            🔥 Spicy food → RAGE +1<br>
+            🐟 Seafood → INSTINCT +1
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:16px">
+  <h3>How A+B work together</h3>
+  <ul>
+    <li><strong>Evolution Tree</strong> sets your <em>form</em> — visual appearance in FPS, unique abilities locked to that form, and which stats get bonuses</li>
+    <li><strong>Stats</strong> grow within any form — spend points each level, food boosts specific stats permanently</li>
+    <li><strong>Destroy vs. spare choices</strong> push you toward Burning or Armored branch at Lv12</li>
+    <li><strong>Each city conquered</strong> gives XP + one evolution point toward the next form</li>
+  </ul>
+  <p>Does this layout work? Any stats to rename, add, or remove?</p>
+</div>

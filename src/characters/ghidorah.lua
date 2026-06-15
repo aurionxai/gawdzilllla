@@ -1,6 +1,7 @@
 -- src/characters/ghidorah.lua
 local Character = require("src/character")
 local AS        = require("src/attack_system")
+local SL        = require("src/sprite_loader")
 
 local STATS = {
   characterName = "Ghidorah",
@@ -29,6 +30,8 @@ function Ghidorah.new()
   self.character = Character.new(STATS)
   self.attacks   = AS.new(self.character, ATTACKS)
   self._beamTimer = 0
+  self.sprites   = SL.load("Ghidorah")
+  self.sprite    = self.sprites[1]
   return self
 end
 

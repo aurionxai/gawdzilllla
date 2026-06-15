@@ -1,0 +1,145 @@
+<h2>Which perspective feels right?</h2>
+<p class="subtitle">These are the three playable views we can build. Pick the one that fits your vision.</p>
+
+<div class="cards">
+
+  <!-- Option A: First-Person Kaiju -->
+  <div class="card" data-choice="fps" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0a0a1a;height:180px;position:relative;overflow:hidden;font-family:monospace;border-radius:4px">
+        <!-- Sky gradient -->
+        <div style="position:absolute;top:0;left:0;right:0;height:90px;background:linear-gradient(to bottom,#1a0a2e,#3d1a5a,#8b3a3a,#c85a1a)"></div>
+        <!-- City silhouettes -->
+        <div style="position:absolute;bottom:40px;left:0;right:0;height:80px">
+          <div style="position:absolute;bottom:0;left:5%;width:12%;height:70px;background:#111130"></div>
+          <div style="position:absolute;bottom:0;left:18%;width:8%;height:100px;background:#111130"></div>
+          <div style="position:absolute;bottom:0;left:27%;width:15%;height:55px;background:#111130"></div>
+          <div style="position:absolute;bottom:0;right:0;width:35%;height:80px;background:#111130"></div>
+          <!-- Windows on buildings -->
+          <div style="position:absolute;bottom:20px;left:6%;width:10%;height:40px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:2px">
+            <div style="background:#f5c842;opacity:0.8"></div><div style="background:transparent"></div><div style="background:#f5c842;opacity:0.8"></div>
+            <div style="background:transparent"></div><div style="background:#f5c842;opacity:0.8"></div><div style="background:transparent"></div>
+            <div style="background:#f5c842;opacity:0.8"></div><div style="background:#f5c842;opacity:0.8"></div><div style="background:transparent"></div>
+          </div>
+        </div>
+        <!-- Ground -->
+        <div style="position:absolute;bottom:0;left:0;right:0;height:42px;background:#1a1a1a"></div>
+        <div style="position:absolute;bottom:38px;left:0;right:0;height:4px;background:#2a2a2a"></div>
+        <!-- Road lane markers -->
+        <div style="position:absolute;bottom:12px;left:42%;width:4%;height:4px;background:#888;opacity:0.5"></div>
+        <div style="position:absolute;bottom:12px;left:50%;width:4%;height:4px;background:#888;opacity:0.5"></div>
+        <div style="position:absolute;bottom:12px;left:58%;width:4%;height:4px;background:#888;opacity:0.5"></div>
+        <!-- Kaiju hands at bottom corners (first-person POV) -->
+        <div style="position:absolute;bottom:0;left:-20px;width:80px;height:60px;background:#1e4020;border-radius:30px 30px 0 0;transform:rotate(-20deg)"></div>
+        <div style="position:absolute;bottom:0;right:-20px;width:80px;height:60px;background:#1e4020;border-radius:30px 30px 0 0;transform:rotate(20deg)"></div>
+        <!-- HUD crosshair center -->
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#0f0;font-size:10px;opacity:0.7">✛</div>
+        <!-- HP bar -->
+        <div style="position:absolute;top:6px;left:8px;font-size:8px;color:#0f0">HP ████████░░</div>
+        <div style="position:absolute;top:14px;left:8px;font-size:8px;color:#f5a">PWR ██████████</div>
+        <!-- Tiny fleeing people at ground level -->
+        <div style="position:absolute;bottom:42px;left:30%;font-size:6px;color:#eee;opacity:0.9">🏃🏃‍♀️🏃</div>
+        <div style="position:absolute;bottom:42px;right:25%;font-size:6px;color:#eee;opacity:0.9">🚗🚗</div>
+        <div style="position:absolute;top:4px;right:8px;font-size:7px;color:#f5c842">RAGE MODE ACTIVE</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — First-Person Kaiju</h3>
+      <p>You see Tokyo from GODZILLA'S eyes. Stomp cars, swat helicopters, breathe atomic fire. Full RPG stats, dialogue, and leveling — city exploration from ground level.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Most immersive</li><li>Iconic scale feel</li><li>Natural for RPG dialogue</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Biggest rebuild</li><li>Raycaster engine needed</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option B: Over-Shoulder 3/4 RPG -->
+  <div class="card" data-choice="rpg34" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0d1a0d;height:180px;position:relative;overflow:hidden;font-family:monospace;border-radius:4px">
+        <!-- Top-down city grid -->
+        <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:repeating-linear-gradient(0deg,transparent,transparent 29px,#1a2a1a 30px),repeating-linear-gradient(90deg,transparent,transparent 29px,#1a2a1a 30px)"></div>
+        <!-- Buildings (top-down blocks) -->
+        <div style="position:absolute;top:10px;left:10px;width:60px;height:40px;background:#253025;border:1px solid #3a4a3a"></div>
+        <div style="position:absolute;top:10px;left:80px;width:40px;height:50px;background:#253025;border:1px solid #3a4a3a"></div>
+        <div style="position:absolute;top:10px;right:10px;width:55px;height:45px;background:#253025;border:1px solid #3a4a3a"></div>
+        <div style="position:absolute;bottom:30px;left:10px;width:45px;height:35px;background:#253025;border:1px solid #3a4a3a"></div>
+        <div style="position:absolute;bottom:30px;right:10px;width:60px;height:40px;background:#253025;border:1px solid #3a4a3a"></div>
+        <!-- Kaiju (top-down, big) -->
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)">
+          <div style="width:30px;height:30px;background:#2e6b30;border-radius:4px;border:2px solid #4a9b4c;box-shadow:0 0 8px #0f0"></div>
+        </div>
+        <!-- Attack arc -->
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:70px;height:70px;border:2px solid rgba(0,255,0,0.3);border-radius:50%"></div>
+        <!-- Mini HUD bar bottom -->
+        <div style="position:absolute;bottom:0;left:0;right:0;height:28px;background:rgba(0,0,0,0.8);display:flex;align-items:center;padding:0 6px;gap:8px">
+          <span style="font-size:7px;color:#0f0">❤️ 85/100</span>
+          <span style="font-size:7px;color:#88f">⚡ LVL 4</span>
+          <span style="font-size:7px;color:#f5c">🔥 RAGE ██████</span>
+        </div>
+        <!-- NPC marker -->
+        <div style="position:absolute;top:70px;left:50px;font-size:8px;color:#ff0">❕</div>
+        <div style="position:absolute;top:55px;left:35px;background:rgba(0,0,0,0.8);padding:2px 4px;font-size:6px;color:#fff;border-radius:2px">QUEST!</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Top-Down RPG</h3>
+      <p>Classic overhead view like Pokémon / Zelda but you're a kaiju. Walk city streets, enter buildings, talk to survivors, complete quests. Rich RPG dialogue and stat trees.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>RPG exploration feel</li><li>Easy NPC dialogue</li><li>Familiar controls</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Loses the scale/power feel</li><li>Major rebuild</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option C: Enhanced Side-Scroller + RPG Layer -->
+  <div class="card" data-choice="sideplus" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0a0a1a;height:180px;position:relative;overflow:hidden;font-family:monospace;border-radius:4px">
+        <!-- Dusk sky gradient -->
+        <div style="position:absolute;top:0;left:0;right:0;height:110px;background:linear-gradient(to bottom,#0d0d28,#251540,#5a1a2a,#a04010,#c86010)"></div>
+        <!-- Buildings side view (current game style) -->
+        <div style="position:absolute;bottom:38px;left:0;width:55px;height:95px;background:#12122a"></div>
+        <div style="position:absolute;bottom:38px;left:58px;width:40px;height:70px;background:#12122a"></div>
+        <div style="position:absolute;bottom:38px;right:0;width:65px;height:85px;background:#12122a"></div>
+        <!-- Godzilla sprite (side view) -->
+        <div style="position:absolute;bottom:38px;left:115px">
+          <div style="width:20px;height:44px;position:relative">
+            <div style="position:absolute;bottom:0;left:2px;width:16px;height:28px;background:#1e4820"></div>
+            <div style="position:absolute;bottom:28px;left:4px;width:12px;height:14px;background:#1e4820;border-radius:4px 6px 0 0"></div>
+            <div style="position:absolute;bottom:35px;left:0;width:4px;height:9px;background:#0a2a0c"></div>
+            <!-- Glowing eye -->
+            <div style="position:absolute;bottom:38px;left:10px;width:3px;height:3px;background:#f5c;border-radius:50%;box-shadow:0 0 4px #f5c"></div>
+          </div>
+        </div>
+        <!-- Ground -->
+        <div style="position:absolute;bottom:0;left:0;right:0;height:40px;background:#1a1510"></div>
+        <!-- DIALOGUE BOX over gameplay -->
+        <div style="position:absolute;bottom:42px;left:8px;right:8px;background:rgba(0,0,0,0.88);border:1px solid #5a4a20;border-radius:3px;padding:5px">
+          <div style="font-size:6px;color:#f5c842;margin-bottom:2px">SURVIVOR — Dr. Tanaka</div>
+          <div style="font-size:7px;color:#ddd;line-height:1.4">"Wait! Don't destroy the research lab — I have intel on Mothra's weakness…"</div>
+          <div style="display:flex;gap:4px;margin-top:3px">
+            <span style="background:#2a1a05;border:1px solid #8a6020;padding:1px 4px;font-size:6px;color:#f5c842;border-radius:2px">[SPARE LAB]</span>
+            <span style="background:#1a0505;border:1px solid #8a2020;padding:1px 4px;font-size:6px;color:#f87;border-radius:2px">[STOMP IT]</span>
+          </div>
+        </div>
+        <!-- Character stat panel right side -->
+        <div style="position:absolute;top:5px;right:5px;background:rgba(0,0,0,0.75);padding:3px 5px;border-radius:2px;border:1px solid #333">
+          <div style="font-size:6px;color:#4af">GODZILLA  LVL 7</div>
+          <div style="font-size:6px;color:#0f0">HP  ████████░░  82/100</div>
+          <div style="font-size:6px;color:#f80">XP  ██████░░░░  60/100</div>
+          <div style="font-size:6px;color:#f5c">STR ★★★★☆</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Side-Scroller + RPG (Recommended)</h3>
+      <p>Keep the existing dusk city feel and kaiju action, but layer in RPG character development: XP, leveling, stats, dialogue choices with survivors, branching story consequences per city.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Keeps what's already great</li><li>Fastest to ship</li><li>Best of both genres</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Not "true" first-person</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+</div>

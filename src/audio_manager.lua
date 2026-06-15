@@ -1,5 +1,4 @@
 -- src/audio_manager.lua
--- Gracefully no-ops if audio files are missing.
 local AM   = {}
 AM.__index = AM
 
@@ -10,34 +9,62 @@ function AM.getInstance()
   return _instance
 end
 
-function AM.new()
-  local self = setmetatable({
-    _sfxSource   = nil,
-    _musicSource = nil,
-    _splatClips  = {},
-    _lastSplat   = -1,
-    _enabled     = true,
-  }, AM)
-
-  -- Try loading splat placeholder (silent if file absent)
-  -- Place real files in assets/audio/splat_01.wav through splat_12.wav
-  local ok
-  self._splatClips = {}
-  for i = 1, 12 do
-    local path = string.format("assets/audio/splat_%02d.wav", i)
-    local exists = love.filesystem.getInfo(path)
-    if exists then
-      ok, self._splatClips[#self._splatClips + 1] = pcall(love.audio.newSource, path, "static")
+local function loadClips(pattern, count)
+  local clips = {}
+  for i = 1, count do
+    local path = string.format(pattern, i)
+    if love.filesystem.getInfo(path) then
+      local ok, src = pcall(love.audio.newSource, path, "static")
+      if ok then clips[#clips + 1] = src end
     end
   end
+  return clips
+end
 
-  local musicPath = "assets/audio/battle_bgm.ogg"
-  if love.filesystem.getInfo(musicPath) then
-    local mok, src = pcall(love.audio.newSource, musicPath, "stream")
-    if mok then
-      self._musicSource = src
-      self._musicSource:setLooping(true)
-    end
+local function loadClip(path, mode)
+  if love.filesystem.getInfo(path) then
+    local ok, src = pcall(love.audio.newSource, path, mode or "static")
+    if ok then return src end
+  end
+  return nil
+end
+
+local function playRandom(clips, lastIdx)
+  if #clips == 0 then return lastIdx end
+  local idx
+  repeat idx = math.random(1, #clips)
+  until idx ~= lastIdx or #clips == 1
+  clips[idx]:clone():play()
+  return idx
+end
+
+function AM.new()
+  local self = setmetatable({
+    _splatClips      = {},
+    _screamClips     = {},
+    _collapseClips   = {},
+    _hitLightClips   = {},
+    _hitHeavyClips   = {},
+    _crowdPanicClip  = nil,
+    _musicSource     = nil,
+    _lastSplat       = -1,
+    _lastScream      = -1,
+    _lastCollapse    = -1,
+    _lastHitLight    = -1,
+    _lastHitHeavy    = -1,
+  }, AM)
+
+  self._splatClips     = loadClips("assets/audio/splat_%02d.wav", 12)
+  self._screamClips    = loadClips("assets/audio/scream_%02d.wav", 4)
+  self._collapseClips  = loadClips("assets/audio/collapse_%02d.wav", 3)
+  self._hitLightClips  = loadClips("assets/audio/hit_light_%02d.wav", 3)
+  self._hitHeavyClips  = loadClips("assets/audio/hit_heavy_%02d.wav", 3)
+  self._crowdPanicClip = loadClip("assets/audio/crowd_panic.wav")
+
+  -- BGM (wav, streamed + looped)
+  self._musicSource = loadClip("assets/audio/battle_bgm.wav", "stream")
+  if self._musicSource then
+    self._musicSource:setLooping(true)
   end
 
   return self
@@ -54,19 +81,36 @@ function AM:stopMusic()
 end
 
 function AM:playRandomSplat()
-  if #self._splatClips == 0 then return end
-  local idx
-  repeat idx = math.random(1, #self._splatClips)
-  until idx ~= self._lastSplat or #self._splatClips == 1
-  self._lastSplat = idx
-  local src = self._splatClips[idx]:clone()
-  src:play()
+  self._lastSplat = playRandom(self._splatClips, self._lastSplat)
+end
+
+function AM:playScream()
+  self._lastScream = playRandom(self._screamClips, self._lastScream)
+end
+
+function AM:playCollapse()
+  self._lastCollapse = playRandom(self._collapseClips, self._lastCollapse)
+end
+
+function AM:playCrowdPanic()
+  if self._crowdPanicClip then
+    self._crowdPanicClip:clone():play()
+  end
+end
+
+-- Called when a kaiju lands a hit on the opponent.
+-- Heavy hits (damage >= 25) use the heavier impact sound.
+function AM:playHit(damage)
+  if damage and damage >= 25 then
+    self._lastHitHeavy = playRandom(self._hitHeavyClips, self._lastHitHeavy)
+  else
+    self._lastHitLight = playRandom(self._hitLightClips, self._lastHitLight)
+  end
 end
 
 function AM:playSFX(clip)
   if not clip then return end
-  local src = clip:clone()
-  src:play()
+  clip:clone():play()
 end
 
 return AM

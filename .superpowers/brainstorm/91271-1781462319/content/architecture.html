@@ -1,0 +1,73 @@
+<h2>Game Architecture — Section 1 of 4</h2>
+<p class="subtitle">Unity 2D · Pixel Art · iOS + Android + WebGL</p>
+
+<div class="section">
+  <h3>📁 Project Structure</h3>
+  <div style="background:#0b1020;border-radius:8px;padding:16px;font-family:monospace;font-size:12px;color:#a3e635;line-height:1.8;">
+    <div style="color:#60a5fa;">Assets/</div>
+    <div style="padding-left:16px;color:#94a3b8;">├── <span style="color:#fbbf24;">Characters/</span>  &nbsp;← sprites, animators, prefabs per kaiju/hero</div>
+    <div style="padding-left:16px;color:#94a3b8;">├── <span style="color:#fbbf24;">Cities/</span>  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← tilemap stages + destructible building prefabs</div>
+    <div style="padding-left:16px;color:#94a3b8;">├── <span style="color:#fbbf24;">NPCs/</span>  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← human, tank, helicopter prefabs + splat particles</div>
+    <div style="padding-left:16px;color:#94a3b8;">├── <span style="color:#fbbf24;">UI/</span>  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← health bar, power meter, menus, battle pass screen</div>
+    <div style="padding-left:16px;color:#94a3b8;">├── <span style="color:#fbbf24;">Audio/</span>  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← "GAWDZILLLLA", roars, splat SFX, music</div>
+    <div style="padding-left:16px;color:#94a3b8;">├── <span style="color:#fbbf24;">Scripts/</span></div>
+    <div style="padding-left:32px;color:#94a3b8;">├── <span style="color:#34d399;">Combat/</span>  &nbsp;&nbsp;&nbsp;&nbsp;← FightManager, AttackSystem, HitDetection</div>
+    <div style="padding-left:32px;color:#94a3b8;">├── <span style="color:#34d399;">Characters/</span> ← CharacterBase, KaijuController, HeroController</div>
+    <div style="padding-left:32px;color:#94a3b8;">├── <span style="color:#34d399;">City/</span>  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← DestructionSystem, NPCSpawner, BloodSplat</div>
+    <div style="padding-left:32px;color:#94a3b8;">├── <span style="color:#34d399;">GameModes/</span> ← StoryMode, VSMode, SurvivalMode</div>
+    <div style="padding-left:32px;color:#94a3b8;">└── <span style="color:#34d399;">Monetization/</span> ← IAPManager, BattlePassManager, SaveData</div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>🎮 Scene Flow</h3>
+  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px;background:#0f172a;border-radius:8px;">
+    <div style="background:#1e40af;color:white;padding:8px 12px;border-radius:6px;font-size:13px;font-weight:bold;">🏠 Main Menu</div>
+    <div style="color:#60a5fa;">→</div>
+    <div style="background:#1e40af;color:white;padding:8px 12px;border-radius:6px;font-size:13px;font-weight:bold;">⚔️ Mode Select</div>
+    <div style="color:#60a5fa;">→</div>
+    <div style="background:#7c3aed;color:white;padding:8px 12px;border-radius:6px;font-size:13px;font-weight:bold;">🦖 Character Select</div>
+    <div style="color:#60a5fa;">→</div>
+    <div style="background:#065f46;color:white;padding:8px 12px;border-radius:6px;font-size:13px;font-weight:bold;">🏙️ City Select</div>
+    <div style="color:#60a5fa;">→</div>
+    <div style="background:#991b1b;color:white;padding:8px 12px;border-radius:6px;font-size:13px;font-weight:bold;">💥 BATTLE</div>
+    <div style="color:#60a5fa;">→</div>
+    <div style="background:#92400e;color:white;padding:8px 12px;border-radius:6px;font-size:13px;font-weight:bold;">🏆 Results + XP</div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>🗺️ Game Modes</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <div style="background:#1e293b;border-radius:8px;padding:14px;border-left:4px solid #f59e0b;">
+      <div style="font-weight:bold;color:#fbbf24;margin-bottom:6px;">⚔️ VS Mode</div>
+      <div style="font-size:13px;color:#cbd5e1;">Pick 2 fighters — human or AI. Fight until one health bar hits zero. Local 2P on same device.</div>
+    </div>
+    <div style="background:#1e293b;border-radius:8px;padding:14px;border-left:4px solid #22c55e;">
+      <div style="font-weight:bold;color:#4ade80;margin-bottom:6px;">🏙️ Story / Smash Mode</div>
+      <div style="font-size:13px;color:#cbd5e1;">Pick a kaiju or hero. Rampage through cities — smash buildings, splat NPCs, hit destruction score targets. Boss fights mid-stage.</div>
+    </div>
+    <div style="background:#1e293b;border-radius:8px;padding:14px;border-left:4px solid #8b5cf6;">
+      <div style="font-weight:bold;color:#a78bfa;margin-bottom:6px;">🌊 Survival Mode</div>
+      <div style="font-size:13px;color:#cbd5e1;">Endless waves of military NPCs + enemy kaiju. How long can you last? Leaderboard score.</div>
+    </div>
+    <div style="background:#1e293b;border-radius:8px;padding:14px;border-left:4px solid #ec4899;">
+      <div style="font-weight:bold;color:#f472b6;margin-bottom:6px;">🏆 Tournament</div>
+      <div style="font-size:13px;color:#cbd5e1;">Single-elimination bracket vs. CPU. Win to unlock lore + new characters. Tied to battle pass seasons.</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>🏙️ City Stages (launch)</h3>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <div style="background:#1e3a5f;color:#93c5fd;padding:8px 14px;border-radius:20px;font-size:13px;">🗽 New York</div>
+    <div style="background:#1e3a5f;color:#93c5fd;padding:8px 14px;border-radius:20px;font-size:13px;">🗼 Tokyo</div>
+    <div style="background:#1e3a5f;color:#93c5fd;padding:8px 14px;border-radius:20px;font-size:13px;">🌁 San Francisco</div>
+    <div style="background:#1e3a5f;color:#93c5fd;padding:8px 14px;border-radius:20px;font-size:13px;">🏯 Hong Kong</div>
+    <div style="background:#1e3a5f;color:#93c5fd;padding:8px 14px;border-radius:20px;font-size:13px;">🌊 Ocean Platform</div>
+    <div style="background:#374151;color:#9ca3af;padding:8px 14px;border-radius:20px;font-size:13px;">+ battle pass cities</div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:20px;">Does this architecture and mode structure look right? ✅ or tell me what to change</p>

@@ -1,0 +1,223 @@
+<h2>Choose Your Titan — Hero Roster</h2>
+<p class="subtitle">Every playable kaiju shares the hybrid combat framework (ranged + melee) but each brings a totally different feel. Tap a card to pick your main — or confirm that this is the right roster shape.</p>
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
+
+  <!-- GODZILLA -->
+  <div class="card" data-choice="godzilla" onclick="toggleSelect(this)" style="cursor:pointer">
+    <div class="card-image">
+      <div style="background:#0a120a;height:160px;position:relative;overflow:hidden;font-family:monospace;border-radius:4px;padding:8px">
+        <!-- Silhouette -->
+        <div style="position:absolute;bottom:10px;left:50%;transform:translateX(-50%)">
+          <div style="position:relative;width:44px;height:70px">
+            <div style="position:absolute;bottom:0;left:8px;width:28px;height:42px;background:#1e4820;border:1px solid #3a8a3c"></div>
+            <div style="position:absolute;bottom:40px;left:10px;width:24px;height:28px;background:#1e4820;border:1px solid #3a8a3c;border-radius:3px 3px 0 0"></div>
+            <!-- Dorsal spines -->
+            <div style="position:absolute;bottom:42px;left:6px;width:4px;height:14px;background:#0f5;clip-path:polygon(50% 0,100% 100%,0 100%)"></div>
+            <div style="position:absolute;bottom:42px;left:12px;width:5px;height:18px;background:#0f5;clip-path:polygon(50% 0,100% 100%,0 100%)"></div>
+            <div style="position:absolute;bottom:42px;left:19px;width:4px;height:14px;background:#0f5;clip-path:polygon(50% 0,100% 100%,0 100%)"></div>
+            <!-- Tail -->
+            <div style="position:absolute;bottom:8px;right:-16px;width:20px;height:8px;background:#1e4820;border-radius:0 4px 4px 0;transform:rotate(-10deg)"></div>
+            <!-- Eye -->
+            <div style="position:absolute;bottom:54px;left:20px;width:4px;height:3px;background:#0ff;border-radius:50%;box-shadow:0 0 4px #0ff"></div>
+          </div>
+        </div>
+        <!-- Atomic glow -->
+        <div style="position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:4px;height:50px;background:linear-gradient(to top,#00f,#0ff,transparent);border-radius:2px;opacity:0.6"></div>
+        <!-- Name -->
+        <div style="position:absolute;top:6px;left:0;right:0;text-align:center;font-size:10px;color:#0f5;letter-spacing:1px">GAWDZILLA</div>
+        <!-- Move chips -->
+        <div style="position:absolute;bottom:6px;left:4px;right:4px;display:flex;flex-wrap:wrap;gap:2px;justify-content:center">
+          <span style="background:#003a00;border:1px solid #0f5;padding:1px 4px;border-radius:2px;font-size:5px;color:#0f5">☢ ATOMIC BREATH</span>
+          <span style="background:#0a0a20;border:1px solid #88f;padding:1px 4px;border-radius:2px;font-size:5px;color:#88f">🌊 DORSAL PULSE</span>
+          <span style="background:#1a0a00;border:1px solid #f80;padding:1px 4px;border-radius:2px;font-size:5px;color:#f80">🦷 BITE</span>
+          <span style="background:#1a0500;border:1px solid #f55;padding:1px 4px;border-radius:2px;font-size:5px;color:#f55">🦎 TAIL SLAM</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body" style="padding:8px">
+      <div style="font-size:9px;color:#0f5;font-weight:bold">GAWDZILLA</div>
+      <div style="font-size:7px;color:#888;margin-top:2px">Balanced — strong at any range. Atomic breath charges faster with dorsal spines lit. Tail slam stuns, then bite for massive damage.</div>
+    </div>
+  </div>
+
+  <!-- MOTHRA -->
+  <div class="card" data-choice="mothra" onclick="toggleSelect(this)" style="cursor:pointer">
+    <div class="card-image">
+      <div style="background:#120a0a;height:160px;position:relative;overflow:hidden;font-family:monospace;border-radius:4px;padding:8px">
+        <!-- Wing silhouette -->
+        <div style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%)">
+          <div style="position:relative;width:80px;height:50px">
+            <!-- Wings -->
+            <div style="position:absolute;top:0;left:0;width:35px;height:40px;background:#3a1a00;border:1px solid #f5c842;border-radius:0 40px 20px 0;transform:rotate(-15deg)"></div>
+            <div style="position:absolute;top:0;right:0;width:35px;height:40px;background:#3a1a00;border:1px solid #f5c842;border-radius:40px 0 0 20px;transform:rotate(15deg)"></div>
+            <!-- Body -->
+            <div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:14px;height:26px;background:#4a2a00;border:1px solid #f5c842;border-radius:7px"></div>
+            <!-- Wing pattern dots -->
+            <div style="position:absolute;top:8px;left:8px;width:6px;height:6px;background:#f5c842;border-radius:50%;opacity:0.8"></div>
+            <div style="position:absolute;top:8px;right:8px;width:6px;height:6px;background:#f5c842;border-radius:50%;opacity:0.8"></div>
+          </div>
+        </div>
+        <!-- Glow -->
+        <div style="position:absolute;top:20px;left:50%;transform:translateX(-50%);width:50px;height:30px;background:radial-gradient(ellipse,#f5c84220,transparent);border-radius:50%"></div>
+        <div style="position:absolute;top:6px;left:0;right:0;text-align:center;font-size:10px;color:#f5c842;letter-spacing:1px">MOTHRA</div>
+        <div style="position:absolute;bottom:6px;left:4px;right:4px;display:flex;flex-wrap:wrap;gap:2px;justify-content:center">
+          <span style="background:#1a1500;border:1px solid #f5c842;padding:1px 4px;border-radius:2px;font-size:5px;color:#f5c842">✨ DIVINE BEAM</span>
+          <span style="background:#1a0a00;border:1px solid #f80;padding:1px 4px;border-radius:2px;font-size:5px;color:#f80">🌀 SILK BIND</span>
+          <span style="background:#0a0a1a;border:1px solid #aaf;padding:1px 4px;border-radius:2px;font-size:5px;color:#aaf">💨 WING GUST</span>
+          <span style="background:#1a0500;border:1px solid #f55;padding:1px 4px;border-radius:2px;font-size:5px;color:#f55">⚡ SCALE BURST</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body" style="padding:8px">
+      <div style="font-size:9px;color:#f5c842;font-weight:bold">MOTHRA</div>
+      <div style="font-size:7px;color:#888;margin-top:2px">Support + ranged. Silk Bind immobilizes enemy titans while allies fight. Wing Gust pushes enemy away from buildings. Only kaiju who can revive civilians.</div>
+    </div>
+  </div>
+
+  <!-- RODAN -->
+  <div class="card" data-choice="rodan" onclick="toggleSelect(this)" style="cursor:pointer">
+    <div class="card-image">
+      <div style="background:#120500;height:160px;position:relative;overflow:hidden;font-family:monospace;border-radius:4px;padding:8px">
+        <!-- Rodan silhouette - pterodactyl shape -->
+        <div style="position:absolute;bottom:15px;left:50%;transform:translateX(-50%)">
+          <div style="position:relative;width:70px;height:55px">
+            <!-- Body -->
+            <div style="position:absolute;bottom:10px;left:24px;width:22px;height:30px;background:#3a1000;border:1px solid #f55;border-radius:4px 4px 0 0"></div>
+            <!-- Wings spread -->
+            <div style="position:absolute;bottom:20px;left:0;width:25px;height:20px;background:#2a0800;border:1px solid #f55;border-radius:0 0 0 20px;transform:rotate(10deg)"></div>
+            <div style="position:absolute;bottom:20px;right:0;width:25px;height:20px;background:#2a0800;border:1px solid #f55;border-radius:0 0 20px 0;transform:rotate(-10deg)"></div>
+            <!-- Head/beak -->
+            <div style="position:absolute;bottom:38px;left:26px;width:18px;height:14px;background:#3a1000;border:1px solid #f55"></div>
+            <div style="position:absolute;bottom:38px;left:42px;width:14px;height:5px;background:#2a0800;border:1px solid #f55"></div>
+            <!-- Eyes -->
+            <div style="position:absolute;bottom:44px;left:34px;width:4px;height:3px;background:#f80;border-radius:50%;box-shadow:0 0 4px #f80"></div>
+          </div>
+        </div>
+        <div style="position:absolute;top:6px;left:0;right:0;text-align:center;font-size:10px;color:#f55;letter-spacing:1px">RODAN</div>
+        <div style="position:absolute;bottom:6px;left:4px;right:4px;display:flex;flex-wrap:wrap;gap:2px;justify-content:center">
+          <span style="background:#1a0500;border:1px solid #f55;padding:1px 4px;border-radius:2px;font-size:5px;color:#f55">🔊 SONIC SCREECH</span>
+          <span style="background:#1a0800;border:1px solid #f80;padding:1px 4px;border-radius:2px;font-size:5px;color:#f80">🌋 VOLCANIC BURST</span>
+          <span style="background:#0a0510;border:1px solid #a5f;padding:1px 4px;border-radius:2px;font-size:5px;color:#a5f">🦅 TALON GRAB</span>
+          <span style="background:#1a0a00;border:1px solid #f5c;padding:1px 4px;border-radius:2px;font-size:5px;color:#f5c">💨 SUPERSONIC DIVE</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body" style="padding:8px">
+      <div style="font-size:9px;color:#f55;font-weight:bold">RODAN</div>
+      <div style="font-size:7px;color:#888;margin-top:2px">Air mobility specialist. Supersonic dive closes distance instantly. Sonic Screech stuns multiple enemies. Talon Grab picks up enemy titans and drops them away from the city.</div>
+    </div>
+  </div>
+
+  <!-- KONG -->
+  <div class="card" data-choice="kong" onclick="toggleSelect(this)" style="cursor:pointer">
+    <div class="card-image">
+      <div style="background:#0a0a0a;height:160px;position:relative;overflow:hidden;font-family:monospace;border-radius:4px;padding:8px">
+        <!-- Kong silhouette -->
+        <div style="position:absolute;bottom:10px;left:50%;transform:translateX(-50%)">
+          <div style="position:relative;width:50px;height:72px">
+            <div style="position:absolute;bottom:0;left:10px;width:30px;height:44px;background:#2a1a0a;border:1px solid #8a6030"></div>
+            <div style="position:absolute;bottom:42px;left:8px;width:34px;height:30px;background:#2a1a0a;border:1px solid #8a6030;border-radius:6px 6px 0 0"></div>
+            <!-- Arms (long) -->
+            <div style="position:absolute;bottom:20px;left:-10px;width:14px;height:42px;background:#2a1a0a;border:1px solid #8a6030;border-radius:4px;transform:rotate(15deg)"></div>
+            <div style="position:absolute;bottom:20px;right:-10px;width:14px;height:42px;background:#2a1a0a;border:1px solid #8a6030;border-radius:4px;transform:rotate(-15deg)"></div>
+            <!-- Eyes -->
+            <div style="position:absolute;bottom:60px;left:14px;width:5px;height:4px;background:#f80;border-radius:50%;box-shadow:0 0 4px #f80"></div>
+            <div style="position:absolute;bottom:60px;right:14px;width:5px;height:4px;background:#f80;border-radius:50%;box-shadow:0 0 4px #f80"></div>
+          </div>
+        </div>
+        <div style="position:absolute;top:6px;left:0;right:0;text-align:center;font-size:10px;color:#a87040;letter-spacing:1px">KONG</div>
+        <div style="position:absolute;bottom:6px;left:4px;right:4px;display:flex;flex-wrap:wrap;gap:2px;justify-content:center">
+          <span style="background:#1a0800;border:1px solid #f80;padding:1px 4px;border-radius:2px;font-size:5px;color:#f80">👊 THUNDER PUNCH</span>
+          <span style="background:#0a0a1a;border:1px solid #88f;padding:1px 4px;border-radius:2px;font-size:5px;color:#88f">⚡ ROAR SHOCKWAVE</span>
+          <span style="background:#1a0500;border:1px solid #f55;padding:1px 4px;border-radius:2px;font-size:5px;color:#f55">🪨 GROUND SLAM</span>
+          <span style="background:#001a0a;border:1px solid #0f5;padding:1px 4px;border-radius:2px;font-size:5px;color:#0f5">🧱 THROW DEBRIS</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body" style="padding:8px">
+      <div style="font-size:9px;color:#a87040;font-weight:bold">KONG</div>
+      <div style="font-size:7px;color:#888;margin-top:2px">Melee powerhouse. Throw Debris gives him ranged option. Ground Slam shakes an area — knocks back enemies AND redirects falling rubble away from civilians. His hands save buildings.</div>
+    </div>
+  </div>
+
+  <!-- ANGUIRUS -->
+  <div class="card" data-choice="anguirus" onclick="toggleSelect(this)" style="cursor:pointer">
+    <div class="card-image">
+      <div style="background:#0a0a05;height:160px;position:relative;overflow:hidden;font-family:monospace;border-radius:4px;padding:8px">
+        <!-- Anguirus - armadillo-like -->
+        <div style="position:absolute;bottom:10px;left:50%;transform:translateX(-50%)">
+          <div style="position:relative;width:60px;height:50px">
+            <!-- Shell/body -->
+            <div style="position:absolute;bottom:10px;left:5px;width:50px;height:28px;background:#2a2a10;border:1px solid #8a8a20;border-radius:50% 50% 30% 30%"></div>
+            <!-- Spikes on shell -->
+            <div style="position:absolute;bottom:35px;left:10px;width:3px;height:10px;background:#8a8a20;clip-path:polygon(50% 0,100% 100%,0 100%)"></div>
+            <div style="position:absolute;bottom:35px;left:18px;width:4px;height:14px;background:#8a8a20;clip-path:polygon(50% 0,100% 100%,0 100%)"></div>
+            <div style="position:absolute;bottom:35px;left:27px;width:4px;height:16px;background:#8a8a20;clip-path:polygon(50% 0,100% 100%,0 100%)"></div>
+            <div style="position:absolute;bottom:35px;left:37px;width:4px;height:12px;background:#8a8a20;clip-path:polygon(50% 0,100% 100%,0 100%)"></div>
+            <div style="position:absolute;bottom:35px;left:46px;width:3px;height:9px;background:#8a8a20;clip-path:polygon(50% 0,100% 100%,0 100%)"></div>
+            <!-- Head -->
+            <div style="position:absolute;bottom:10px;left:0;width:18px;height:14px;background:#2a2a10;border:1px solid #6a6a20;border-radius:0 0 0 4px"></div>
+            <!-- Tail -->
+            <div style="position:absolute;bottom:10px;right:-10px;width:14px;height:8px;background:#2a2a10;border:1px solid #6a6a20;border-radius:0 4px 4px 0"></div>
+            <!-- Legs -->
+            <div style="position:absolute;bottom:0;left:8px;width:10px;height:12px;background:#2a2a10;border:1px solid #6a6a20"></div>
+            <div style="position:absolute;bottom:0;left:42px;width:10px;height:12px;background:#2a2a10;border:1px solid #6a6a20"></div>
+          </div>
+        </div>
+        <div style="position:absolute;top:6px;left:0;right:0;text-align:center;font-size:10px;color:#8a8a20;letter-spacing:1px">ANGUIRUS</div>
+        <div style="position:absolute;bottom:6px;left:4px;right:4px;display:flex;flex-wrap:wrap;gap:2px;justify-content:center">
+          <span style="background:#1a1a00;border:1px solid #8a8;padding:1px 4px;border-radius:2px;font-size:5px;color:#8a8">🔊 SONIC ROAR</span>
+          <span style="background:#0a0a00;border:1px solid #aa0;padding:1px 4px;border-radius:2px;font-size:5px;color:#aa0">🌀 CURL ROLL</span>
+          <span style="background:#1a0500;border:1px solid #f55;padding:1px 4px;border-radius:2px;font-size:5px;color:#f55">🗡 SPIKE SLAM</span>
+          <span style="background:#0a1500;border:1px solid #5f5;padding:1px 4px;border-radius:2px;font-size:5px;color:#5f5">🛡 SHELL GUARD</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body" style="padding:8px">
+      <div style="font-size:9px;color:#8a8a20;font-weight:bold">ANGUIRUS</div>
+      <div style="font-size:7px;color:#888;margin-top:2px">Tank + crowd control. Shell Guard absorbs massive hits — unique ability to protect buildings by standing between them and the enemy. Curl Roll is a devastating charge.</div>
+    </div>
+  </div>
+
+  <!-- MORE SLOT -->
+  <div class="card" data-choice="more" onclick="toggleSelect(this)" style="cursor:pointer;opacity:0.5">
+    <div class="card-image">
+      <div style="background:#0a0a0a;height:160px;position:relative;overflow:hidden;font-family:monospace;border-radius:4px;padding:8px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px">
+        <div style="font-size:28px;color:#333">+</div>
+        <div style="font-size:7px;color:#555;text-align:center">UNLOCK MORE<br>DEFENDERS<br>as you play</div>
+      </div>
+    </div>
+    <div class="card-body" style="padding:8px">
+      <div style="font-size:9px;color:#555;font-weight:bold">MORE COMING</div>
+      <div style="font-size:7px;color:#555;margin-top:2px">Unlock additional playable titans through story progression. Each city may introduce a new defender.</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="section">
+  <h3>All heroes share the same combat framework</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:8px;font-family:monospace">
+    <div style="background:#0d0d15;padding:8px;border-radius:4px;border-left:2px solid #0f5">
+      <div style="color:#0f5;margin-bottom:4px">EVERY KAIJU HAS:</div>
+      <div style="color:#888;line-height:1.7">
+        ✓ 1–2 ranged attacks (unique)<br>
+        ✓ Claw / bite / tail combo (melee)<br>
+        ✓ 1 signature special (unique)<br>
+        ✓ 1 passive trait (changes playstyle)<br>
+        ✓ Evolution tree (2 branches at Lv12)
+      </div>
+    </div>
+    <div style="background:#0d0d15;padding:8px;border-radius:4px;border-left:2px solid #f5c842">
+      <div style="color:#f5c842;margin-bottom:4px">PICK YOUR STYLE:</div>
+      <div style="color:#888;line-height:1.7">
+        Gawdzilla → balanced, classic feel<br>
+        Mothra → support, crowd protect<br>
+        Rodan → speed, aerial acrobatics<br>
+        Kong → raw power, debris combat<br>
+        Anguirus → tank, building shield
+      </div>
+    </div>
+  </div>
+</div>

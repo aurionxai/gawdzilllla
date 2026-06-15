@@ -1,0 +1,219 @@
+<h2>Combat System + HUD Design</h2>
+<p class="subtitle">Section 3 of 4 — Controls, meters, special moves, and fight mechanics</p>
+
+<div class="section">
+  <h3>📱 HUD Layout — VS Mode</h3>
+  <div style="background:#0b1020;border-radius:12px;padding:16px;">
+    <!-- GAME SCREEN MOCKUP -->
+    <div style="background:#1a2744;border-radius:8px;border:2px solid #334155;overflow:hidden;position:relative;">
+
+      <!-- TOP HUD BAR -->
+      <div style="background:#0b1020;padding:10px 12px;display:flex;align-items:center;gap:8px;">
+        <!-- P1 SIDE -->
+        <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div style="background:#1e293b;border-radius:4px;padding:3px 8px;font-size:11px;color:#4ade80;font-weight:bold;font-family:monospace;">🦖 GODZILLA</div>
+          </div>
+          <!-- HEALTH BAR P1 -->
+          <div style="background:#1e293b;border-radius:3px;height:14px;overflow:hidden;border:1px solid #334155;">
+            <div style="background:linear-gradient(90deg,#16a34a,#4ade80);height:100%;width:72%;border-radius:3px;position:relative;">
+              <div style="position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent,transparent 8px,rgba(255,255,255,0.05) 8px,rgba(255,255,255,0.05) 9px);"></div>
+            </div>
+          </div>
+          <!-- POWER METER P1 -->
+          <div style="display:flex;align-items:center;gap:4px;">
+            <div style="font-size:9px;color:#f59e0b;letter-spacing:1px;font-family:monospace;">PWR</div>
+            <div style="flex:1;background:#1e293b;border-radius:2px;height:6px;border:1px solid #334155;">
+              <div style="background:linear-gradient(90deg,#d97706,#fbbf24,#fef08a);height:100%;width:85%;border-radius:2px;box-shadow:0 0 6px #fbbf24;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TIMER CENTER -->
+        <div style="text-align:center;min-width:60px;">
+          <div style="font-size:22px;font-weight:bold;color:#f8fafc;font-family:monospace;text-shadow:0 0 12px #60a5fa;">59</div>
+          <div style="font-size:9px;color:#64748b;letter-spacing:2px;">ROUND 1</div>
+        </div>
+
+        <!-- P2 SIDE -->
+        <div style="flex:1;display:flex;flex-direction:column;gap:4px;align-items:flex-end;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div style="background:#1e293b;border-radius:4px;padding:3px 8px;font-size:11px;color:#f87171;font-weight:bold;font-family:monospace;">GHIDORAH 🐉</div>
+          </div>
+          <!-- HEALTH BAR P2 -->
+          <div style="background:#1e293b;border-radius:3px;height:14px;overflow:hidden;border:1px solid #334155;width:100%;">
+            <div style="background:linear-gradient(90deg,#f87171,#dc2626);height:100%;width:45%;border-radius:3px;margin-left:auto;position:relative;">
+              <div style="position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent,transparent 8px,rgba(255,255,255,0.05) 8px,rgba(255,255,255,0.05) 9px);"></div>
+            </div>
+          </div>
+          <!-- POWER METER P2 -->
+          <div style="display:flex;align-items:center;gap:4px;width:100%;">
+            <div style="flex:1;background:#1e293b;border-radius:2px;height:6px;border:1px solid #334155;">
+              <div style="background:linear-gradient(90deg,#7c3aed,#a78bfa);height:100%;width:40%;border-radius:2px;float:right;"></div>
+            </div>
+            <div style="font-size:9px;color:#a78bfa;letter-spacing:1px;font-family:monospace;">PWR</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CITY BATTLE AREA -->
+      <div style="height:180px;background:linear-gradient(to bottom,#1a2744 0%,#1a2744 60%,#0f1a0f 60%,#0f1a0f 100%);position:relative;overflow:hidden;">
+        <!-- sky buildings silhouette -->
+        <div style="position:absolute;bottom:72px;left:0;right:0;display:flex;align-items:flex-end;gap:2px;padding:0 8px;">
+          <div style="width:20px;height:55px;background:#0d1f0d;border-radius:2px 2px 0 0;"></div>
+          <div style="width:15px;height:40px;background:#0d1f0d;border-radius:2px 2px 0 0;"></div>
+          <div style="width:25px;height:70px;background:#0d1f0d;border-radius:2px 2px 0 0;"></div>
+          <div style="width:18px;height:50px;background:#0d1f0d;border-radius:2px 2px 0 0;opacity:0.7;"></div>
+          <div style="flex:1;"></div>
+          <div style="width:20px;height:60px;background:#0d1f0d;border-radius:2px 2px 0 0;opacity:0.7;"></div>
+          <div style="width:30px;height:80px;background:#0d1f0d;border-radius:2px 2px 0 0;"></div>
+          <div style="width:15px;height:45px;background:#0d1f0d;border-radius:2px 2px 0 0;"></div>
+        </div>
+        <!-- ground -->
+        <div style="position:absolute;bottom:0;left:0;right:0;height:72px;background:#1a2f1a;border-top:2px solid #2d5a2d;"></div>
+        <!-- tiny NPCs on ground -->
+        <div style="position:absolute;bottom:70px;left:0;right:0;display:flex;gap:6px;padding:0 20px;flex-wrap:wrap;">
+          <div style="width:3px;height:6px;background:#f87171;border-radius:1px;"></div>
+          <div style="width:3px;height:6px;background:#fb923c;border-radius:1px;"></div>
+          <div style="width:3px;height:6px;background:#fbbf24;border-radius:1px;"></div>
+          <div style="width:3px;height:6px;background:#4ade80;border-radius:1px;"></div>
+          <div style="width:3px;height:6px;background:#60a5fa;border-radius:1px;"></div>
+          <div style="width:3px;height:6px;background:#f472b6;border-radius:1px;"></div>
+          <div style="width:3px;height:6px;background:#a78bfa;border-radius:1px;"></div>
+          <div style="width:3px;height:6px;background:#f87171;border-radius:1px;"></div>
+          <div style="width:3px;height:6px;background:#94a3b8;border-radius:1px;"></div>
+          <div style="width:3px;height:6px;background:#fb923c;border-radius:1px;"></div>
+        </div>
+        <!-- P1 Godzilla (left) -->
+        <div style="position:absolute;bottom:68px;left:40px;text-align:center;">
+          <div style="font-size:52px;filter:drop-shadow(0 0 10px rgba(74,222,128,0.4));">🦖</div>
+        </div>
+        <!-- P2 Ghidorah (right) -->
+        <div style="position:absolute;bottom:68px;right:30px;text-align:center;transform:scaleX(-1);">
+          <div style="font-size:52px;filter:drop-shadow(0 0 10px rgba(248,113,113,0.4));">🐉</div>
+        </div>
+        <!-- HIT EFFECT -->
+        <div style="position:absolute;top:40px;left:50%;transform:translateX(-50%);text-align:center;">
+          <div style="font-size:16px;font-weight:bold;color:#fbbf24;font-family:monospace;text-shadow:0 0 12px #f59e0b;letter-spacing:2px;">COMBO x4</div>
+        </div>
+        <!-- BLOOD SPLAT NPCs -->
+        <div style="position:absolute;bottom:68px;left:120px;">
+          <div style="font-size:10px;">💥</div>
+        </div>
+      </div>
+
+      <!-- BOTTOM CONTROLS HUD -->
+      <div style="background:#0b1020;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid #1e293b;">
+        <!-- JOYSTICK (left) -->
+        <div style="position:relative;width:60px;height:60px;">
+          <div style="position:absolute;inset:0;border-radius:50%;background:#1e293b;border:2px solid #334155;opacity:0.8;"></div>
+          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:24px;height:24px;border-radius:50%;background:#475569;border:2px solid #64748b;"></div>
+          <div style="position:absolute;top:4px;left:50%;transform:translateX(-50%);font-size:8px;color:#475569;">▲</div>
+          <div style="position:absolute;bottom:4px;left:50%;transform:translateX(-50%);font-size:8px;color:#475569;">▼</div>
+          <div style="position:absolute;left:4px;top:50%;transform:translateY(-50%);font-size:8px;color:#475569;">◀</div>
+          <div style="position:absolute;right:4px;top:50%;transform:translateY(-50%);font-size:8px;color:#475569;">▶</div>
+        </div>
+
+        <!-- CENTER INFO -->
+        <div style="text-align:center;">
+          <div style="font-size:9px;color:#64748b;letter-spacing:1px;">DESTRUCTION</div>
+          <div style="font-size:16px;font-weight:bold;color:#fbbf24;font-family:monospace;">$4.2B</div>
+        </div>
+
+        <!-- ATTACK BUTTONS (right) -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;width:130px;">
+          <button style="background:#1e3a5f;border:2px solid #3b82f6;border-radius:8px;padding:8px;font-size:10px;color:#93c5fd;font-weight:bold;cursor:pointer;">👊<br/>LIGHT</button>
+          <button style="background:#3b0764;border:2px solid #7c3aed;border-radius:8px;padding:8px;font-size:10px;color:#c4b5fd;font-weight:bold;cursor:pointer;">💥<br/>HEAVY</button>
+          <button style="background:#0f2d0f;border:2px solid #16a34a;border-radius:8px;padding:8px;font-size:10px;color:#4ade80;font-weight:bold;cursor:pointer;">🌀<br/>SPECIAL</button>
+          <button style="background:#431407;border:2px solid #dc2626;border-radius:8px;padding:8px;font-size:10px;color:#fca5a5;font-weight:bold;cursor:pointer;animation:pulse 1s infinite;">☢️<br/>UNLEASH</button>
+        </div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:#64748b;text-align:center;margin-top:8px;">VS Mode HUD — tap UNLEASH when power meter is full (glowing red)</div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>⚔️ Attack System</h3>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;">
+    <div style="background:#1e293b;border-radius:8px;padding:12px;border-left:4px solid #3b82f6;">
+      <div style="font-weight:bold;color:#60a5fa;">👊 LIGHT ATTACK</div>
+      <div style="font-size:12px;color:#94a3b8;margin-top:4px;">Fast claw swipe or punch. Low damage, quick recovery. Tap rapidly for 3-hit combo. Builds power meter +5%.</div>
+    </div>
+    <div style="background:#1e293b;border-radius:8px;padding:12px;border-left:4px solid #7c3aed;">
+      <div style="font-weight:bold;color:#a78bfa;">💥 HEAVY ATTACK</div>
+      <div style="font-size:12px;color:#94a3b8;margin-top:4px;">Tail slam, body crush, or ground pound. High damage, slow recovery. Stuns enemy briefly. Builds power meter +15%.</div>
+    </div>
+    <div style="background:#1e293b;border-radius:8px;padding:12px;border-left:4px solid #16a34a;">
+      <div style="font-weight:bold;color:#4ade80;">🌀 SPECIAL MOVE</div>
+      <div style="font-size:12px;color:#94a3b8;margin-top:4px;">Character-specific signature attack. Costs 25% power. Godzilla = Atomic Breath beam. Kong = Axe slam. Mothra = Wing beam burst.</div>
+    </div>
+    <div style="background:#1e293b;border-radius:8px;padding:12px;border-left:4px solid #dc2626;">
+      <div style="font-weight:bold;color:#fca5a5;">☢️ UNLEASH (Ultimate)</div>
+      <div style="font-size:12px;color:#94a3b8;margin-top:4px;">Full power meter required. 3-second cinematic animation. Massive AoE damage. "GAWDZILLLLA!" voice trigger. Destroys half the screen.</div>
+    </div>
+    <div style="background:#1e293b;border-radius:8px;padding:12px;border-left:4px solid #f59e0b;">
+      <div style="font-weight:bold;color:#fbbf24;">🤸 DODGE</div>
+      <div style="font-size:12px;color:#94a3b8;margin-top:4px;">Swipe left/right to dodge. Brief invincibility frames. Perfect dodge (< 0.3s before hit) = COUNTER state — next attack does 2x damage.</div>
+    </div>
+    <div style="background:#1e293b;border-radius:8px;padding:12px;border-left:4px solid #ec4899;">
+      <div style="font-weight:bold;color:#f472b6;">🫂 GRAB + THROW</div>
+      <div style="font-size:12px;color:#94a3b8;margin-top:4px;">Hold HEAVY near enemy → grab. Swipe direction to throw into buildings. Buildings collapse = bonus destruction + NPC splats.</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>⚡ Power Meter — How It Fills</h3>
+  <div style="background:#0b1020;border-radius:8px;padding:14px;">
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+      <div style="background:#0f172a;border:1px solid #334155;border-radius:6px;padding:8px 12px;font-size:12px;color:#fbbf24;text-align:center;">👊 Hit enemy<br/><span style="font-size:14px;font-weight:bold;color:#4ade80;">+5%</span></div>
+      <div style="color:#475569;">+</div>
+      <div style="background:#0f172a;border:1px solid #334155;border-radius:6px;padding:8px 12px;font-size:12px;color:#fbbf24;text-align:center;">🏢 Destroy building<br/><span style="font-size:14px;font-weight:bold;color:#4ade80;">+8%</span></div>
+      <div style="color:#475569;">+</div>
+      <div style="background:#0f172a;border:1px solid #334155;border-radius:6px;padding:8px 12px;font-size:12px;color:#fbbf24;text-align:center;">🧍 Splat NPC<br/><span style="font-size:14px;font-weight:bold;color:#4ade80;">+2%</span></div>
+      <div style="color:#475569;">+</div>
+      <div style="background:#0f172a;border:1px solid #334155;border-radius:6px;padding:8px 12px;font-size:12px;color:#fbbf24;text-align:center;">🍢 Food power-up<br/><span style="font-size:14px;font-weight:bold;color:#4ade80;">+25%</span></div>
+      <div style="color:#475569;">+</div>
+      <div style="background:#0f172a;border:1px solid #334155;border-radius:6px;padding:8px 12px;font-size:12px;color:#fbbf24;text-align:center;">🔥 Combo x5+<br/><span style="font-size:14px;font-weight:bold;color:#4ade80;">+3%/hit</span></div>
+      <div style="color:#f59e0b;font-size:18px;font-weight:bold;align-self:center;">= ☢️ UNLEASH</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>🦖 Character-Specific Unleash Moves</h3>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;">
+    <div style="background:#1e293b;border-radius:8px;padding:10px;"><div style="color:#4ade80;font-weight:bold;font-size:12px;">🦖 Godzilla</div><div style="font-size:12px;color:#94a3b8;margin-top:3px;">Nuclear Pulse — full-screen atomic explosion. Everything within 3 blocks vaporized. "GAWDZILLLLA!"</div></div>
+    <div style="background:#1e293b;border-radius:8px;padding:10px;"><div style="color:#a78bfa;font-weight:bold;font-size:12px;">🦍 Kong</div><div style="font-size:12px;color:#94a3b8;margin-top:3px;">Primal Rage — picks up building, uses as bat. Horizontal sweep clears entire screen.</div></div>
+    <div style="background:#1e293b;border-radius:8px;padding:10px;"><div style="color:#fbbf24;font-weight:bold;font-size:12px;">🦋 Mothra</div><div style="font-size:12px;color:#94a3b8;margin-top:3px;">Divine Wings — rainbow light beam. Stuns all enemies 5 sec, heals self 30%.</div></div>
+    <div style="background:#1e293b;border-radius:8px;padding:10px;"><div style="color:#f87171;font-weight:bold;font-size:12px;">🐉 Ghidorah</div><div style="font-size:12px;color:#94a3b8;margin-top:3px;">Triple Gravity Beam — 3 simultaneous lightning blasts from each head. Widest AoE in game.</div></div>
+    <div style="background:#1e293b;border-radius:8px;padding:10px;"><div style="color:#60a5fa;font-weight:bold;font-size:12px;">🤖 MechaGodzilla</div><div style="font-size:12px;color:#94a3b8;margin-top:3px;">Full Weapons Hot — all missiles + proton scream simultaneously. Robotic voice: "EXTERMINATE."</div></div>
+    <div style="background:#1e293b;border-radius:8px;padding:10px;"><div style="color:#fb923c;font-weight:bold;font-size:12px;">💪 Titan (Hero)</div><div style="font-size:12px;color:#94a3b8;margin-top:3px;">Orbital Laser — flies to stratosphere, fires beam down. Cinematic top-down camera cut.</div></div>
+    <div style="background:#1e293b;border-radius:8px;padding:10px;"><div style="color:#fbbf24;font-weight:bold;font-size:12px;">🧍 Gregg (Easter Egg)</div><div style="font-size:12px;color:#94a3b8;margin-top:3px;">Unleash: sits down, eats a sandwich, heals himself only. Does zero damage. Says "good team effort."</div></div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>🏙️ Story/Smash Mode HUD Differences</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+    <div style="background:#1e293b;border-radius:8px;padding:12px;border-left:4px solid #22c55e;">
+      <div style="font-weight:bold;color:#4ade80;">Destruction Score</div>
+      <div style="font-size:12px;color:#94a3b8;margin-top:4px;">Replaces opponent health bar. Dollar value of damage done — buildings, vehicles, NPCs all have values. Target score to advance.</div>
+    </div>
+    <div style="background:#1e293b;border-radius:8px;padding:12px;border-left:4px solid #f59e0b;">
+      <div style="font-weight:bold;color:#fbbf24;">NPC Splat Combo</div>
+      <div style="font-size:12px;color:#94a3b8;margin-top:4px;">Stomp 5 NPCs in 2 seconds = SPLAT STREAK. Text pops: "SQUISH x5 — GAWDZILLLLA APPROVES." Multiplier to score.</div>
+    </div>
+    <div style="background:#1e293b;border-radius:8px;padding:12px;border-left:4px solid #8b5cf6;">
+      <div style="font-weight:bold;color:#a78bfa;">Military Wave Counter</div>
+      <div style="font-size:12px;color:#94a3b8;margin-top:4px;">Top of screen shows incoming wave: tanks → jets → helicopters → boss kaiju. Countdown timer per wave.</div>
+    </div>
+    <div style="background:#1e293b;border-radius:8px;padding:12px;border-left:4px solid #ec4899;">
+      <div style="font-weight:bold;color:#f472b6;">City Destruction %</div>
+      <div style="font-size:12px;color:#94a3b8;margin-top:4px;">Progress bar showing how much of the city is rubble. Hit 100% = stage clear bonus + next city unlocked.</div>
+    </div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:20px;">Does this combat system + HUD layout look right? ✅ Last section is Monetization (IAP + Battle Pass flow).</p>

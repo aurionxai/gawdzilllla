@@ -1,6 +1,7 @@
 -- src/characters/godzilla.lua
 local Character = require("src/character")
 local AS        = require("src/attack_system")
+local SL        = require("src/sprite_loader")
 
 local STATS = {
   characterName = "Godzilla",
@@ -29,9 +30,9 @@ function Godzilla.new()
   self.character = Character.new(STATS)
   self.attacks  = AS.new(self.character, ATTACKS)
   self._flashTimer = 0
-  self.character.onPowerFull = function()
-    -- HUD will listen separately; nothing needed here
-  end
+  self.sprites  = SL.load("Godzilla")
+  self.sprite   = self.sprites[1]
+  self.character.onPowerFull = function() end
   return self
 end
 

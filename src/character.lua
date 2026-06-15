@@ -54,6 +54,12 @@ function Character:resetForNewRound()
   if self.onPowerChanged  then self.onPowerChanged(self.power) end
 end
 
+function Character:heal(amount)
+  if self.isDefeated then return end
+  self.health = math.min(self.stats.maxHealth, self.health + amount)
+  if self.onHealthChanged then self.onHealthChanged(self.health) end
+end
+
 function Character:healthPercent() return self.health / self.stats.maxHealth end
 function Character:powerPercent()  return self.power / 100 end
 function Character:isPowerFull()   return self.power >= 100 end

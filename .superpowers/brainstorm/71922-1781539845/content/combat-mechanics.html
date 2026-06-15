@@ -1,0 +1,148 @@
+<h2>How do you fight titans in first-person?</h2>
+<p class="subtitle">You're inside Godzilla's body, facing a 100-meter enemy. What does combat feel like?</p>
+
+<div class="cards">
+
+  <!-- Option A: Melee Brawler -->
+  <div class="card" data-choice="melee" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0a0a1a;height:200px;position:relative;overflow:hidden;font-family:monospace;border-radius:4px">
+        <!-- Sky -->
+        <div style="position:absolute;top:0;left:0;right:0;height:120px;background:linear-gradient(to bottom,#1a0a0a,#3a1010,#6a2000)"></div>
+        <!-- Ground -->
+        <div style="position:absolute;bottom:0;left:0;right:0;height:50px;background:#1a1510"></div>
+        <!-- Enemy titan close up - FACE filling screen -->
+        <div style="position:absolute;top:10px;left:20px;right:20px;bottom:50px;background:#1a0505;border:2px solid #5a1010;border-radius:8px;overflow:hidden">
+          <!-- Titan face -->
+          <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:80px;height:80px;background:#1e0808;border-radius:8px;border:1px solid #6a1010">
+            <!-- Eyes -->
+            <div style="position:absolute;top:20px;left:12px;width:16px;height:12px;background:#f00;border-radius:50%;box-shadow:0 0 12px #f00,0 0 24px #f006"></div>
+            <div style="position:absolute;top:20px;right:12px;width:16px;height:12px;background:#f00;border-radius:50%;box-shadow:0 0 12px #f00,0 0 24px #f006"></div>
+            <!-- Mouth -->
+            <div style="position:absolute;bottom:15px;left:12px;right:12px;height:6px;background:#5a0000;border-radius:2px"></div>
+          </div>
+          <!-- STAGGER indicator -->
+          <div style="position:absolute;top:5px;left:50%;transform:translateX(-50%);background:#f55;padding:1px 6px;border-radius:2px;font-size:7px;color:#fff;white-space:nowrap">⚡ STAGGERED — FINISH HIM</div>
+        </div>
+        <!-- YOUR HANDS — mid punch -->
+        <div style="position:absolute;bottom:40px;left:-10px;width:65px;height:70px;background:#1e4820;border-radius:20px 30px 0 0;transform:rotate(-10deg) translateY(-20px);box-shadow:0 0 8px #0f03"></div>
+        <div style="position:absolute;bottom:40px;right:25px;width:65px;height:55px;background:#1e4820;border-radius:30px 20px 0 0;transform:rotate(5deg);box-shadow:0 0 8px #0f03"></div>
+        <!-- Impact flash -->
+        <div style="position:absolute;top:30px;left:35px;font-size:20px;color:#ff0;text-shadow:0 0 10px #ff0">💥</div>
+        <!-- HUD -->
+        <div style="position:absolute;bottom:52px;left:0;right:0;height:16px;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;gap:12px;padding:0 6px">
+          <span style="font-size:6px;color:#f55">[Z] CLAW SWIPE</span>
+          <span style="font-size:6px;color:#f80">[X] TAIL SLAM</span>
+          <span style="font-size:6px;color:#ff0">[R] BODY CRASH</span>
+          <span style="font-size:6px;color:#f55">COMBO ×4</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Melee Brawler</h3>
+      <p>Get in close. Claw swipes, tail slams, body crashes. Build combo meter to trigger powerful finishers. Stagger the titan with enough hits to open a "rip apart" window. Think of it as kaiju boxing — pure physical dominance at close range.</p>
+    </div>
+  </div>
+
+  <!-- Option B: Ranged + Melee Hybrid (Recommended) -->
+  <div class="card recommended" data-choice="hybrid" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0a0a1a;height:200px;position:relative;overflow:hidden;font-family:monospace;border-radius:4px">
+        <!-- Sky -->
+        <div style="position:absolute;top:0;left:0;right:0;height:120px;background:linear-gradient(to bottom,#0a1a2a,#1a2a4a,#3a1a6a)"></div>
+        <!-- City buildings background -->
+        <div style="position:absolute;bottom:50px;left:0;width:40px;height:70px;background:#10101e"></div>
+        <div style="position:absolute;bottom:50px;right:0;width:50px;height:60px;background:#10101e"></div>
+        <!-- Ground -->
+        <div style="position:absolute;bottom:0;left:0;right:0;height:50px;background:#1a1510"></div>
+        <!-- Enemy titan at mid range -->
+        <div style="position:absolute;bottom:50px;left:50%;transform:translateX(-50%)">
+          <div style="position:relative;width:60px;height:90px">
+            <div style="position:absolute;bottom:0;left:10px;width:40px;height:55px;background:#1a0505;border:1px solid #5a0000"></div>
+            <div style="position:absolute;bottom:53px;left:13px;width:34px;height:37px;background:#1a0505;border:1px solid #5a0000;border-radius:3px 3px 0 0"></div>
+            <!-- Red eyes -->
+            <div style="position:absolute;bottom:72px;left:18px;width:7px;height:5px;background:#f00;border-radius:50%;box-shadow:0 0 6px #f00"></div>
+            <div style="position:absolute;bottom:72px;left:33px;width:7px;height:5px;background:#f00;border-radius:50%;box-shadow:0 0 6px #f00"></div>
+            <!-- Weak spot glow on chest -->
+            <div style="position:absolute;bottom:25px;left:20px;width:18px;height:18px;background:#f5c842;border-radius:50%;opacity:0.5;box-shadow:0 0 10px #f5c842;animation:pulse 1s infinite"></div>
+            <div style="font-size:5px;color:#f5c842;position:absolute;bottom:16px;left:8px">WEAK SPOT</div>
+          </div>
+        </div>
+        <!-- ATOMIC BREATH beam -->
+        <div style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:8px;height:90px;background:linear-gradient(to top,#00f 0%,#0ff 40%,transparent 100%);border-radius:4px;opacity:0.85;box-shadow:0 0 10px #0ff"></div>
+        <!-- YOUR HANDS -->
+        <div style="position:absolute;bottom:0;left:-10px;width:60px;height:45px;background:#1e4820;border-radius:25px 25px 0 0;transform:rotate(-12deg);box-shadow:0 0 8px #0f03"></div>
+        <div style="position:absolute;bottom:0;right:-10px;width:60px;height:45px;background:#1e4820;border-radius:25px 25px 0 0;transform:rotate(12deg);box-shadow:0 0 8px #0f03"></div>
+        <!-- HUD -->
+        <div style="position:absolute;top:5px;left:6px">
+          <div style="font-size:6px;color:#0f0">ATOMIC BREATH — 3.2s</div>
+          <div style="height:3px;background:#111;width:70px;border-radius:1px"><div style="width:60%;height:100%;background:#0ff"></div></div>
+        </div>
+        <div style="position:absolute;bottom:52px;left:0;right:0;height:16px;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;gap:12px">
+          <span style="font-size:6px;color:#0ff">[Q] ATOMIC BREATH · RANGE</span>
+          <span style="font-size:6px;color:#f80">[X] TAIL SLAM · CLOSE</span>
+          <span style="font-size:6px;color:#88f">[E] DORSAL PULSE · AoE</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Ranged + Melee Hybrid <span style="color:#f5c842;font-size:11px">(Recommended)</span></h3>
+      <p>Use atomic breath to soften titans from a distance, then close in for melee finishers. Range keeps you safe from grabs; melee deals more damage but risks getting caught. Monarch marks weak spots — aim your breath there for bonus damage. Naturally creates rhythm: breathe → dodge → close in → slam.</p>
+    </div>
+  </div>
+
+  <!-- Option C: Strategic Targeting -->
+  <div class="card" data-choice="strategic" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0a0a1a;height:200px;position:relative;overflow:hidden;font-family:monospace;border-radius:4px">
+        <!-- Sky -->
+        <div style="position:absolute;top:0;left:0;right:0;height:120px;background:linear-gradient(to bottom,#0a1510,#0a2a10,#1a4a20)"></div>
+        <!-- Ground -->
+        <div style="position:absolute;bottom:0;left:0;right:0;height:50px;background:#1a1510"></div>
+        <!-- Titan with SEGMENTS highlighted -->
+        <div style="position:absolute;bottom:50px;left:50%;transform:translateX(-50%)">
+          <div style="position:relative;width:70px;height:100px">
+            <!-- Legs -->
+            <div style="position:absolute;bottom:0;left:8px;width:18px;height:25px;background:#1a0505;border:2px solid #5a1a1a"></div>
+            <div style="position:absolute;bottom:0;right:8px;width:18px;height:25px;background:#1a0505;border:2px solid #5a1a1a"></div>
+            <!-- Body - HIGHLIGHTED (cursor over it) -->
+            <div style="position:absolute;bottom:23px;left:12px;width:46px;height:40px;background:#3a0808;border:2px solid #f5c842;box-shadow:0 0 8px #f5c8421a">
+              <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+                <div style="font-size:5px;color:#f5c842;text-align:center">CHEST<br>CORE<br>×1.8 DMG</div>
+              </div>
+            </div>
+            <!-- Arms -->
+            <div style="position:absolute;bottom:30px;left:-2px;width:14px;height:32px;background:#1a0505;border:2px solid #5a0000;transform:rotate(20deg)"></div>
+            <div style="position:absolute;bottom:30px;right:-2px;width:14px;height:32px;background:#1a0505;border:2px solid #5a0000;transform:rotate(-20deg)"></div>
+            <!-- Head -->
+            <div style="position:absolute;bottom:61px;left:15px;width:40px;height:38px;background:#1a0505;border:2px solid #5a1a1a;border-radius:3px 3px 0 0">
+              <!-- Eyes dim -->
+              <div style="position:absolute;top:10px;left:6px;width:9px;height:7px;background:#800;border-radius:50%"></div>
+              <div style="position:absolute;top:10px;right:6px;width:9px;height:7px;background:#800;border-radius:50%"></div>
+            </div>
+          </div>
+        </div>
+        <!-- Targeting reticle -->
+        <div style="position:absolute;bottom:100px;left:50%;transform:translateX(-50%);width:50px;height:42px;border:2px solid #f5c842;border-radius:3px;box-shadow:0 0 6px #f5c842"></div>
+        <!-- YOUR HANDS -->
+        <div style="position:absolute;bottom:0;left:-10px;width:60px;height:45px;background:#1e4820;border-radius:25px 25px 0 0;transform:rotate(-12deg);box-shadow:0 0 8px #0f03"></div>
+        <div style="position:absolute;bottom:0;right:-10px;width:60px;height:45px;background:#1e4820;border-radius:25px 25px 0 0;transform:rotate(12deg);box-shadow:0 0 8px #0f03"></div>
+        <!-- Intel panel -->
+        <div style="position:absolute;top:5px;right:5px;background:rgba(0,0,0,0.8);padding:3px 5px;border:1px solid #0f0;border-radius:2px">
+          <div style="font-size:6px;color:#0f0">DR. CHEN INTEL</div>
+          <div style="font-size:6px;color:#888">HEAD: normal</div>
+          <div style="font-size:6px;color:#f5c842">CHEST: ×1.8 ◄ AIM HERE</div>
+          <div style="font-size:6px;color:#555">LEGS: ×0.5</div>
+        </div>
+        <div style="position:absolute;bottom:52px;left:0;right:0;height:16px;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;gap:6px">
+          <span style="font-size:6px;color:#f5c842">TARGET WEAK SPOT → ALL ATTACKS DEAL ×1.8</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Strategic Targeting</h3>
+      <p>Monarch highlights body segments with multipliers. Aim at the glowing weak spot before attacking — any attack on it deals bonus damage. Different titans have different weak spots (head, chest, wings, tails). Rewards patience and positioning over button-mashing.</p>
+    </div>
+  </div>
+
+</div>

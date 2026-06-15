@@ -1,0 +1,153 @@
+<h2>How should your kaiju grow?</h2>
+<p class="subtitle">You're playing first-person as the kaiju. How does character development work as you conquer cities?</p>
+
+<div class="cards">
+
+  <!-- Option A: Evolution Tree -->
+  <div class="card" data-choice="evolution" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0a0a1a;height:200px;padding:10px;font-family:monospace;position:relative;overflow:hidden;border-radius:4px">
+        <div style="color:#f5c842;font-size:8px;margin-bottom:6px;text-align:center;letter-spacing:1px">── KAIJU EVOLUTION ──</div>
+        <!-- Evolution tree -->
+        <div style="display:flex;justify-content:center;align-items:flex-start;gap:0;position:relative">
+          <!-- Root -->
+          <div style="text-align:center;width:100%">
+            <div style="display:inline-block;background:#1e3a20;border:2px solid #3a7a3c;border-radius:4px;padding:4px 8px;margin-bottom:4px">
+              <div style="font-size:9px;color:#4af">HATCHLING</div>
+              <div style="font-size:7px;color:#888">Lv1–5 · Small</div>
+            </div>
+            <div style="color:#555;font-size:8px;margin:2px">▼</div>
+            <!-- Two branches -->
+            <div style="display:flex;justify-content:center;gap:8px">
+              <div style="text-align:center">
+                <div style="background:#1a3a1a;border:2px solid #2a7a2c;border-radius:4px;padding:3px 6px">
+                  <div style="font-size:8px;color:#0f0">CLASSIC</div>
+                  <div style="font-size:6px;color:#888">Atomic breath</div>
+                  <div style="font-size:6px;color:#888">Dorsal spines</div>
+                </div>
+                <div style="color:#555;font-size:7px;margin:2px">▼</div>
+                <div style="background:#0a2a0a;border:2px solid #0a6a0c;border-radius:4px;padding:3px 6px;box-shadow:0 0 6px #0f04">
+                  <div style="font-size:8px;color:#0f0">BURNING</div>
+                  <div style="font-size:6px;color:#f80">Nuclear pulse</div>
+                  <div style="font-size:6px;color:#f80">Lv20 unlock</div>
+                </div>
+              </div>
+              <div style="text-align:center">
+                <div style="background:#1a1a3a;border:2px solid #2a2a8a;border-radius:4px;padding:3px 6px">
+                  <div style="font-size:8px;color:#88f">ARMORED</div>
+                  <div style="font-size:6px;color:#888">Shield scales</div>
+                  <div style="font-size:6px;color:#888">Tank build</div>
+                </div>
+                <div style="color:#555;font-size:7px;margin:2px">▼</div>
+                <div style="background:#0a0a2a;border:2px solid #2a2aaa;border-radius:4px;padding:3px 6px;opacity:0.6">
+                  <div style="font-size:8px;color:#88f">MECH-FUSED</div>
+                  <div style="font-size:6px;color:#555">??? Lv30</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- XP bar at bottom -->
+        <div style="position:absolute;bottom:6px;left:10px;right:10px">
+          <div style="font-size:6px;color:#888;margin-bottom:2px">XP TO NEXT FORM ░░░░░░░░░░░░░░░░░░░░</div>
+          <div style="height:4px;background:#111;border-radius:2px"><div style="width:65%;height:100%;background:#f5c842;border-radius:2px"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Evolution Tree</h3>
+      <p>Choose a form path as you level up. Classic → Burning, or Armored → Mech-Fused. Each branch changes your FPS abilities and what you see in first-person (body, hands, HUD color).</p>
+    </div>
+  </div>
+
+  <!-- Option B: Stats + Skills RPG -->
+  <div class="card" data-choice="stats" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0a0a1a;height:200px;padding:10px;font-family:monospace;border-radius:4px;overflow:hidden">
+        <div style="color:#f5c842;font-size:8px;margin-bottom:6px;text-align:center;letter-spacing:1px">── CHARACTER SHEET ──</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          <!-- Left: Stats -->
+          <div>
+            <div style="font-size:6px;color:#888;margin-bottom:3px">BASE STATS</div>
+            <div style="margin-bottom:2px">
+              <div style="font-size:7px;color:#f55">STR ████████░░  18</div>
+            </div>
+            <div style="margin-bottom:2px">
+              <div style="font-size:7px;color:#5af">DEF ██████░░░░  12</div>
+            </div>
+            <div style="margin-bottom:2px">
+              <div style="font-size:7px;color:#5f5">SPD ████░░░░░░   8</div>
+            </div>
+            <div style="margin-bottom:2px">
+              <div style="font-size:7px;color:#f80">RAG ██████████  20</div>
+            </div>
+            <div style="margin-bottom:2px">
+              <div style="font-size:7px;color:#a5f">INT █████░░░░░  10</div>
+            </div>
+            <div style="margin-top:5px;padding:3px;background:#111;border-radius:2px">
+              <div style="font-size:6px;color:#f5c842">⬆ 3 POINTS UNSPENT</div>
+            </div>
+          </div>
+          <!-- Right: Ability slots -->
+          <div>
+            <div style="font-size:6px;color:#888;margin-bottom:3px">EQUIPPED ABILITIES</div>
+            <div style="background:#111;border:1px solid #333;padding:2px 3px;border-radius:2px;margin-bottom:2px">
+              <div style="font-size:7px;color:#0f0">🔥 Atomic Breath</div>
+              <div style="font-size:6px;color:#555">Cost: 20 rage · Long range</div>
+            </div>
+            <div style="background:#111;border:1px solid #333;padding:2px 3px;border-radius:2px;margin-bottom:2px">
+              <div style="font-size:7px;color:#88f">💥 Shockwave Stomp</div>
+              <div style="font-size:6px;color:#555">AoE · Stuns all nearby</div>
+            </div>
+            <div style="background:#111;border:1px dashed #333;padding:2px 3px;border-radius:2px;opacity:0.5">
+              <div style="font-size:7px;color:#555">[ EMPTY SLOT ]</div>
+              <div style="font-size:6px;color:#444">Unlock at Lv10</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Stats + Skills RPG (Recommended)</h3>
+      <p>Traditional RPG sheet: STR, DEF, SPD, RAGE, INT. Spend points each level, unlock ability slots. Food you eat raises specific stats. Conquering cities unlocks new abilities to slot in.</p>
+    </div>
+  </div>
+
+  <!-- Option C: City Influence Map -->
+  <div class="card" data-choice="influence" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0a0a1a;height:200px;padding:10px;font-family:monospace;border-radius:4px;overflow:hidden">
+        <div style="color:#f5c842;font-size:8px;margin-bottom:6px;text-align:center;letter-spacing:1px">── KAIJU REPUTATION ──</div>
+        <!-- World map with reputation indicators -->
+        <div style="position:relative;height:110px;background:#0d1520;border-radius:3px;overflow:hidden;margin-bottom:6px">
+          <!-- Simple map dots -->
+          <div style="position:absolute;top:20%;left:15%;text-align:center">
+            <div style="width:18px;height:18px;background:#8B0000;border-radius:50%;margin:0 auto;box-shadow:0 0 6px #f00"></div>
+            <div style="font-size:5px;color:#f55;margin-top:1px">NYC<br>FEARED</div>
+          </div>
+          <div style="position:absolute;top:10%;left:40%;text-align:center">
+            <div style="width:14px;height:14px;background:#1a5a1a;border-radius:50%;margin:0 auto;box-shadow:0 0 4px #0f0"></div>
+            <div style="font-size:5px;color:#5f5;margin-top:1px">TOKYO<br>REVERED</div>
+          </div>
+          <div style="position:absolute;top:30%;left:65%;text-align:center;opacity:0.4">
+            <div style="width:12px;height:12px;background:#333;border-radius:50%;margin:0 auto"></div>
+            <div style="font-size:5px;color:#555;margin-top:1px">LONDON<br>UNKNOWN</div>
+          </div>
+          <div style="position:absolute;top:55%;left:30%;text-align:center">
+            <div style="width:15px;height:15px;background:#5a4a00;border-radius:50%;margin:0 auto;box-shadow:0 0 4px #f80"></div>
+            <div style="font-size:5px;color:#f80;margin-top:1px">MIAMI<br>WARY</div>
+          </div>
+        </div>
+        <!-- Faction bars -->
+        <div style="font-size:6px;color:#888;margin-bottom:3px">CITY REACTIONS CHANGE YOUR POWERS</div>
+        <div style="margin-bottom:2px"><span style="font-size:6px;color:#f55">FEARED   </span><div style="display:inline-block;width:60px;height:4px;background:#111;border-radius:1px;vertical-align:middle"><div style="width:85%;height:100%;background:#f55;border-radius:1px"></div></div></div>
+        <div><span style="font-size:6px;color:#5f5">REVERED  </span><div style="display:inline-block;width:60px;height:4px;background:#111;border-radius:1px;vertical-align:middle"><div style="width:30%;height:100%;background:#5f5;border-radius:1px"></div></div></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — City Reputation System</h3>
+      <p>No stat points — instead each city has a reputation meter. Destroy everything → FEARED (power boost, enemies flee). Spare survivors → REVERED (healing buffs, intel). Changes the FPS experience in each city.</p>
+    </div>
+  </div>
+
+</div>

@@ -1,13 +1,12 @@
 -- main.lua
 local SM = require("src/scene_manager")
 
--- Reference resolution
 local REF_W, REF_H = 480, 270
 
 function love.load()
   love.graphics.setDefaultFilter("nearest", "nearest")
-  local MainMenu = require("src/scenes/main_menu")
-  SM.push(MainMenu.new())
+  local MM = require("src/scenes/main_menu")
+  SM.push(MM.new())
 end
 
 function love.update(dt)
@@ -29,7 +28,6 @@ function love.draw()
 end
 
 function love.keypressed(key)
-  if key == "escape" then love.event.quit() end
   SM.keypressed(key)
 end
 

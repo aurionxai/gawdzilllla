@@ -1,6 +1,7 @@
 -- src/characters/kong.lua
 local Character = require("src/character")
 local AS        = require("src/attack_system")
+local SL        = require("src/sprite_loader")
 
 local STATS = {
   characterName = "Kong",
@@ -29,6 +30,8 @@ function Kong.new()
   self.character = Character.new(STATS)
   self.attacks  = AS.new(self.character, ATTACKS)
   self._rageTimer = 0
+  self.sprites  = SL.load("Kong")
+  self.sprite   = self.sprites[1]
   return self
 end
 

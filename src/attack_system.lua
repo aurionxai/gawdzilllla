@@ -7,15 +7,16 @@ local COMBO_EXTRA_POWER  = 3     -- bonus power at 5-hit combo milestone
 
 function AS.new(character, attacks)
   return setmetatable({
-    character   = character,
-    attacks     = attacks,   -- table with keys: light, heavy, special, unleash
-    isAttacking = false,
-    _phase      = nil,       -- "startup" | "active" | "recovery"
-    _timer      = 0,
-    _activeData = nil,
-    _hitboxes   = {},        -- list of {offsetX, w, h, damage, powerGain, stunDuration}
-    comboCount  = 0,
-    _comboTimer = 0,
+    character      = character,
+    attacks        = attacks,   -- table with keys: light, heavy, special, unleash
+    isAttacking    = false,
+    _phase         = nil,       -- "startup" | "active" | "recovery"
+    _timer         = 0,
+    _activeData    = nil,
+    _hitboxes      = {},        -- list of {offsetX, w, h, damage, powerGain, stunDuration}
+    comboCount     = 0,
+    _comboTimer    = 0,
+    onSpecialFired = nil,       -- callback() when special successfully fires
   }, AS)
 end
 
@@ -27,6 +28,7 @@ function AS:performSpecial()
   if self.character.power < sp.powerCost then return end
   self.character:spendPower(sp.powerCost)
   self:_startAttack(sp)
+  if self.onSpecialFired then self.onSpecialFired() end
 end
 
 function AS:performUnleash()

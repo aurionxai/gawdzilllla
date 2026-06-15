@@ -7,8 +7,10 @@ Menu.__index = Menu
 function Menu.new()
   return setmetatable({
     _buttons = {
-      { label="PLAY",  y=130, action="play"  },
-      { label="QUIT",  y=158, action="quit"  },
+      { label="STORY",     y=104, action="story" },
+      { label="1 PLAYER",  y=132, action="1p"    },
+      { label="2 PLAYERS", y=160, action="2p"    },
+      { label="QUIT",      y=188, action="quit"  },
     },
     _selected = 1,
   }, Menu)
@@ -22,10 +24,12 @@ function Menu:draw()
 
   -- Title
   love.graphics.setColor(0.9, 0.7, 0.1)
-  love.graphics.printf("GAWDZILLLLA", 0, 70, 480, "center")
+  love.graphics.printf("Gawdzillaaaa", 0, 48, 480, "center")
+  love.graphics.setColor(0.7, 0.4, 0.9)
+  love.graphics.printf("Ohhhhh nooooooo", 0, 70, 480, "center")
 
   love.graphics.setColor(0.5, 0.5, 0.7)
-  love.graphics.printf("The Most Important Kaiju Game", 0, 95, 480, "center")
+  love.graphics.printf("The Most Important Kaiju Game", 0, 93, 480, "center")
 
   -- Buttons
   for i, btn in ipairs(self._buttons) do
@@ -38,7 +42,7 @@ function Menu:draw()
   end
 
   love.graphics.setColor(0.3, 0.3, 0.4)
-  love.graphics.printf("UP/DOWN to select  ENTER to confirm", 0, 250, 480, "center")
+  love.graphics.printf("UP/DOWN   ENTER to confirm", 0, 252, 480, "center")
 end
 
 function Menu:keypressed(key)
@@ -46,9 +50,12 @@ function Menu:keypressed(key)
   if key == "down"  then self._selected = math.min(#self._buttons, self._selected + 1) end
   if key == "return" or key == "space" then
     local action = self._buttons[self._selected].action
-    if action == "play" then
+    if action == "story" then
       local CS = require("src/scenes/character_select")
-      SM.replace(CS.new())
+      SM.replace(CS.new(false, true))   -- false=2p-controls, true=storyMode
+    elseif action == "1p" or action == "2p" then
+      local CS = require("src/scenes/character_select")
+      SM.replace(CS.new(action == "1p"))
     elseif action == "quit" then
       love.event.quit()
     end

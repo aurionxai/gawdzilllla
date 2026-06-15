@@ -1,0 +1,154 @@
+<h2>GAWDZILLA — Defender of Earth</h2>
+<p class="subtitle">You protect cities against invading titans. Humans are allies. Enemy kaiju are the threat. Does this framing feel right?</p>
+
+<div class="split">
+
+  <!-- Left: FPS view mockup -->
+  <div class="mockup">
+    <div class="mockup-header">IN-GAME — First-Person View · Tokyo Under Attack</div>
+    <div class="mockup-body" style="background:#0a0a1a;padding:0;border-radius:4px;overflow:hidden;font-family:monospace">
+      <div style="position:relative;height:240px;overflow:hidden">
+
+        <!-- Sky -->
+        <div style="position:absolute;top:0;left:0;right:0;height:130px;background:linear-gradient(to bottom,#1a0a0a,#3a1010,#8a2a00)"></div>
+
+        <!-- Distant city buildings (YOUR city to protect) -->
+        <div style="position:absolute;bottom:52px;left:0;width:50px;height:90px;background:#12121f"></div>
+        <div style="position:absolute;bottom:52px;left:52px;width:35px;height:65px;background:#12121f"></div>
+        <div style="position:absolute;bottom:52px;right:0;width:60px;height:80px;background:#12121f"></div>
+        <div style="position:absolute;bottom:52px;right:62px;width:30px;height:55px;background:#12121f"></div>
+        <!-- Building windows (lit warmly - ALIVE city) -->
+        <div style="position:absolute;bottom:90px;left:6px;display:grid;grid-template-columns:repeat(4,6px);gap:2px">
+          <div style="height:5px;background:#f5c842;opacity:0.9"></div><div style="height:5px;background:#f5c842;opacity:0.8"></div><div style="height:5px;background:transparent"></div><div style="height:5px;background:#f5c842;opacity:0.9"></div>
+          <div style="height:5px;background:transparent"></div><div style="height:5px;background:#f5c842;opacity:0.7"></div><div style="height:5px;background:#f5c842;opacity:0.9"></div><div style="height:5px;background:transparent"></div>
+        </div>
+
+        <!-- ENEMY TITAN approaching center (the threat) -->
+        <div style="position:absolute;bottom:52px;left:50%;transform:translateX(-50%)">
+          <!-- Enemy kaiju silhouette — massive, dark, glowing red eyes -->
+          <div style="position:relative;width:80px;height:110px">
+            <!-- Body -->
+            <div style="position:absolute;bottom:0;left:15px;width:50px;height:70px;background:#1a0505;border:1px solid #5a0000"></div>
+            <!-- Head -->
+            <div style="position:absolute;bottom:68px;left:18px;width:44px;height:42px;background:#1a0505;border:1px solid #5a0000;border-radius:4px 4px 0 0"></div>
+            <!-- Red glowing eyes -->
+            <div style="position:absolute;bottom:90px;left:24px;width:8px;height:6px;background:#f00;border-radius:50%;box-shadow:0 0 8px #f00,0 0 16px #f004"></div>
+            <div style="position:absolute;bottom:90px;left:46px;width:8px;height:6px;background:#f00;border-radius:50%;box-shadow:0 0 8px #f00,0 0 16px #f004"></div>
+            <!-- Arms -->
+            <div style="position:absolute;bottom:30px;left:0;width:16px;height:38px;background:#1a0505;border:1px solid #5a0000;transform:rotate(20deg)"></div>
+            <div style="position:absolute;bottom:30px;right:0;width:16px;height:38px;background:#1a0505;border:1px solid #5a0000;transform:rotate(-20deg)"></div>
+            <!-- THREAT label -->
+            <div style="position:absolute;top:-16px;left:50%;transform:translateX(-50%);white-space:nowrap;background:#5a0000;padding:1px 4px;border-radius:2px;font-size:6px;color:#f55">⚠ GHIDORAH · HP 68%</div>
+            <!-- HP bar -->
+            <div style="position:absolute;top:-8px;left:0;right:0;height:3px;background:#111"><div style="width:68%;height:100%;background:#f00"></div></div>
+          </div>
+        </div>
+
+        <!-- Ground -->
+        <div style="position:absolute;bottom:0;left:0;right:0;height:54px;background:#1a1510"></div>
+
+        <!-- Humans (allies) - tiny figures running AWAY from titan toward YOU -->
+        <div style="position:absolute;bottom:54px;left:15%;font-size:8px;color:#ffa">🏃→</div>
+        <div style="position:absolute;bottom:54px;left:22%;font-size:8px;color:#ffa">🏃‍♀️→</div>
+        <!-- Military helping -->
+        <div style="position:absolute;bottom:54px;right:20%;font-size:7px;color:#8f8">🚁</div>
+
+        <!-- YOUR kaiju hands (green, protective) -->
+        <div style="position:absolute;bottom:0;left:-15px;width:70px;height:50px;background:#1e4820;border-radius:30px 30px 0 0;transform:rotate(-15deg);box-shadow:0 0 10px #0f03"></div>
+        <div style="position:absolute;bottom:0;right:-15px;width:70px;height:50px;background:#1e4820;border-radius:30px 30px 0 0;transform:rotate(15deg);box-shadow:0 0 10px #0f03"></div>
+
+        <!-- Atomic breath charging (aimed at enemy) -->
+        <div style="position:absolute;bottom:25px;left:50%;transform:translateX(-50%);width:6px;height:60px;background:linear-gradient(to top,#00f,#0ff,transparent);opacity:0.7;border-radius:3px"></div>
+
+        <!-- HUD overlays -->
+        <!-- Top left: Your status -->
+        <div style="position:absolute;top:5px;left:6px">
+          <div style="font-size:7px;color:#0f0;margin-bottom:1px">GAWDZILLA · LVL 7 · <span style="color:#5af">DEFENDER</span></div>
+          <div style="font-size:6px;color:#888">HP <div style="display:inline-block;width:70px;height:4px;background:#111;border-radius:1px;vertical-align:middle"><div style="width:78%;height:100%;background:#0f0;border-radius:1px"></div></div> 78</div>
+          <div style="font-size:6px;color:#888">RAGE <div style="display:inline-block;width:55px;height:4px;background:#111;border-radius:1px;vertical-align:middle"><div style="width:55%;height:100%;background:#f80;border-radius:1px"></div></div></div>
+        </div>
+
+        <!-- Top center: city health -->
+        <div style="position:absolute;top:5px;left:50%;transform:translateX(-50%);text-align:center">
+          <div style="font-size:6px;color:#f5c842;white-space:nowrap">🏙 TOKYO INTEGRITY</div>
+          <div style="width:80px;height:4px;background:#111;border-radius:1px;margin-top:1px"><div style="width:72%;height:100%;background:#f5c842;border-radius:1px"></div></div>
+          <div style="font-size:5px;color:#888;text-align:center">72%</div>
+        </div>
+
+        <!-- Top right: Civilians saved -->
+        <div style="position:absolute;top:5px;right:6px;text-align:right">
+          <div style="font-size:6px;color:#5af">👥 CIVILIANS SAFE: 1,240</div>
+          <div style="font-size:6px;color:#f55">💀 TITAN DMGE: -3 bldgs</div>
+        </div>
+
+        <!-- Bottom: Ally comms -->
+        <div style="position:absolute;bottom:56px;left:6px;right:6px;background:rgba(0,0,0,0.8);border:1px solid #1a3a1a;border-radius:2px;padding:4px 6px">
+          <div style="font-size:6px;color:#0f0;margin-bottom:1px">⚡ DR. CHEN — MONARCH COMMAND</div>
+          <div style="font-size:7px;color:#ccc">"Ghidorah is charging its gravity beams — dodge LEFT and aim for the middle head!"</div>
+        </div>
+
+        <!-- Ability bar bottom -->
+        <div style="position:absolute;bottom:0;left:0;right:0;height:22px;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;gap:8px;padding:0 6px">
+          <span style="font-size:6px;color:#0f0">[Q] ATOMIC BREATH</span>
+          <span style="font-size:6px;color:#88f">[E] DORSAL PULSE</span>
+          <span style="font-size:6px;color:#f80">[R] TAIL SLAM</span>
+          <span style="font-size:6px;color:#888">[TAB] CHARACTER</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: How the new design works -->
+  <div class="mockup">
+    <div class="mockup-header">WHAT CHANGES — Destroyer → Defender</div>
+    <div class="mockup-body" style="font-family:monospace;font-size:7px;line-height:1.6">
+
+      <div style="margin-bottom:10px">
+        <div style="color:#f5c842;font-size:8px;margin-bottom:5px">ENEMIES (who you fight)</div>
+        <div style="display:flex;flex-direction:column;gap:3px">
+          <div style="background:#1a0505;border:1px solid #5a1a1a;border-radius:3px;padding:4px 6px;display:flex;align-items:center;gap:6px">
+            <span style="font-size:12px">👹</span>
+            <div><div style="color:#f55">INVADING TITANS</div><div style="color:#555">Ghidorah, Rodan, MUTOs — they attack the city. YOU stop them.</div></div>
+          </div>
+          <div style="background:#0a0a1a;border:1px solid #2a2a4a;border-radius:3px;padding:4px 6px;display:flex;align-items:center;gap:6px">
+            <span style="font-size:12px">🪖</span>
+            <div><div style="color:#888">HOSTILE MILITARY</div><div style="color:#555">Some factions attack you by mistake. <span style="color:#aaa">Don't retaliate</span> — earn their trust.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:10px">
+        <div style="color:#f5c842;font-size:8px;margin-bottom:5px">ALLIES (who help you)</div>
+        <div style="display:flex;flex-direction:column;gap:3px">
+          <div style="background:#051a05;border:1px solid #1a5a1a;border-radius:3px;padding:4px 6px;display:flex;align-items:center;gap:6px">
+            <span style="font-size:12px">🔬</span>
+            <div><div style="color:#0f0">MONARCH SCIENTISTS</div><div style="color:#555">Radio you intel, mark titan weak points, heal you between fights</div></div>
+          </div>
+          <div style="background:#051a05;border:1px solid #1a5a1a;border-radius:3px;padding:4px 6px;display:flex;align-items:center;gap:6px">
+            <span style="font-size:12px">🏙</span>
+            <div><div style="color:#5f5">CITY SURVIVORS</div><div style="color:#555">Each city has a faction — protect them, earn their buffs + story</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:10px">
+        <div style="color:#f5c842;font-size:8px;margin-bottom:5px">NEW WIN CONDITIONS</div>
+        <div style="background:#0d0d15;border-radius:3px;padding:6px;display:flex;flex-direction:column;gap:3px">
+          <div style="display:flex;gap:4px"><span style="color:#0f0">✓</span><span style="color:#ccc">Defeat the invading titan</span></div>
+          <div style="display:flex;gap:4px"><span style="color:#f5c">✓</span><span style="color:#ccc">City integrity above 50% (buildings standing)</span></div>
+          <div style="display:flex;gap:4px"><span style="color:#5af">✓</span><span style="color:#ccc">Civilian casualties below threshold</span></div>
+          <div style="display:flex;gap:4px"><span style="color:#f80">+</span><span style="color:#888">Bonus: zero civilian losses → HERO rating → stat boost</span></div>
+        </div>
+      </div>
+
+      <div>
+        <div style="color:#f5c842;font-size:8px;margin-bottom:5px">FOOD STILL MATTERS</div>
+        <div style="background:#0d0d15;border-radius:3px;padding:6px">
+          <div style="color:#888">Cities reward you with their signature food after victory — cultural meals give temporary boosts. The restaurant cinema stays exactly as designed.</div>
+          <div style="margin-top:4px;color:#5f5">Tokyo win → KAIJU RAMEN → SPEED SURGE for next city</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
