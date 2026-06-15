@@ -29,6 +29,7 @@ function EnemyTitan.new(x, y)
 end
 
 function EnemyTitan:takeDamage(amount)
+  if self.state == "DEAD" then return end
   self.hp = math.max(0, self.hp - amount)
   self.flashTimer = 0.18
   local ratio = self.hp / self.maxHp
@@ -71,7 +72,7 @@ function EnemyTitan:update(dt, playerX, playerY)
       self.state       = "ATTACK"
       self.attackWindup = 0.7
       self.attackCooldown = 3.5
-    elseif dist > 90 then
+    elseif dist >= 90 then
       -- Move toward player (simple linear chase, no pathfinding)
       if dist > 0 then
         self.x = self.x + (dx / dist) * self.speed * dt
