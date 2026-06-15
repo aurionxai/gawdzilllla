@@ -108,12 +108,8 @@ function WM:keypressed(key)
     local city = self:_selectedCity()
     if not SS.isUnlocked(city) then return end
 
-    -- Launch battle
-    local defender = SS.getDefender(city, CHARS)
-    local cityDef  = SS.findCityDef(self._CitiesData, city.cityName)
-
-    local SC = require("src/scenes/story_card")
-    SM.replace(SC.new(city.key, SS.playerChar, defender, self._CitiesData))
+    local Portal = require("src/fps/portal_transition")
+    SM.replace(Portal.new(city.key, SS.playerChar, city.name))
   end
 end
 
