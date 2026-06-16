@@ -32,6 +32,9 @@ COPY --from=packager /build/game.love ./game.love
 
 # Shell + config
 COPY docker/index.html ./index.html
+# Inject content hash into index.html so browsers bust the game.love cache on every deploy
+RUN HASH=$(md5sum game.love | awk '{print substr($1,1,8)}') && \
+    sed -i "s|game\.love'|game.love?v=${HASH}'|g" index.html
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 8080
