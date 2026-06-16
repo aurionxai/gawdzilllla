@@ -22,52 +22,69 @@
       color: #fff; font-family: monospace; font-size: 1.5rem;
       cursor: pointer; z-index: 100;
     }
+    #status {
+      position: fixed; bottom: 1rem; left: 0; right: 0;
+      text-align: center; color: #666; font-family: monospace; font-size: 0.8rem;
+      pointer-events: none; z-index: 50;
+    }
   </style>
 </head>
 <body>
   <div id="tap-to-start">TAP TO START</div>
+  <div id="status"></div>
   <canvas id="canvas" oncontextmenu="event.preventDefault()"></canvas>
 
   <script>
-    // Unlock Web Audio on first user gesture (required by all modern browsers)
-    document.getElementById('tap-to-start').addEventListener('click', function() {
-      this.style.display = 'none';
-      startGame();
-    }, { once: true });
+    var loveScript = document.createElement('script');
+    loveScript.src = 'lovejs/love.js';
+    loveScript.onload = function() {
+      document.getElementById('tap-to-start').addEventListener('click', function() {
+        this.style.display = 'none';
+        startGame();
+      }, { once: true });
+      document.getElementById('status').textContent = 'tap to start';
+    };
+    loveScript.onerror = function() {
+      document.getElementById('status').textContent = 'failed to load engine';
+    };
+    document.body.appendChild(loveScript);
 
     function startGame() {
-      // love.js reads window.Love (not window.Module)
-      var Love = {
+      var status = document.getElementById('status');
+      status.textContent = 'loading game...';
+
+      // love.js exports itself as a factory function: Love(config) => module
+      // config properties are merged into the module object before preRun runs,
+      // so config.addRunDependency / config.FS_createDataFile are available inside preRun.
+      var config = {
         canvas: document.getElementById('canvas'),
         arguments: ['/game.love'],
         INITIAL_MEMORY: 268435456,
-        // Fetch game.love into Emscripten virtual FS before main() runs
         preRun: [function() {
-          Love.addRunDependency('fetch-game-love');
+          config.addRunDependency('fetch-game-love');
+          status.textContent = 'fetching game...';
           var xhr = new XMLHttpRequest();
           xhr.open('GET', 'game.love');
           xhr.responseType = 'arraybuffer';
           xhr.onload = function() {
-            var data = new Uint8Array(xhr.response);
-            FS.createDataFile('/', 'game.love', data, true, true);
-            Love.removeRunDependency('fetch-game-love');
+            config.FS_createDataFile('/', 'game.love', new Uint8Array(xhr.response), true, true);
+            status.textContent = 'starting...';
+            config.removeRunDependency('fetch-game-love');
           };
           xhr.onerror = function() {
-            console.error('Failed to fetch game.love');
+            status.textContent = 'error: could not fetch game.love';
           };
           xhr.send();
         }],
         onRuntimeInitialized: function() {
-          console.log('love.js runtime ready');
+          status.textContent = '';
         },
         print: function(text) { console.log(text); },
         printErr: function(text) { console.error(text); },
         locateFile: function(path) { return 'lovejs/' + path; },
       };
-      window.Love = Love;
-      var script = document.createElement('script');
-      script.src = 'lovejs/love.js';
-      document.body.appendChild(script);
+
+      Love(config);
     }
   </script>
 </body>
