@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>GAWDZILLLLA</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; background: #000; overflow: hidden; }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      touch-action: none;
+    }
+    #tap-to-start {
+      position: fixed; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.85);
+      color: #fff; font-family: monospace; font-size: 1.5rem;
+      cursor: pointer; z-index: 100;
+    }
+  </style>
+</head>
+<body>
+  <div id="tap-to-start">TAP TO START</div>
+  <canvas id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+
+  <script>
+    // Unlock Web Audio on first user gesture (required by all modern browsers)
+    document.getElementById('tap-to-start').addEventListener('click', function() {
+      this.remove();
+      startGame();
+    }, { once: true });
+
+    function startGame() {
+      var Module = {
+        canvas: document.getElementById('canvas'),
+        arguments: ['/game.love'],
+        INITIAL_MEMORY: 268435456,
+        onRuntimeInitialized: function() {
+          console.log('love.js ready');
+        },
+        print: function(text) { console.log(text); },
+        printErr: function(text) { console.error(text); },
+        locateFile: function(path) { return 'lovejs/' + path; },
+      };
+      window.Module = Module;
+      var script = document.createElement('script');
+      script.src = 'lovejs/love.js';
+      document.body.appendChild(script);
+    }
+  </script>
+</body>
+</html>
