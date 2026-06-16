@@ -19,5 +19,8 @@ end
 function SM.keyreleased(key)
   local s = _stack[#_stack]; if s and s.keyreleased then s:keyreleased(key) end
 end
+function SM.mousemoved(x, y, dx, dy)
+  local s = _stack[#_stack]; if s and s.mousemoved then s:mousemoved(x, y, dx, dy) end
+end
 
 return SM
