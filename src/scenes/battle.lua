@@ -12,6 +12,7 @@ local City       = require("src/city")
 local CitiesData = require("src/cities_data")
 local FoodMgr    = require("src/food_manager")
 local CPU        = require("src/cpu_controller")
+local KS         = require("src/kaiju_sprites")
 
 local Battle   = {}
 Battle.__index = Battle
@@ -303,9 +304,9 @@ function Battle:draw()
   self._foodMgr:draw()
 
   -- Characters
-  self._ctrl1:draw(self._p1.stats.color, self._p1.sprites or self._p1.sprite)
+  KS.draw(self._p1.stats.characterName, self._ctrl1, 2)
   self._p1:drawExtra(self._ctrl1)
-  self._ctrl2:draw(self._p2.stats.color, self._p2.sprites or self._p2.sprite)
+  KS.draw(self._p2.stats.characterName, self._ctrl2, 2)
   self._p2:drawExtra(self._ctrl2)
 
   -- HUD
