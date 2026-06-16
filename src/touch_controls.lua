@@ -109,11 +109,15 @@ function TC.touchreleased(id)
     joy.dx = 0
     joy.dy = 0
   end
-  -- Release any buttons held by this touch
+  -- Release any buttons held by this touch (collect-then-nil to avoid pairs() mutation)
+  local toRelease = {}
   for action, tid in pairs(btnTouches) do
     if tid == id then
-      btnTouches[action] = nil
+      toRelease[#toRelease + 1] = action
     end
+  end
+  for _, action in ipairs(toRelease) do
+    btnTouches[action] = nil
   end
 end
 
