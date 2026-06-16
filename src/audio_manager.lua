@@ -54,15 +54,15 @@ function AM.new()
     _lastHitHeavy    = -1,
   }, AM)
 
-  self._splatClips     = loadClips("assets/audio/splat_%02d.wav", 12)
-  self._screamClips    = loadClips("assets/audio/scream_%02d.wav", 4)
-  self._collapseClips  = loadClips("assets/audio/collapse_%02d.wav", 3)
-  self._hitLightClips  = loadClips("assets/audio/hit_light_%02d.wav", 3)
-  self._hitHeavyClips  = loadClips("assets/audio/hit_heavy_%02d.wav", 3)
-  self._crowdPanicClip = loadClip("assets/audio/crowd_panic.wav")
+  self._splatClips     = loadClips("Assets/audio/splat_%02d.wav", 12)
+  self._screamClips    = loadClips("Assets/audio/scream_%02d.wav", 4)
+  self._collapseClips  = loadClips("Assets/audio/collapse_%02d.wav", 3)
+  self._hitLightClips  = loadClips("Assets/audio/hit_light_%02d.wav", 3)
+  self._hitHeavyClips  = loadClips("Assets/audio/hit_heavy_%02d.wav", 3)
+  self._crowdPanicClip = loadClip("Assets/audio/crowd_panic.wav")
 
   -- BGM (wav, streamed + looped)
-  self._musicSource = loadClip("assets/audio/battle_bgm.wav", "stream")
+  self._musicSource = loadClip("Assets/audio/battle_bgm.wav", "stream")
   if self._musicSource then
     self._musicSource:setLooping(true)
   end

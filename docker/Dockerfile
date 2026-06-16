@@ -10,7 +10,13 @@ RUN zip -r game.love . \
       -x ".git/*" \
       -x "tests/*" \
       -x "*.sh" \
-      -x ".gitignore"
+      -x ".gitignore" \
+      -x "Library/*" \
+      -x "Packages/*" \
+      -x "ProjectSettings/*" \
+      -x "UserSettings/*" \
+      -x "Logs/*" \
+      -x "*.py"
 
 # ── Stage 2: nginx serve ──────────────────────────────────────────────────────
 FROM nginx:1.25-alpine AS runtime

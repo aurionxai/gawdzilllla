@@ -1,0 +1,11 @@
+Library/
+Packages/
+ProjectSettings/
+UserSettings/
+Logs/
+docs/
+.git/
+tests/
+*.py
+*.sh
+.gitignore

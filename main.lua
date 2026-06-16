@@ -49,22 +49,22 @@ end
 
 -- Mouse events (love.js maps mobile touch → mouse on Web)
 function love.mousepressed(x, y, button)
-  if button == 1 then
+  if button == 1 and Input.isTouchMode() then
     local rx, ry = toRef(x, y)
-    Input.touchpressed("mouse", rx, ry)
+    Input.TouchControls.touchpressed("mouse", rx, ry)
   end
 end
 
 function love.mousereleased(x, y, button)
-  if button == 1 then
-    Input.touchreleased("mouse")
+  if button == 1 and Input.isTouchMode() then
+    Input.TouchControls.touchreleased("mouse")
   end
 end
 
 function love.mousemoved(x, y, dx, dy)
   local rx, ry = toRef(x, y)
-  if love.mouse.isDown(1) then
-    Input.touchmoved("mouse", rx, ry)
+  if Input.isTouchMode() and love.mouse.isDown(1) then
+    Input.TouchControls.touchmoved("mouse", rx, ry)
   end
   SM.mousemoved(rx, ry, dx, dy)   -- dx/dy are raw pixel deltas (not REF-scaled); FPS camera sensitivity expects this
 end
