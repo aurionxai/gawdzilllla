@@ -2,6 +2,8 @@
 local HUD   = {}
 HUD.__index = HUD
 
+local Input = require("src/input")
+
 local BAR_H    = 8
 local BAR_W    = 150
 local P1_BAR_X = 10
@@ -162,6 +164,11 @@ function HUD:draw()
   if self._comboTimer > 0 then
     love.graphics.setColor(1, 0.8, 0.1, math.min(1, self._comboTimer))
     love.graphics.printf(self._comboText or "", 0, 128, 480, "center")
+  end
+
+  -- Touch controls overlay (mobile / Web)
+  if Input.isTouchMode() then
+    Input.TouchControls.draw()
   end
 end
 
