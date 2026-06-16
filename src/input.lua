@@ -81,6 +81,18 @@ function Input.getMoveX(player)
   return math.max(-1, math.min(1, x))
 end
 
+function Input.getMoveY(player)
+  local m = MAPS[player]
+  local y = 0
+  if m.up   and love.keyboard.isDown(m.up)   then y = y - 1 end
+  if m.down and love.keyboard.isDown(m.down) then y = y + 1 end
+  if player == 1 and _touchMode then
+    local _, tdy = TC.getAxis()
+    if math.abs(tdy) > 0.1 then y = y + tdy end
+  end
+  return math.max(-1, math.min(1, y))
+end
+
 function Input.isDown(player, action)
   local m = MAPS[player]
   local kb = m[action] and love.keyboard.isDown(m[action]) or false
