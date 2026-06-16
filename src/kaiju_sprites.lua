@@ -823,6 +823,104 @@ local AN_HG = {0.65, 0.50, 0.30}
 local AN_BE = {0.60, 0.52, 0.35}
 local AN_EY = {0.95, 0.82, 0.15}
 
+-- ── Gregg (easter egg human) ──────────────────────────────────────────────────
+local GG_SKIN = {0.86, 0.68, 0.51}   -- skin tone
+local GG_HAIR = {0.18, 0.09, 0.04}   -- dark brown hair + beard
+local GG_CAP  = {0.10, 0.16, 0.47}   -- navy baseball cap
+local GG_CAPD = {0.06, 0.10, 0.32}   -- cap shadow
+local GG_POLO = {0.39, 0.65, 0.88}   -- light blue polo
+local GG_PLOD = {0.30, 0.52, 0.72}   -- polo shadow
+local GG_COLR = {0.90, 0.95, 1.00}   -- polo collar (white-ish)
+local GG_KHAK = {0.70, 0.62, 0.38}   -- khaki pants
+local GG_KHDP = {0.55, 0.48, 0.28}   -- khaki shadow
+local GG_SHOE = {0.96, 0.96, 0.93}   -- white shoes
+local GG_SWSH = {0.94, 0.40, 0.08}   -- orange Nike swoosh
+local GG_BREF = {0.53, 0.35, 0.16}   -- brown briefcase
+local GG_BLTB = {0.75, 0.56, 0.25}   -- belt buckle (gold)
+local GG_EBRN = {0.32, 0.20, 0.09}   -- eye iris (brown)
+local GG_PUPL = {0.04, 0.04, 0.04}   -- pupil
+local GG_BLTL = {0.26, 0.14, 0.05}   -- belt band
+
+local function drawGregg(wt, grounded)
+  local bob  = (grounded and math.floor(wt * 2) % 2 == 0) and 1 or 0
+  local step = math.floor(wt * 3) % 2   -- leg alternation
+
+  -- SHOES (foot level: y = 0)
+  R(GG_SHOE, -8, -3+bob,  8, 3)
+  R(GG_SHOE,  2, -3+bob,  8, 3)
+  R(GG_SWSH, -6, -2+bob,  3, 1)
+  R(GG_SWSH,  4, -2+bob,  3, 1)
+
+  -- LEGS / TROUSERS (khaki, alternating walk)
+  if step == 0 then
+    R(GG_KHAK, -7, -13+bob,  6, 11)
+    R(GG_KHAK,  1, -13+bob,  6, 11)
+  else
+    R(GG_KHAK, -8, -14+bob,  6, 12)
+    R(GG_KHAK,  2, -12+bob,  6, 10)
+  end
+  R(GG_KHDP, -5, -13+bob, 1, 10)
+  R(GG_KHDP,  3, -13+bob, 1, 10)
+
+  -- BELT
+  R(GG_BLTL, -7, -14+bob, 14,  2)
+  R(GG_BLTB, -1, -14+bob,  3,  2)
+
+  -- POLO SHIRT (torso)
+  R(GG_POLO, -8, -27+bob, 16, 14)
+  R(GG_PLOD, -8, -27+bob,  2, 14)
+  R(GG_COLR, -2, -28+bob,  4,  2)
+  R(GG_PLOD,  0, -25+bob,  1,  1)
+  R(GG_PLOD,  0, -22+bob,  1,  1)
+  R(GG_PLOD,  0, -19+bob,  1,  1)
+
+  -- LEFT ARM (extended, empty hand)
+  R(GG_POLO, -11, -26+bob,  4, 12)
+  R(GG_SKIN, -11, -15+bob,  4,  4)
+
+  -- RIGHT ARM (briefcase arm)
+  R(GG_POLO,   8, -26+bob,  4, 12)
+
+  -- BRIEFCASE (right side, at waist)
+  R(GG_BREF,  11, -25+bob,  8,  9)
+  R(GG_HAIR,  12, -27+bob,  6,  3)
+  R(GG_BLTB,  13, -22+bob,  3,  1)
+  R(GG_KHDP,  11, -21+bob,  8,  1)
+
+  -- NECK
+  R(GG_SKIN, -3, -30+bob,  6,  3)
+
+  -- HEAD (face)
+  R(GG_SKIN, -6, -40+bob, 12, 11)
+  R(GG_SKIN, -7, -38+bob,  2,  5)
+  R(GG_SKIN,  5, -38+bob,  2,  5)
+
+  -- HAIR (sides below cap)
+  R(GG_HAIR, -6, -39+bob,  2,  5)
+  R(GG_HAIR,  4, -39+bob,  2,  5)
+
+  -- EYES
+  R(GG_EBRN, -4, -37+bob,  3,  3)
+  R(GG_EBRN,  1, -37+bob,  3,  3)
+  R(GG_PUPL, -3, -36+bob,  1,  2)
+  R(GG_PUPL,  2, -36+bob,  1,  2)
+
+  -- BEARD (full, lower face)
+  R(GG_HAIR, -5, -32+bob, 10,  6)
+  R({0.28,0.14,0.06,1}, -4, -31+bob, 8, 4)
+  R(GG_HAIR, -5, -33+bob, 10,  2)
+
+  -- CAP (navy)
+  R(GG_CAP,  -6, -46+bob, 12,  7)
+  R(GG_CAP,  -7, -42+bob, 14,  4)
+  R(GG_CAPD, -7, -46+bob,  2,  7)
+  R(GG_CAP,   5, -40+bob,  9,  3)
+  R(GG_CAPD,  5, -40+bob,  1,  3)
+  -- Nike tick (~2px white checkmark)
+  R({0.85,0.90,1.00}, -1, -45+bob, 2, 1)
+  R({0.85,0.90,1.00},  0, -44+bob, 3, 1)
+end
+
 KS._sprites = {
   ["Godzilla"]      = drawGodzilla,
   ["Kong"]          = drawKong,
@@ -877,6 +975,19 @@ end
 
 function KS.drawBoss(name, ctrl, scale)
   KS.draw(name, ctrl, scale or 2)
+end
+
+-- ── Gregg (easter egg) — called from food_manager.lua ─────────────────────────
+-- g = Gregg entity table: { x, y, w, h, dir, _walkTimer }
+-- Translates to foot-center then draws using the same coordinate system as other sprites.
+function KS.drawGregg(g)
+  love.graphics.push()
+  love.graphics.translate(g.x + g.w * 0.5, g.y + g.h)
+  if g.dir < 0 then
+    love.graphics.scale(-1, 1)
+  end
+  drawGregg(g._walkTimer or 0, true)
+  love.graphics.pop()
 end
 
 return KS
