@@ -883,7 +883,7 @@ local function drawGregg(wt, grounded)
   R(GG_SKIN,   8, -15+bob,  4,  4)   -- right hand
 
   -- BRIEFCASE (right side, at waist)
-  R(GG_HAIR,  13, -36+bob,  4,  2)   -- briefcase handle (dark strap)
+  R(GG_HAIR,  13, -27+bob,  4,  2)   -- briefcase handle (dark strap)
   R(GG_BREF,  11, -25+bob,  8,  9)
   R(GG_HAIR,  12, -27+bob,  6,  3)
   R(GG_BLTB,  13, -22+bob,  3,  1)
@@ -909,7 +909,7 @@ local function drawGregg(wt, grounded)
 
   -- BEARD (full, lower face)
   R(GG_HAIR, -5, -32+bob, 10,  6)
-  R({0.28,0.14,0.06,1}, -4, -31+bob, 8, 4)
+  R({0.28,0.14,0.06}, -4, -31+bob, 8, 4)
   R(GG_HAIR, -5, -33+bob, 10,  2)
 
   -- CAP (navy)
