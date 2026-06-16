@@ -100,6 +100,7 @@ function FoodManager:_spawnGregg()
     _fartAlpha  = 0,
     _strutDir   = 1,
     _walkTimer  = 0,
+    _lifeTimer  = 0,   -- despawn if no food eaten within 30s
   }
 end
 
@@ -151,6 +152,15 @@ function FoodManager:_updateGregg(dt)
   local g = self._gregg
 
   g._walkTimer = g._walkTimer + dt
+
+  -- Life timer: if Gregg hasn't eaten in 30s, he gives up and leaves
+  if g.state == "WANDER" or g.state == "SEEK" then
+    g._lifeTimer = g._lifeTimer + dt
+    if g._lifeTimer > 30 then
+      g.state  = "LEAVE"
+      g._timer = 3.0
+    end
+  end
 
   if g.state == "WANDER" then
     g.x = g.x + g.dir * GREGG_SPEED * dt
