@@ -228,6 +228,7 @@ function FoodManager:_updateGregg(dt)
     end
 
   elseif g.state == "STRUT" then
+    g.dir    = g._strutDir   -- face the direction of travel
     g._timer = g._timer - dt
     g.x = g.x + g._strutDir * GREGG_SPEED * 1.7 * dt
     if g._timer <= 0 then
