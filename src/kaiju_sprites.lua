@@ -880,8 +880,10 @@ local function drawGregg(wt, grounded)
 
   -- RIGHT ARM (briefcase arm)
   R(GG_POLO,   8, -26+bob,  4, 12)
+  R(GG_SKIN,   8, -15+bob,  4,  4)   -- right hand
 
   -- BRIEFCASE (right side, at waist)
+  R(GG_HAIR,  13, -36+bob,  4,  2)   -- briefcase handle (dark strap)
   R(GG_BREF,  11, -25+bob,  8,  9)
   R(GG_HAIR,  12, -27+bob,  6,  3)
   R(GG_BLTB,  13, -22+bob,  3,  1)
