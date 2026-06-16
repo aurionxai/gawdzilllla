@@ -5,11 +5,13 @@
 -- Origin: (0,0) = foot center. Sprite always drawn facing right; scale(-1,1) when facing left.
 
 local KS = {}
+KS._flash = false   -- set true before KS.draw to render sprite all-white (hit flash)
 
 -- ── Draw helper ───────────────────────────────────────────────────────────────
 -- Called inside each sprite function. Draws a rect relative to foot center.
+local WHITE = {1, 1, 1}
 local function R(c, x, y, w, h)
-  love.graphics.setColor(c)
+  love.graphics.setColor(KS._flash and WHITE or c)
   love.graphics.rectangle("fill", x, y, w, h)
 end
 

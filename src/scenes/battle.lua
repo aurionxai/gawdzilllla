@@ -87,6 +87,9 @@ function Battle._build(p1Info, p2Info, isSinglePlayer, forceCityDef)
   self._hud.fm = self._fm
   self._matchOver  = false
   self._matchWinner = nil
+  self._hitstop = 0
+  self._flash1  = 0
+  self._flash2  = 0
 
   self._fm.onRoundStart = function(r)
     self._announceText  = "ROUND " .. r .. "  FIGHT!"
@@ -125,6 +128,10 @@ end
 -- ── Update ────────────────────────────────────────────────────────────────────
 
 function Battle:update(dt)
+  -- Flash timers always tick so the white flash fades correctly
+  if self._flash1 > 0 then self._flash1 = math.max(0, self._flash1 - dt) end
+  if self._flash2 > 0 then self._flash2 = math.max(0, self._flash2 - dt) end
+
   if self._matchOver then
     self._resultTimer = self._resultTimer - dt
     if self._resultTimer <= 0 then
@@ -145,6 +152,12 @@ function Battle:update(dt)
         }))
       end
     end
+    return
+  end
+
+  -- Hitstop: freeze physics/AI for a few frames on a successful hit
+  if self._hitstop > 0 then
+    self._hitstop = self._hitstop - dt
     return
   end
 
@@ -228,6 +241,10 @@ function Battle:_checkHits(attackSystem, attackerCtrl, targetChar, targetCtrl)
       local dir = attackerCtrl.facingRight and 1 or -1
       targetCtrl:applyKnockback(dir * hb.damage * 4, -hb.damage * 2)
       self._audio:playHit(hb.damage)
+      -- Hit flash + hitstop
+      self._hitstop = 0.055
+      if targetCtrl == self._ctrl1 then self._flash1 = 0.12
+      else                               self._flash2 = 0.12 end
     end
   end
 end
@@ -303,11 +320,14 @@ function Battle:draw()
   -- Food / Gregg
   self._foodMgr:draw()
 
-  -- Characters
+  -- Characters (KS._flash makes the sprite render all-white for hit feedback)
+  KS._flash = self._flash1 > 0
   KS.draw(self._p1.stats.characterName, self._ctrl1, 2)
   self._p1:drawExtra(self._ctrl1)
+  KS._flash = self._flash2 > 0
   KS.draw(self._p2.stats.characterName, self._ctrl2, 2)
   self._p2:drawExtra(self._ctrl2)
+  KS._flash = false
 
   -- HUD
   self._hud:draw()
