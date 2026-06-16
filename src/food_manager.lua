@@ -1,13 +1,13 @@
 -- src/food_manager.lua
--- Food pickups + Gregg easter egg, unlocked by cumulative special moves.
+-- Food pickups + Gregg easter egg, random 1-in-500 spawn chance per food item.
 local AS = require("src/attack_system")
 local FR = require("src/food_renderer")
+local KS = require("src/kaiju_sprites")
 
 local FoodManager = {}
 FoodManager.__index = FoodManager
 
 local SPECIAL_THRESHOLD_FOOD  = 1   -- food appears after first special
-local SPECIAL_THRESHOLD_GREGG = 4   -- Gregg appears after 4th special
 local FOOD_SPAWN_INTERVAL     = 9.0
 local FOOD_HEAL               = 20
 local GROUND_Y                = 220
@@ -15,15 +15,34 @@ local FOOD_W, FOOD_H          = 16, 16
 
 local FOOD_TYPES = FR.TYPES  -- 50 food types
 
-local GREGG_W     = 22
-local GREGG_H     = 30
-local GREGG_SPEED = 42
+local GREGG_W            = 18
+local GREGG_H            = 44
+local GREGG_SPEED        = 42
+local GREGG_SPAWN_CHANCE = 500
 
-local BLAME_LINES = {
-  "IT WAS %s!!",
-  "NOT ME — %s DID IT!",
-  "%s CROPDUSTED US ALL!",
-  "DEFINITELY %s. I SAW IT.",
+local BLAME_BY_NAME = {
+  ["Godzilla"]      = "He does this every time. Classic Godzilla.",
+  ["Kong"]          = "I've been saying Kong has a problem. Nobody listens.",
+  ["MechaGodzilla"] = "Exhaust leak. It's a mech thing. Engineering issue.",
+  ["Ghidorah"]      = "Three heads, one source. I've run the math.",
+  ["Mothra"]        = "Moths. You have no idea what they get up to.",
+  ["Rodan"]         = "Supersonic wingspan. Aerodynamic displacement. Not me.",
+  ["Titan"]         = "Super-powered metabolism. It's a hero thing.",
+  ["Ironclad"]      = "Exhaust ports. Engineering issue. Totally different.",
+  ["Webslinger"]    = "Silk glands. You really don't want to know.",
+  ["Thunderstrike"] = "He gets a lightning hammer. I get the blame. Classic.",
+  ["Biollante"]     = "Plant biology is wildly misunderstood. This tracks.",
+  ["Destoroyah"]    = "End-stage mutation. Practically expected at this point.",
+  ["Gigan"]         = "Cybernetic propulsion. Documented exhaust signature.",
+  ["SpaceGodzilla"] = "Cosmic radiation. Not a me problem, technically.",
+  ["Hedorah"]       = "Smog monster. Honestly I'm surprised you're surprised.",
+  ["Anguirus"]      = "That armored shell traps everything. Common knowledge.",
+}
+local BLAME_FALLBACK = {
+  "That little guy right there. I saw him.",
+  "Military grade diesel. That's on the government.",
+  "...There was someone here. They left.",
+  "I take no responsibility for this whatsoever.",
 }
 
 function FoodManager.new(p1, p2, ctrl1, ctrl2)
@@ -45,11 +64,8 @@ function FoodManager:registerSpecial()
     self:_spawnFood()
     self._announce      = "FOOD FALLS FROM THE SKY!"
     self._announceTimer = 2.2
-  elseif self._specialCount == SPECIAL_THRESHOLD_GREGG then
-    self:_spawnGregg()
-    self._announce      = "GREGG HAS ARRIVED. OH NO."
-    self._announceTimer = 2.5
   end
+  -- Gregg now spawns randomly via _spawnFood(), not on special count
 end
 
 function FoodManager:_spawnFood()
@@ -62,21 +78,28 @@ function FoodManager:_spawnFood()
     type      = ft,
     collected = false,
   })
+  -- Easter egg: 1-in-GREGG_SPAWN_CHANCE Gregg crashes the party
+  if not self._gregg and math.random(GREGG_SPAWN_CHANCE) == 1 then
+    self:_spawnGregg()
+    self._announce      = "GREGG HAS ARRIVED. OH NO."
+    self._announceTimer = 2.5
+  end
 end
 
 function FoodManager:_spawnGregg()
   self._gregg = {
-    x          = -30,
-    y          = GROUND_Y - GREGG_H,
-    w          = GREGG_W,
-    h          = GREGG_H,
-    state      = "WANDER",
-    dir        = 1,
-    _timer     = 0,
+    x           = -30,
+    y           = GROUND_Y - GREGG_H,
+    w           = GREGG_W,
+    h           = GREGG_H,
+    state       = "WANDER",
+    dir         = 1,
+    _timer      = 0,
     _targetFood = nil,
     _blameText  = nil,
     _fartAlpha  = 0,
     _strutDir   = 1,
+    _walkTimer  = 0,
   }
 end
 
@@ -127,6 +150,8 @@ end
 function FoodManager:_updateGregg(dt)
   local g = self._gregg
 
+  g._walkTimer = g._walkTimer + dt
+
   if g.state == "WANDER" then
     g.x = g.x + g.dir * GREGG_SPEED * dt
     if g.x < 5  then g.dir =  1 end
@@ -176,16 +201,17 @@ function FoodManager:_updateGregg(dt)
     if g._timer <= 0 then
       local d1 = math.abs(self._ctrl1.x - g.x)
       local d2 = math.abs(self._ctrl2.x - g.x)
-      local targetName
+      local targetName, targetCtrl
       if d1 <= d2 then
-        targetName = self._p1.stats.characterName
-        g._strutDir = self._ctrl1.x > g.x and -1 or 1
+        targetName  = self._p1.stats.characterName
+        targetCtrl  = self._ctrl1
       else
-        targetName = self._p2.stats.characterName
-        g._strutDir = self._ctrl2.x > g.x and -1 or 1
+        targetName  = self._p2.stats.characterName
+        targetCtrl  = self._ctrl2
       end
-      local line = BLAME_LINES[math.random(#BLAME_LINES)]
-      g._blameText = string.format(line, targetName)
+      g._blameText = BLAME_BY_NAME[targetName]
+          or BLAME_FALLBACK[math.random(#BLAME_FALLBACK)]
+      g._strutDir  = targetCtrl.x > g.x and -1 or 1
       g._fartAlpha = 0.45
       g.state      = "BLAME"
       g._timer     = 2.0
@@ -204,10 +230,17 @@ function FoodManager:_updateGregg(dt)
   elseif g.state == "STRUT" then
     g._timer = g._timer - dt
     g.x = g.x + g._strutDir * GREGG_SPEED * 1.7 * dt
-    g.x = math.max(-30, math.min(470, g.x))
     if g._timer <= 0 then
-      g.state = "WANDER"
-      g.dir   = g._strutDir
+      g.state  = "LEAVE"
+      g._timer = 3.0
+    end
+
+  elseif g.state == "LEAVE" then
+    g._timer = g._timer - dt
+    g.x = g.x + g._strutDir * GREGG_SPEED * 2.8 * dt
+    if g.x < -60 or g.x > 540 or g._timer <= 0 then
+      self._gregg = nil
+      return
     end
   end
 end
@@ -227,109 +260,43 @@ function FoodManager:draw()
   end
 end
 
-function FoodManager:_drawFood(item)  -- kept for reference, no longer called
-  local x, y, w, h = item.x, item.y, item.w, item.h
-  -- Glow halo
-  love.graphics.setColor(1, 1, 0.4, 0.25)
-  love.graphics.rectangle("fill", x - 3, y - 3, w + 6, h + 6)
-
-  local t = item.type
-  if t == "pizza" then
-    love.graphics.setColor(0.85, 0.55, 0.1)
-    love.graphics.rectangle("fill", x, y, w, h)
-    love.graphics.setColor(0.75, 0.1, 0.1)
-    love.graphics.rectangle("fill", x+2, y+2, w-4, h-6)
-    love.graphics.setColor(0.9, 0.7, 0.2)
-    love.graphics.rectangle("fill", x+4, y+5, 3, 3)
-    love.graphics.rectangle("fill", x+9, y+3, 2, 2)
-  elseif t == "burger" then
-    love.graphics.setColor(0.65, 0.38, 0.12)
-    love.graphics.rectangle("fill", x, y, w, 5)
-    love.graphics.setColor(0.15, 0.6, 0.15)
-    love.graphics.rectangle("fill", x, y+5, w, 3)
-    love.graphics.setColor(0.8, 0.4, 0.1)
-    love.graphics.rectangle("fill", x, y+8, w, 3)
-    love.graphics.setColor(0.65, 0.38, 0.12)
-    love.graphics.rectangle("fill", x, y+11, w, 5)
-  elseif t == "hotdog" then
-    love.graphics.setColor(0.82, 0.58, 0.38)
-    love.graphics.rectangle("fill", x, y+4, w, h-8)
-    love.graphics.setColor(0.72, 0.15, 0.1)
-    love.graphics.rectangle("fill", x+2, y+6, w-4, h-12)
-    love.graphics.setColor(0.9, 0.8, 0.3)
-    love.graphics.rectangle("fill", x+3, y+7, w-6, 2)
-  elseif t == "sushi" then
-    love.graphics.setColor(0.92, 0.92, 0.88)
-    love.graphics.rectangle("fill", x, y, w, h)
-    love.graphics.setColor(0.1, 0.1, 0.1)
-    love.graphics.rectangle("fill", x, y, w, 4)
-    love.graphics.setColor(0.85, 0.15, 0.15)
-    love.graphics.rectangle("fill", x+2, y+5, w-4, 5)
-  elseif t == "donut" then
-    love.graphics.setColor(0.9, 0.5, 0.65)
-    love.graphics.rectangle("fill", x, y, w, h)
-    love.graphics.setColor(0.15, 0.07, 0.02)
-    love.graphics.rectangle("fill", x+4, y+4, w-8, h-8)
-    love.graphics.setColor(0.9, 0.5, 0.65)
-    love.graphics.rectangle("fill", x+5, y+5, w-10, h-10)
-    -- sprinkles
-    love.graphics.setColor(1, 0.9, 0.2)
-    love.graphics.rectangle("fill", x+2, y+2, 2, 1)
-    love.graphics.setColor(0.3, 0.8, 1)
-    love.graphics.rectangle("fill", x+9, y+1, 2, 1)
-  end
-end
-
 function FoodManager:_drawGregg()
   local g = self._gregg
   local x, y = g.x, g.y
 
-  -- Fart cloud (behind him)
+  -- Fart cloud (behind Gregg)
   if g._fartAlpha and g._fartAlpha > 0 then
-    local cloudX = g.dir > 0 and (x - 14) or (x + g.w - 4)
+    local cloudX = g.dir > 0 and (x - 14) or (x + GREGG_W + 2)
     love.graphics.setColor(0.35, 0.78, 0.25, g._fartAlpha * 0.7)
-    love.graphics.rectangle("fill", cloudX, y + g.h - 18, 18, 12)
-    love.graphics.rectangle("fill", cloudX + 2, y + g.h - 26, 12, 10)
-    love.graphics.rectangle("fill", cloudX + 4, y + g.h - 33, 8, 9)
+    love.graphics.rectangle("fill", cloudX,     y + GREGG_H - 16, 18, 10)
+    love.graphics.rectangle("fill", cloudX + 2, y + GREGG_H - 24, 12,  9)
+    love.graphics.rectangle("fill", cloudX + 4, y + GREGG_H - 31,  8,  8)
   end
 
-  -- Body
-  love.graphics.setColor(0.28, 0.08, 0.42)
-  love.graphics.rectangle("fill", x, y, g.w, g.h)
-  -- Belly stripe
-  love.graphics.setColor(0.42, 0.12, 0.60)
-  love.graphics.rectangle("fill", x + 5, y + 8, g.w - 10, g.h - 14)
-  -- Eyes
-  love.graphics.setColor(1, 0.9, 0.1)
-  local eyeOff = g.dir > 0 and (g.w - 10) or 2
-  love.graphics.rectangle("fill", x + eyeOff,     y + 4, 4, 4)
-  love.graphics.rectangle("fill", x + eyeOff + 5, y + 4, 4, 4)
-  -- Pupils (scheming)
-  love.graphics.setColor(0, 0, 0)
-  local pOff = g.dir > 0 and 1 or 0
-  love.graphics.rectangle("fill", x + eyeOff + pOff,     y + 5, 2, 2)
-  love.graphics.rectangle("fill", x + eyeOff + 5 + pOff, y + 5, 2, 2)
+  -- Pixel art sprite
+  love.graphics.setColor(1, 1, 1)
+  KS.drawGregg(g)
 
-  -- EAT state: chomping
+  -- "NOM NOM!" while eating
   if g.state == "EAT" then
-    love.graphics.setColor(1, 1, 0.6)
-    love.graphics.printf("NOM NOM!", x - 20, y - 14, g.w + 40, "center")
+    love.graphics.setColor(1, 1, 0.5)
+    love.graphics.printf("NOM NOM!", x - 22, y - 16, GREGG_W + 44, "center")
   end
 
-  -- STRUT state: smug grin
-  if g.state == "STRUT" then
+  -- Smug strut face
+  if g.state == "STRUT" or g.state == "LEAVE" then
     love.graphics.setColor(0, 1, 0.5)
-    love.graphics.printf(":)", x - 10, y - 12, g.w + 20, "center")
+    love.graphics.printf(":)", x - 10, y - 14, GREGG_W + 20, "center")
   end
 
   -- Name tag
   love.graphics.setColor(0.85, 0.4, 1)
-  love.graphics.printf("GREGG", x - 20, y - 10, g.w + 40, "center")
+  love.graphics.printf("GREGG", x - 22, y - 14, GREGG_W + 44, "center")
 
-  -- Blame text
+  -- Blame speech bubble
   if g._blameText then
     love.graphics.setColor(1, 0.15, 0.15)
-    love.graphics.printf(g._blameText, x - 65, y - 26, g.w + 130, "center")
+    love.graphics.printf(g._blameText, x - 70, y - 30, GREGG_W + 140, "center")
   end
 end
 
