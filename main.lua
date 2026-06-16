@@ -63,8 +63,10 @@ end
 
 function love.mousemoved(x, y, dx, dy)
   local rx, ry = toRef(x, y)
-  Input.touchmoved("mouse", rx, ry)
-  SM.mousemoved(rx, ry, dx, dy)
+  if love.mouse.isDown(1) then
+    Input.touchmoved("mouse", rx, ry)
+  end
+  SM.mousemoved(rx, ry, dx, dy)   -- dx/dy are raw pixel deltas (not REF-scaled); FPS camera sensitivity expects this
 end
 
 -- Native multi-touch (Love2D desktop / love-android / love-ios)
