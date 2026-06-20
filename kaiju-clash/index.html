@@ -8,6 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#000000">
 <title>KAIJU CHOMP</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>%F0%9F%A6%96</text></svg>">
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   html,body{
@@ -460,8 +461,11 @@ function buildFromRows(rows){
     saved:false, eaten:false, eatenTimer:0, savedTimer:0, particles:[],
   }));
   const ps = p.spawns.player || { r:7, c:2 };
+  // Rest the player's 66px box ON the surface below its spawn char, not embedded in
+  // the floor — otherwise resolveX reads the buried floor tile as a wall and marches
+  // the player a tile/frame to the exit (the level "plays itself").
   return { tiles:p.tiles, food, enemies, citizens,
-           playerSpawn:{ x:ps.c*TS, y:ps.r*TS }, exit:p.spawns.exit, LW:p.LW, LH:p.LH };
+           playerSpawn:{ x:ps.c*TS, y: surfaceTop(ps.c, ps.r) - 66 }, exit:p.spawns.exit, LW:p.LW, LH:p.LH };
 }
 
 // World 1, Level 1 — a deep street -> rooftops -> sky climb (taller than the screen).
@@ -524,7 +528,7 @@ function mkState(charKey, levelId){
       hp: charKey==='poppy' ? 80 : 100,
       maxHp: charKey==='poppy' ? 80 : 100,
       fartMeter:0,
-      invincMs:0,
+      invincMs:1200,            // spawn grace: ~1.2s of safety so enemies can't tag you before you move
       eatAnim:0,
       fartAnim:0,
       jumpPressed:false,
@@ -987,14 +991,15 @@ function drawTiles(s){
       const px=~~(c*TS-cam.x), py=~~(r*TS-cam.y);
 
       if(t===T_SOLID){
-        ctx.fillStyle='#6b5536'; ctx.fillRect(px,py,TS,TS);           // building wall
-        ctx.fillStyle='#7d6440'; ctx.fillRect(px,py,TS,4);            // lit top edge
-        ctx.fillStyle='rgba(0,0,0,0.18)'; ctx.fillRect(px,py+TS-4,TS,4);
-        ctx.strokeStyle='rgba(0,0,0,0.15)'; ctx.lineWidth=1; ctx.strokeRect(px+0.5,py+0.5,TS-1,TS-1);
+        ctx.fillStyle='#4a3a22'; ctx.fillRect(px,py,TS,TS);           // darker wall — separates from the warm backdrop
+        ctx.fillStyle='#d8b566'; ctx.fillRect(px,py,TS,3);            // bright walkable top edge (reads at a glance)
+        ctx.fillStyle='#8a6d3e'; ctx.fillRect(px,py+3,TS,2);          // warm under-glow
+        ctx.fillStyle='rgba(0,0,0,0.28)'; ctx.fillRect(px,py+TS-4,TS,4);
+        ctx.strokeStyle='rgba(0,0,0,0.45)'; ctx.lineWidth=1; ctx.strokeRect(px+0.5,py+0.5,TS-1,TS-1);  // crisp outline
       } else if(t===T_PLAT){
-        ctx.fillStyle='#9a4a3a'; ctx.fillRect(px,py,TS,7);            // rooftop slab
-        ctx.fillStyle='#bd5f49'; ctx.fillRect(px,py,TS,3);
-        ctx.fillStyle='rgba(0,0,0,0.12)'; ctx.fillRect(px,py+7,TS,3);
+        ctx.fillStyle='#7a3527'; ctx.fillRect(px,py,TS,9);            // rooftop slab (taller, darker body)
+        ctx.fillStyle='#ff9a5c'; ctx.fillRect(px,py,TS,3);            // bright landable lip
+        ctx.fillStyle='rgba(0,0,0,0.30)'; ctx.fillRect(px,py+9,TS,3); // shadow beneath the lip
       } else if(t===T_DEST){
         ctx.fillStyle='#a9762e'; ctx.fillRect(px+1,py+1,TS-2,TS-2);   // wooden crate
         ctx.strokeStyle='#6e4a18'; ctx.lineWidth=2; ctx.strokeRect(px+2,py+2,TS-4,TS-4);
