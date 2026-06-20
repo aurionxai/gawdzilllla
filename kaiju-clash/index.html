@@ -886,10 +886,14 @@ function updateCitizens(dt, s){
       if(d < nearestDist){ nearestDist=d; nearestDx=dx; }
     });
     const panic = nearestDist < 180;
-    c.dir = panic ? (nearestDx > 0 ? -1 : 1) : c.dir;
+    // Only turn when the threat is clearly to one side; a per-frame flip made
+    // cornered citizens vibrate (gyrate) in place and mirror their sprite every frame.
+    if(panic && Math.abs(nearestDx) > 24) c.dir = nearestDx > 0 ? -1 : 1;
     const spd = panic ? 1.5 : 0.7;
-    c.x += c.dir * spd;
-    c.x = Math.max(TS, Math.min((LW-2)*TS, c.x));
+    const nx  = c.x + c.dir * spd;
+    const lo = TS, hi = (LW-2)*TS;
+    // If fleeing into a wall, hold still instead of jittering against the clamp.
+    if(nx > lo && nx < hi) c.x = nx;
 
     // Enemy catches citizen
     s.level.enemies.forEach(e=>{
@@ -1184,9 +1188,13 @@ function drawEnemy(e, x, y, dir, flash, stun){
 const GROWTH_SCALE = [0.62, 0.78, 0.92, 1.12, 1.35];
 function _kaijuScale(){ return GROWTH_SCALE[(meta && meta.growthStage) || 0] || 1; }
 function _drawKaijuSprite(key, bx, by, dir){
-  const sz = 64 * _kaijuScale();
-  // (bx,by) is the original 64px top-left; keep the same bottom-center anchor.
-  _drawSprite(key, (bx + 32) - sz/2, (by + 64) - sz, sz, sz, dir, false);
+  const img = loadedSprites[key];
+  const h  = 64 * _kaijuScale();                 // drawn height (grows with the kaiju)
+  // Keep the frame's real aspect — the SNES frames aren't square; forcing a square
+  // both squished the hero and (with the old 64px anchor) floated it above the ground.
+  const w  = img ? h * (img.naturalWidth / img.naturalHeight) : h;
+  // Plant the feet on the hitbox bottom: by = screenY-4, hitbox is 66 tall -> by+70.
+  _drawSprite(key, (bx + 32) - w/2, (by + 70) - h, w, h, dir, false);
 }
 function drawLulah(x, y, pl, tick){
   const invinc = (pl.invincMs||0)>0 && Math.floor(Date.now()/80)%2===0;
