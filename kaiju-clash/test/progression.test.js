@@ -128,3 +128,31 @@ test('applyResult does not mutate the input meta', () => {
   assert.strictEqual(m.orbs, 0);
   assert.deepStrictEqual(m.levels, {});
 });
+
+test('LEVELS: world 1 has 4 ordered entries, only w1l1 playable now', () => {
+  const w1 = Progression.LEVELS.filter(l => l.world === 1);
+  assert.strictEqual(w1.length, 4);
+  assert.strictEqual(w1[0].id, 'w1l1');
+  assert.strictEqual(w1[0].playable, true);
+  assert.strictEqual(w1[1].playable, false);
+});
+
+test('isLevelUnlocked: first level always unlocked', () => {
+  assert.strictEqual(Progression.isLevelUnlocked(Progression.defaultMeta(), 'w1l1'), true);
+});
+
+test('isLevelUnlocked: locked when prior level incomplete', () => {
+  assert.strictEqual(Progression.isLevelUnlocked(Progression.defaultMeta(), 'w1l2'), false);
+});
+
+test('isLevelUnlocked: non-playable stays locked even if prior complete', () => {
+  let m = Progression.defaultMeta();
+  m.levels['w1l1'] = { stars: 1, rank: 'C', sideQuestsDone: 0 };
+  // w1l2 is not playable in this milestone
+  assert.strictEqual(Progression.isLevelUnlocked(m, 'w1l2'), false);
+});
+
+test('nextLevelId returns next playable or null', () => {
+  // w1l1 is the only playable level this milestone -> no next playable
+  assert.strictEqual(Progression.nextLevelId('w1l1'), null);
+});

@@ -74,4 +74,31 @@ Progression.applyResult = function applyResult(meta, { levelId, rank, citizensSa
   return next;
 };
 
+Progression.LEVELS = [
+  { id: 'w1l1', world: 1, name: 'Tokyo Streets', order: 1, playable: true },
+  { id: 'w1l2', world: 1, name: 'Rooftop Run',   order: 2, playable: false },
+  { id: 'w1l3', world: 1, name: 'Tower Climb',    order: 3, playable: false },
+  { id: 'w1l4', world: 1, name: 'Riot Mecha',     order: 4, playable: false },
+];
+
+function levelById(id) { return Progression.LEVELS.find(l => l.id === id) || null; }
+
+Progression.isLevelUnlocked = function isLevelUnlocked(meta, levelId) {
+  const lvl = levelById(levelId);
+  if (!lvl) return false;
+  if (lvl.order === 1) return true;
+  if (!lvl.playable) return false;
+  const prev = Progression.LEVELS.find(l => l.world === lvl.world && l.order === lvl.order - 1);
+  return !!(prev && meta.levels && meta.levels[prev.id]);
+};
+
+Progression.nextLevelId = function nextLevelId(levelId) {
+  const lvl = levelById(levelId);
+  if (!lvl) return null;
+  const candidates = Progression.LEVELS
+    .filter(l => l.playable && (l.world > lvl.world || (l.world === lvl.world && l.order > lvl.order)))
+    .sort((a, b) => (a.world - b.world) || (a.order - b.order));
+  return candidates.length ? candidates[0].id : null;
+};
+
 if (typeof module !== 'undefined' && module.exports) module.exports = Progression;
