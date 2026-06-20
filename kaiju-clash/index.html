@@ -956,37 +956,25 @@ function drawTiles(s){
       if(t===T_AIR) continue;
       const px=~~(c*TS-cam.x), py=~~(r*TS-cam.y);
 
-      if(t===T_PLAT){
-        // Wooden platform ledge
-        ctx.fillStyle='#3a5828';
-        ctx.fillRect(px, py, TS, 6);
-        ctx.fillStyle='#4e7234';
-        ctx.fillRect(px+1, py+1, TS-2, 3);
-        ctx.fillStyle='#5e9040';
-        ctx.fillRect(px, py-2, TS, 3);  // grass top
-      } else {
-        // Solid ground / destructible
-        const base = t===T_DEST ? '#5a3018' : '#1a2838';
-        const hi   = t===T_DEST ? '#7a4828' : '#243548';
-        const sh   = t===T_DEST ? '#2e1808' : '#0e1820';
-        ctx.fillStyle=base; ctx.fillRect(px,py,TS,TS);
-        ctx.fillStyle=hi;
-        ctx.fillRect(px+1,py+1,TS-2,2);
-        ctx.fillRect(px+1,py+1,2,TS-2);
-        ctx.fillStyle=sh;
-        ctx.fillRect(px+TS-3,py+3,3,TS-3);
-        ctx.fillRect(px+3,py+TS-3,TS-3,3);
-        if(t===T_DEST){
-          // Brick lines
-          ctx.fillStyle='rgba(0,0,0,0.2)';
-          ctx.fillRect(px+1,py+TS/2,TS-2,1);
-          ctx.fillRect(px+TS/2,py+1,1,TS/2-1);
-          ctx.fillRect(px+TS/4,py+TS/2+1,1,TS/2-2);
-        } else {
-          // Concrete edge detail
-          ctx.fillStyle='rgba(255,255,255,0.04)';
-          ctx.fillRect(px+2,py+2,TS-4,1);
-        }
+      if(t===T_SOLID){
+        ctx.fillStyle='#6b5536'; ctx.fillRect(px,py,TS,TS);           // building wall
+        ctx.fillStyle='#7d6440'; ctx.fillRect(px,py,TS,4);            // lit top edge
+        ctx.fillStyle='rgba(0,0,0,0.18)'; ctx.fillRect(px,py+TS-4,TS,4);
+        ctx.strokeStyle='rgba(0,0,0,0.15)'; ctx.lineWidth=1; ctx.strokeRect(px+0.5,py+0.5,TS-1,TS-1);
+      } else if(t===T_PLAT){
+        ctx.fillStyle='#9a4a3a'; ctx.fillRect(px,py,TS,7);            // rooftop slab
+        ctx.fillStyle='#bd5f49'; ctx.fillRect(px,py,TS,3);
+        ctx.fillStyle='rgba(0,0,0,0.12)'; ctx.fillRect(px,py+7,TS,3);
+      } else if(t===T_DEST){
+        ctx.fillStyle='#a9762e'; ctx.fillRect(px+1,py+1,TS-2,TS-2);   // wooden crate
+        ctx.strokeStyle='#6e4a18'; ctx.lineWidth=2; ctx.strokeRect(px+2,py+2,TS-4,TS-4);
+        ctx.beginPath(); ctx.moveTo(px+2,py+2); ctx.lineTo(px+TS-2,py+TS-2);
+        ctx.moveTo(px+TS-2,py+2); ctx.lineTo(px+2,py+TS-2); ctx.stroke();
+      } else if(t===T_HAZARD){
+        ctx.fillStyle='#3a3f4a'; ctx.fillRect(px,py+TS-6,TS,6);       // base
+        ctx.fillStyle='#c8ccd4';                                      // metal spikes
+        for(let k=0;k<4;k++){ const sx=px+k*8;
+          ctx.beginPath(); ctx.moveTo(sx,py+TS-6); ctx.lineTo(sx+4,py+10); ctx.lineTo(sx+8,py+TS-6); ctx.fill(); }
       }
     }
   }
