@@ -475,18 +475,22 @@ function buildFromRows(rows){
 // spaced >=6 tiles apart on each level so the crowd stays calm; rooftop citizens sit
 // above the street out of reach. Authored via a generator (kept here as the source of truth).
 const W1L1_ROWS = [
-  "                                                        ",
-  "                                                     E  ",
-  "                                                     o  ",
-  "                                                        ",
-  "                 o        C                             ",
-  "         C             ======         o       C         ",
-  "       =====             o            s     =====       ",
-  "               ====                 =====               ",
-  "         o          ##                  ##    o         ",
-  " P o  C  o  ^^  s o ##  C  o  w  ^^ o   ##  s   o C     ",
-  "########################################################",
-  "########################################################",
+  "                                                                        ",
+  "                                                                     E  ",
+  "                                                                     o  ",
+  "                                                                        ",
+  "                                                                        ",
+  "                                            Co                          ",
+  "                                          =====                         ",
+  "                                     Co                                 ",
+  "                                    ====          so                    ",
+  "                               Co                ====                   ",
+  "                              ====                                      ",
+  "                         Co                                             ",
+  "                        ====                                    ##      ",
+  " P  o  C o   s  s  s o           w                   Co  ^^ os  ##w o   ",
+  "########################################################################",
+  "########################################################################",
 ];
 const LEVEL_BUILDERS = {
   w1l1: () => buildFromRows(W1L1_ROWS),
@@ -624,6 +628,7 @@ function updatePlayer(dt, s){
   pl.y += pl.vy;
   pl.onGround = false;
   resolveY(pl, tiles, PW, PH);
+  if(pl.onGround) pl.stompCombo = 0;   // chain ends when you touch the ground
 
   // ── Spikes / hazards: damage if the player's box overlaps a hazard tile ──
   if((pl.invincMs||0) <= 0){
@@ -657,21 +662,25 @@ function updatePlayer(dt, s){
   if(pl.vy > 0 && state){
     const PW=44, PH=66;
     state.level.enemies.forEach(e=>{
-      if(e.dead || e.stunMs>0) return;
+      if(e.dead) return;                                   // stunned enemies CAN be re-bopped (Mario chain)
       const ew=eW(e), eh=eH(e);
       const prevFeet = pl.y+PH - pl.vy;
       const eFeetTop = e.y;
       if(pl.x+PW-6 > e.x && pl.x+6 < e.x+ew &&
          prevFeet <= eFeetTop+4 && pl.y+PH >= eFeetTop){
-        e.stunMs = 2500;
+        e.stunMs = Math.max(e.stunMs, 900);
         e.hp -= 25;
-        const stompScore = e.hp<=0 ? (enemyBig(e)?300:100) : 25;
-        if(e.hp<=0){ e.dead=true; state.score+=stompScore; addShake(5,220); }
+        // Combo: each stomp before landing chains for escalating points (100,200,400,...).
+        pl.stompCombo = (pl.stompCombo||0) + 1;
+        const mult = pl.stompCombo;
+        const base = e.hp<=0 ? (enemyBig(e)?300:100) : 25;
+        if(e.hp<=0){ e.dead=true; addShake(5,220); }
         else { addShake(3, 120); }
+        state.score += base * mult;
         pushNum(state, pl.x, pl.y, '-25', '#ff8844');
-        pl.vy = -7;  // bounce
+        pl.vy = -8 - Math.min(mult,5)*0.4;  // bounce a touch higher each chain
         sndJump();
-        pushMsg(state, '👊 STOMP!', 700, '#ffee44', 'md');
+        pushMsg(state, mult>1 ? ('👊 STOMP x'+mult+'!') : '👊 STOMP!', 700, '#ffee44', 'md');
         // Save nearby citizen
         state.level.citizens.forEach(c=>{
           if(c.saved||c.eaten) return;
