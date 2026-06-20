@@ -455,18 +455,28 @@ function buildFromRows(rows){
            playerSpawn:{ x:ps.c*TS, y:ps.r*TS }, exit:p.spawns.exit, LW:p.LW, LH:p.LH };
 }
 
-// A small starter tilemap proving the pipeline; the real deep w1l1 lands in Task 6.
+// World 1, Level 1 — a deep street -> rooftops -> sky climb (taller than the screen).
+// Vertical gaps between platforms are <= 3 tiles so the kaiju can jump them.
 const W1L1_ROWS = [
+  "                                  E     ",
+  "                              ===       ",
+  "                    o      C            ",
+  "                   ===        ===       ",
+  "              w                         ",
+  "         ===        ^^      o           ",
+  "   o   C       ===        ===           ",
+  "  ===              o                    ",
+  "            s            C       w      ",
+  "       ===     ===     ===      ===     ",
+  "   o                          o         ",
+  "  ===       x x      ===                ",
+  "        C        o          C     s     ",
+  "  ===  ===     ===   ^^    ===   ===     ",
   "                                        ",
-  "                                        ",
-  "                   ===                  ",
-  "          o              o        E     ",
-  "      ===        x x          ===       ",
-  "                                        ",
-  "   o        s       C      w       o    ",
-  "  ===      ###     ===    ###      ===   ",
-  "                  ^^                     ",
-  "P    o   C    s        o    C      s   o ",
+  "   o   s    C    o    w    C    o    s   ",
+  "  ###     ###       ###        ###      ",
+  "              ^^^             o          ",
+  "P   o   C   s    o   C   w   o   C    o  ",
   "########################################",
   "########################################",
 ];
@@ -908,8 +918,13 @@ function drawBg(cam){
     const pf = 0.35;                       // parallax: backdrop drifts slower than camera
     let ox = (cam.x * pf) % VW;
     if(ox < 0) ox += VW;
-    ctx.drawImage(bgImg, -ox, 0, VW, VH);
-    ctx.drawImage(bgImg, VW - ox, 0, VW, VH);
+    // Vertical parallax: the backdrop is drawn taller than the viewport and pans with
+    // cam.y, so climbing reveals more sky up top and the street stays at the bottom.
+    const drawH = VH * 1.5;
+    const camYMax = Math.max(1, LH*TS - VH);
+    const oy = -((cam.y / camYMax) * (drawH - VH));   // 0 (sky) at top, -(drawH-VH) (street) at bottom
+    ctx.drawImage(bgImg, -ox, oy, VW, drawH);
+    ctx.drawImage(bgImg, VW - ox, oy, VW, drawH);
     // Graduated scrim over the play band so foreground sprites read clearly against
     // the busy street-level art — darkest at the very bottom, fading out by mid-screen.
     const scrim = ctx.createLinearGradient(0, VH - 170, 0, VH);
