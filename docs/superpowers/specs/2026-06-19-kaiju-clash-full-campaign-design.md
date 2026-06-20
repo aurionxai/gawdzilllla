@@ -83,7 +83,49 @@ The finale. Mechanic: **vertical climb**.
 - **Per-level scoring:** letter rank S/A/B/C (time + citizens + style) and a
   "saved all citizens" star. Replay hooks.
 - **Character unlock:** finishing the campaign unlocks a 3rd playable kaiju.
-- **Ending:** a payoff screen / short sequence after the Rival Kaiju.
+- **Growth spine:** see §4a — the kaiju physically grows as quests are completed.
+- **Two endings:** the final boss is always beatable; reaching full **Apex** form
+  unlocks a special "true ending" cutscene (see §4a).
+
+## 4a. Growth spine — "Grow to Apex"
+
+The kaiju starts **small and weak** and **physically grows** across the campaign.
+Growth is **fed by quests** (main + side), not automatic. Complete everything and you
+reach the final boss at full **Apex** strength.
+
+**Growth currency: Spirit Orbs.** Main levels award enough orbs to *survive* the next
+world; side quests / collectibles award the **surplus** needed to reach full Apex by L15.
+
+**5 growth stages (sprite visibly scales up each stage — progress readable with no menu):**
+
+| Stage | Reached | Look | Unlocks |
+|---|---|---|---|
+| 🥚 **Hatchling** | Start (W1) | Small, stubby | Stomp, chomp |
+| 🦖 **Juvenile** | After W1 | Taller | Fart special |
+| ⚡ **Adolescent** | After W2 | Bigger, glowing accents | Stronger ranged shot |
+| 🌊 **Leviathan** | After W3 | Hulking, fins/scales | Charge-dash / heavy stomp |
+| 👑 **Apex** | W4 finale | Max size, full color, roar | All abilities + screen-clear roar |
+
+**Finale gating — two endings:**
+- The final boss (Rival Kaiju) is **winnable at any growth stage** — no child is hard-walled.
+- Reaching full **Apex** (= all/most side quests done) unlocks a **"true ending"**
+  cutscene/sequence on top of the normal ending. Rewards completionists, punishes no one.
+
+## 4b. Side quests (kid-simple — no quest logs, all optional)
+
+1–2 discoverable side objectives per level, each rewarding Spirit Orbs:
+- **Rescue the named ones** — the 8 citizen types (salaryman, schoolgirl, sumo, chef,
+  otaku, tourist, idol, obāchan) become named characters with tiny "find & save me" tasks.
+- **Hidden collectibles** — 3 golden ramen bowls (or a hidden building to smash) per level,
+  Mario star-coin style.
+- **Optional mini-challenge** — e.g. "save all citizens without taking a hit," or a time goal.
+
+## 4c. Easter eggs (the delight layer)
+
+- **Gregg cameo** — the existing Gregg / soldier character hidden as a secret rescue.
+- **Secret room** behind a destructible wall in each world (dev-room nod + orb cache).
+- **Ride the whale** — a hidden friendly whale in Sunken City the player can surf.
+- **Konami-style secret** — a code that grants instant fart-charge.
 
 ---
 
@@ -111,9 +153,11 @@ Each world needs a distinct skyline silhouette and one signature backdrop "hero"
 
 ## 7. Build order (each is its own spec → plan → implementation cycle)
 
-1. **Progression spine first** — world/level select + level loader + win/rank screen,
-   so levels can be data-driven and the campaign has a skeleton.
-2. **World 1 (4 levels + Riot Mecha boss)** — proves the per-world rhythm end to end.
+1. **Progression spine first** — world/level select + level loader + win/rank screen +
+   **Spirit Orb count and growth-stage state**, so levels are data-driven and the campaign
+   (including growth) has a skeleton.
+2. **World 1 (4 levels + Riot Mecha boss + Hatchling→Juvenile growth + first side quests)**
+   — proves the per-world rhythm *and* the growth/side-quest loop end to end.
 3. **World 2 — Neon Shibuya** (light/dark mechanic).
 4. **World 3 — Sunken City** (swim physics — the centerpiece; biggest new-mechanic risk).
 5. **World 4 — Volcano Skyline** (vertical climb + final boss + ending).
