@@ -31,3 +31,35 @@ test('computeRank: handles zero citizens total without dividing by zero', () => 
     Progression.computeRank({ timeSec: 60, hitsTaken: 0, citizensSaved: 0, citizensTotal: 0 }),
     'S');
 });
+
+test('orbsForResult: S rank base + bonuses', () => {
+  // base S=100, +5/citizen *8 = 40, +20/sidequest *1 = 20  => 160
+  assert.strictEqual(
+    Progression.orbsForResult({ rank: 'S', citizensSaved: 8, sideQuestsDone: 1 }),
+    160);
+});
+
+test('orbsForResult: C rank minimal', () => {
+  // base C=30, +0 citizens, +0 sidequests => 30
+  assert.strictEqual(
+    Progression.orbsForResult({ rank: 'C', citizensSaved: 0, sideQuestsDone: 0 }),
+    30);
+});
+
+test('starsForResult: complete only is 1 star', () => {
+  assert.strictEqual(
+    Progression.starsForResult({ rank: 'C', citizensSaved: 2, citizensTotal: 8 }),
+    1);
+});
+
+test('starsForResult: A rank adds a star', () => {
+  assert.strictEqual(
+    Progression.starsForResult({ rank: 'A', citizensSaved: 6, citizensTotal: 8 }),
+    2);
+});
+
+test('starsForResult: A rank + all citizens is 3 stars', () => {
+  assert.strictEqual(
+    Progression.starsForResult({ rank: 'A', citizensSaved: 8, citizensTotal: 8 }),
+    3);
+});

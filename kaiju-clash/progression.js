@@ -12,4 +12,19 @@ Progression.computeRank = function computeRank({ timeSec, hitsTaken, citizensSav
   return 'C';
 };
 
+const RANK_ORB_BASE = { S: 100, A: 75, B: 50, C: 30 };
+
+Progression.orbsForResult = function orbsForResult({ rank, citizensSaved, sideQuestsDone }) {
+  const base = RANK_ORB_BASE[rank] || 0;
+  return base + citizensSaved * 5 + sideQuestsDone * 20;
+};
+
+// 1 star: completed. +1 star: rank A or S. +1 star: every citizen saved.
+Progression.starsForResult = function starsForResult({ rank, citizensSaved, citizensTotal }) {
+  let stars = 1;
+  if (rank === 'A' || rank === 'S') stars += 1;
+  if (citizensTotal > 0 && citizensSaved >= citizensTotal) stars += 1;
+  return stars;
+};
+
 if (typeof module !== 'undefined' && module.exports) module.exports = Progression;
