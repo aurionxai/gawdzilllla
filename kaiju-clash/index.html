@@ -1470,7 +1470,7 @@ function drawHUD(s){
   // ── Growth stage + orb readout (bottom right) ──
   ctx.save();
   ctx.textAlign='right'; ctx.font='12px monospace'; ctx.fillStyle='#7CD7FF';
-  ctx.fillText('◈ '+meta.orbs+'  '+Progression.GROWTH_STAGES[meta.growthStage].name, VW-12, VH-12);
+  ctx.fillText('◈ '+meta.orbs+'  '+(Progression.GROWTH_STAGES[meta.growthStage]||Progression.GROWTH_STAGES[0]).name, VW-12, VH-16);
   ctx.restore();
 }
 
@@ -1675,7 +1675,7 @@ function drawGameover(){
   ctx.fillStyle='#664444';
   ctx.fillText('PRESS SPACE / ENTER  or  TAP TO RETURN', VW/2, VH/2+42);
   ctx.textAlign='left';
-  const tapRestart = Object.keys(touches).length > 0 && !_lastTouchCount;
+
   if(wasDown('Space','Enter','ArrowUp','KeyW') || _lastTouchCount>0){
     scene='overworld';
   }
@@ -1812,7 +1812,7 @@ function drawOverworld(){
   ctx.fillStyle='#ffd84a'; ctx.font='bold 28px monospace';
   ctx.fillText('KAIJU KID\'S QUEST', VW/2, 48);
   ctx.font='14px monospace'; ctx.fillStyle='#cfc6e6';
-  ctx.fillText('Spirit Orbs: '+meta.orbs+'   Growth: '+Progression.GROWTH_STAGES[meta.growthStage].name, VW/2, 74);
+  ctx.fillText('Spirit Orbs: '+meta.orbs+'   Growth: '+(Progression.GROWTH_STAGES[meta.growthStage]||Progression.GROWTH_STAGES[0]).name, VW/2, 74);
 
   const nodes = Progression.LEVELS;
   const gap = VW/(nodes.length+1);
