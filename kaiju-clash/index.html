@@ -26,6 +26,7 @@
 <body>
 <canvas id="c"></canvas>
 <script src="progression.js"></script>
+<script src="levelparse.js"></script>
 <script>
 // ═══════════════════════════════════════════
 //  CANVAS
@@ -278,8 +279,8 @@ function sndRoar(){
 //  CONSTANTS
 // ═══════════════════════════════════════════
 const TS    = 32;   // tile size
-const LW    = 110;  // level tiles wide
-const LH    = 11;   // level tiles tall (352px)
+let LW    = 110;  // level tiles wide  (set per-level on load)
+let LH    = 11;   // level tiles tall  (set per-level on load)
 const GRAV  = 0.38;
 const MAXVY = 11;
 
@@ -432,15 +433,45 @@ function spawnCitizens(){
   ];
 }
 
-// Level registry: maps a Progression.LEVELS id to a concrete level builder.
-// World 1 levels 2-4 are added in the World 1 content plan.
+// Convert an ASCII tilemap (array of strings) into a game level object.
+function buildFromRows(rows){
+  const p = LevelParse.parseLevel(rows);
+  LW = p.LW; LH = p.LH;                       // level dims are global, set on build
+  const food = p.spawns.food.map((s,i)=>({
+    type: FOOD_TYPES[i % FOOD_TYPES.length],
+    x: s.c*TS + TS/2 - 10, y: s.r*TS - 20, collected:false, bobOff:i*0.8,
+  }));
+  const enemies = p.spawns.enemies.map(s=>({
+    x: s.c*TS, y: s.r*TS, dir:-1, type:s.type,
+    hp: ENEMIES[s.type].hp, maxHp: ENEMIES[s.type].hp,
+    patrol:[(s.c-3)*TS, (s.c+3)*TS], stunMs:0, dead:false, flashMs:0,
+  }));
+  const citizens = p.spawns.citizens.map((s,i)=>({
+    x: s.c*TS, y: s.r*TS, dir: i%2?1:-1, clr:'#ffd8a8', npc: NPC_TYPES[i % NPC_TYPES.length],
+    saved:false, eaten:false, eatenTimer:0, savedTimer:0, particles:[],
+  }));
+  const ps = p.spawns.player || { r:7, c:2 };
+  return { tiles:p.tiles, food, enemies, citizens,
+           playerSpawn:{ x:ps.c*TS, y:ps.r*TS }, exit:p.spawns.exit, LW:p.LW, LH:p.LH };
+}
+
+// A small starter tilemap proving the pipeline; the real deep w1l1 lands in Task 6.
+const W1L1_ROWS = [
+  "                                        ",
+  "                                        ",
+  "                   ===                  ",
+  "          o              o        E     ",
+  "      ===        x x          ===       ",
+  "                                        ",
+  "   o        s       C      w       o    ",
+  "  ===      ###     ===    ###      ===   ",
+  "                  ^^                     ",
+  "P    o   C    s        o    C      s   o ",
+  "########################################",
+  "########################################",
+];
 const LEVEL_BUILDERS = {
-  w1l1: () => ({
-    tiles:    buildLevel(),
-    food:     spawnFood(),
-    enemies:  spawnEnemies(),
-    citizens: spawnCitizens(),
-  }),
+  w1l1: () => buildFromRows(W1L1_ROWS),
 };
 
 // ═══════════════════════════════════════════
@@ -466,7 +497,8 @@ function mkState(charKey, levelId){
     charKey,
     levelId,
     player: {
-      x: 2*TS, y: 7*TS,
+      x: (build.playerSpawn ? build.playerSpawn.x : 2*TS),
+      y: (build.playerSpawn ? build.playerSpawn.y : 7*TS),
       vx:0, vy:0,
       onGround:false,
       dir:1,
