@@ -148,6 +148,16 @@ const ENEMIES = {
   ember_bat:     { file:'enemies/ember_bat.png',     w:46, h:34, big:false, hp:40,  world:4 },
   obsidian_crab: { file:'enemies/obsidian_crab.png', w:48, h:40, big:true,  hp:100, world:4 },
   flame_wisp:    { file:'enemies/flame_wisp.png',    w:30, h:42, big:false, hp:35,  world:4 },
+  // World 2 Neon Shibuya set — asset-pipeline (Higgsfield + asset-slicer agent).
+  glitch_drone:  { file:'enemies/glitch_drone.png',  w:44, h:32, big:false, hp:45,  world:2 },
+  karaoke_bot:   { file:'enemies/karaoke_bot.png',   w:36, h:44, big:false, hp:55,  world:2 },
+  pixel_ghost:   { file:'enemies/pixel_ghost.png',   w:34, h:40, big:false, hp:40,  world:2 },
+  neon_serpent:  { file:'enemies/neon_serpent.png',  w:46, h:36, big:false, hp:50,  world:2 },
+  // World 3 Sunken City set — asset-pipeline (Higgsfield + asset-slicer agent).
+  mecha_pufferfish:{ file:'enemies/mecha_pufferfish.png', w:42, h:40, big:false, hp:60, world:3 },
+  anchor_bot:    { file:'enemies/anchor_bot.png',    w:36, h:44, big:true,  hp:90,  world:3 },
+  bubble_eel:    { file:'enemies/bubble_eel.png',    w:46, h:34, big:false, hp:45,  world:3 },
+  coral_crab:    { file:'enemies/coral_crab.png',    w:46, h:40, big:true,  hp:90,  world:3 },
 };
 function enemyBig(e){ const d=ENEMIES[e.type]; return !!(d && d.big); }
 function loadEnemies(){
