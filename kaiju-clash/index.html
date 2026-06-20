@@ -61,16 +61,8 @@ const AC = new (window.AudioContext||window.webkitAudioContext)();
 //  SPRITES
 // ═══════════════════════════════════════════
 const SPRITES = {
-  lulah_idle:    'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_183232_68a9252e-0b26-42a2-a919-74b3ef299bb5.png',
-  lulah_walk_1:  'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_183234_adf2b3e5-fcbf-4cdd-bb3b-616ef919cc50.png',
-  lulah_walk_2:  'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_183237_6aee6b8a-a9de-4169-8624-8099d6ce120b.png',
-  lulah_walk_3:  'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_183239_ffc03e13-7aeb-4e46-a1c1-5c7ab57d93a4.png',
-  lulah_walk_4:  'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_183242_344696e4-5fbd-4b57-b9f6-869e627bdcec.png',
-  lulah_jump:    'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_183244_1050ba18-93d8-4059-a9cd-7cb97ab1d03f.png',
-  lulah_eat_1:   'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_183246_109e0d98-0ae8-4d28-9618-ada5352d3982.png',
-  lulah_eat_2:   'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_183250_5454ec0a-cdd8-4c8d-b42e-641b1bc3c1db.png',
-  lulah_fart_1:  'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_183254_12b1d6ea-7d19-48a9-86b7-07e058f642ca.png',
-  lulah_fart_2:  'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_183257_92ab252d-6c41-42d5-ad55-7b291ef91df0.png',
+  // Hero (Lulah) frames now come from the active SKIN (see SKINS below), not here.
+  // Poppy is still hardcoded until its skin frames are produced.
   poppy_idle:    'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_183300_90a09ad9-aa85-4065-acb7-b27b0329b39a.png',
   poppy_walk_1:  'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_183303_5977026d-1cf4-4188-9431-836b2ac07197.png',
   poppy_walk_2:  'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_183305_de870dcd-51f1-4cfd-b401-5fe548f549e3.png',
@@ -102,6 +94,42 @@ function loadSprites() {
     img.crossOrigin = 'anonymous';
     img.onload  = () => { loadedSprites[key] = img; _spriteDone++; res(); };
     img.onerror = () => { _spriteDone++; res(); };
+    img.src = url;
+  })));
+}
+
+// ═══════════════════════════════════════════
+//  CHARACTER SKINS  (swappable; future store / contributor packs)
+// ═══════════════════════════════════════════
+// A skin maps the animation keys the game requests (from _kaijuKey) to image
+// files in the skin's asset pack. Adding a skin = drop a folder under skins/
+// and add an entry here; no render-code changes. activeSkin selects which one.
+const SKINS = {
+  default: {
+    name: 'Sakura',
+    frames: {
+      lulah_idle:   'skins/default/lulah_idle.png',
+      lulah_walk_1: 'skins/default/lulah_walk1.png',
+      lulah_walk_2: 'skins/default/lulah_walk2.png',
+      lulah_walk_3: 'skins/default/lulah_walk1.png',
+      lulah_walk_4: 'skins/default/lulah_walk2.png',
+      lulah_jump:   'skins/default/lulah_jump.png',
+      lulah_eat_1:  'skins/default/lulah_eat.png',
+      lulah_eat_2:  'skins/default/lulah_idle.png',
+      lulah_fart_1: 'skins/default/lulah_fart.png',
+      lulah_fart_2: 'skins/default/lulah_fart.png',
+    },
+  },
+};
+let activeSkin = 'default';
+// Load a skin's frames into loadedSprites under the animation keys the game uses.
+function loadSkin(id){
+  const skin = SKINS[id] || SKINS.default;
+  const entries = Object.entries(skin.frames);
+  return Promise.all(entries.map(([key, url]) => new Promise(res => {
+    const img = new Image();
+    img.onload  = () => { loadedSprites[key] = img; res(); };
+    img.onerror = () => { res(); };
     img.src = url;
   })));
 }
@@ -1658,7 +1686,7 @@ function loop(ts){
   justDn.clear();
   requestAnimationFrame(loop);
 }
-loadSprites().then(()=>{ spritesReady=true; lastT=performance.now(); });
+Promise.all([loadSprites(), loadSkin(activeSkin)]).then(()=>{ spritesReady=true; lastT=performance.now(); });
 requestAnimationFrame(loop);
 </script>
 </body>
