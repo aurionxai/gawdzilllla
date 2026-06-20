@@ -1058,16 +1058,27 @@ function drawDraglet(x, y, dir, flash, stun){
 // ═══════════════════════════════════════════
 //  KAIJU SPRITES  (16-bit SNES style)
 // ═══════════════════════════════════════════
+// Physical growth: the kaiju visibly scales up with meta.growthStage
+// (Hatchling → Apex). Sprite is anchored at the feet so it grows upward.
+// Per-stage redesigned art (pink-frilled Lulah etc.) is a follow-on; this
+// reuses the existing animation frames at a stage-driven scale.
+const GROWTH_SCALE = [0.62, 0.78, 0.92, 1.12, 1.35];
+function _kaijuScale(){ return GROWTH_SCALE[(meta && meta.growthStage) || 0] || 1; }
+function _drawKaijuSprite(key, bx, by, dir){
+  const sz = 64 * _kaijuScale();
+  // (bx,by) is the original 64px top-left; keep the same bottom-center anchor.
+  _drawSprite(key, (bx + 32) - sz/2, (by + 64) - sz, sz, sz, dir, false);
+}
 function drawLulah(x, y, pl, tick){
   const invinc = (pl.invincMs||0)>0 && Math.floor(Date.now()/80)%2===0;
   if(invinc){ ctx.save(); ctx.globalAlpha=0.3; }
-  _drawSprite(_kaijuKey('lulah',pl,tick), x-10, y-4, 64, 64, pl.dir, false);
+  _drawKaijuSprite(_kaijuKey('lulah',pl,tick), x-10, y-4, pl.dir);
   if(invinc) ctx.restore();
 }
 function drawPoppy(x, y, pl, tick){
   const invinc = (pl.invincMs||0)>0 && Math.floor(Date.now()/80)%2===0;
   if(invinc){ ctx.save(); ctx.globalAlpha=0.3; }
-  _drawSprite(_kaijuKey('poppy',pl,tick), x-9, y-4, 64, 64, pl.dir, false);
+  _drawKaijuSprite(_kaijuKey('poppy',pl,tick), x-9, y-4, pl.dir);
   if(invinc) ctx.restore();
 }
 // ═══════════════════════════════════════════
