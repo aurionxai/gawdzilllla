@@ -470,28 +470,23 @@ function buildFromRows(rows){
 
 // World 1, Level 1 — a deep street -> rooftops -> sky climb (taller than the screen).
 // Vertical gaps between platforms are <= 3 tiles so the kaiju can jump them.
+// Tutorial level: a left->right traverse with gentle verticality. Win by reaching the
+// right edge (pl.x > (LW-3)*TS) or rescuing all 6 townsfolk. Enemies and citizens are
+// spaced >=6 tiles apart on each level so the crowd stays calm; rooftop citizens sit
+// above the street out of reach. Authored via a generator (kept here as the source of truth).
 const W1L1_ROWS = [
-  "                                  E     ",
-  "                              ===       ",
-  "                    o      C            ",
-  "                   ===        ===       ",
-  "              w                         ",
-  "         ===        ^^      o           ",
-  "   o   C       ===        ===           ",
-  "  ===              o                    ",
-  "            s            C       w      ",
-  "       ===     ===     ===      ===     ",
-  "   o                          o         ",
-  "  ===       x x      ===                ",
-  "        C        o          C     s     ",
-  "  ===  ===     ===   ^^    ===   ===     ",
-  "                                        ",
-  "   o   s    C    o    w    C    o    s   ",
-  "  ###     ###       ###        ###      ",
-  "              ^^^             o          ",
-  "P   o   C   s    o   C   w   o   C    o  ",
-  "########################################",
-  "########################################",
+  "                                                        ",
+  "                                                     E  ",
+  "                                                     o  ",
+  "                                                        ",
+  "                 o        C                             ",
+  "         C             ======         o       C         ",
+  "       =====             o            s     =====       ",
+  "               ====                 =====               ",
+  "         o          ##                  ##    o         ",
+  " P o  C  o  ^^  s o ##  C  o  w  ^^ o   ##  s   o C     ",
+  "########################################################",
+  "########################################################",
 ];
 const LEVEL_BUILDERS = {
   w1l1: () => buildFromRows(W1L1_ROWS),
@@ -881,10 +876,12 @@ function updateCitizens(dt, s){
     });
     if(c.saved || c.eaten) return;
 
-    // Run away from nearest active enemy
+    // Run away from the nearest active enemy that's on roughly the same level — an enemy
+    // far above/below (a rooftop vs the street) isn't a threat, so it shouldn't cause panic.
     let nearestDist = Infinity, nearestDx = 0;
     s.level.enemies.forEach(e=>{
       if(e.dead) return;
+      if(Math.abs(e.y - c.y) > 80) return;
       const dx = e.x - c.x;
       const d = Math.abs(dx);
       if(d < nearestDist){ nearestDist=d; nearestDx=dx; }
