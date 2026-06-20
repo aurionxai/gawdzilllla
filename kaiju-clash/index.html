@@ -61,13 +61,8 @@ const AC = new (window.AudioContext||window.webkitAudioContext)();
 //  SPRITES
 // ═══════════════════════════════════════════
 const SPRITES = {
-  // Hero frames (Lulah + Poppy) come from the active SKIN (see SKINS below), not here.
-  soldier_walk: 'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_183326_e71cfc32-2dde-4131-8be9-5b1fabb92707.png',
-  soldier_stun: 'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_183329_cf774ead-7742-48d2-b3a3-4779ebf4eedb.png',
-  tank_idle:    'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_183332_d2703d44-21a3-4db3-9472-376b776e34e9.png',
-  tank_stun:    'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_183335_acc63ce2-896d-4e1a-a418-f1c8e3acb6bb.png',
-  slime_walk:    'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_184425_6d7fcd34-92f8-4fa4-8a23-fe69c1a4453b.png',
-  draglet_walk:  'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_184428_4224be1a-d18a-4eb1-8aa1-101ef240b65a.png',
+  // Hero frames (Lulah + Poppy) come from the active SKIN; enemies come from the
+  // ENEMIES registry (loadEnemies). Neither is hardcoded here.
   citizen_run:   'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_184431_cbbcd9db-aa37-4c9f-9f3e-f63475d3e3a3.png',
   citizen_saved: 'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_184433_86336736-3fa6-4b09-b68f-1bf1a7cb92d6.png',
   // World backdrops (local, per Progression world): drawBg picks bg_w<N> by level id.
@@ -135,6 +130,32 @@ function loadSkin(id){
     img.src = url;
   })));
 }
+
+// ═══════════════════════════════════════════
+//  ENEMIES  (data-driven roster; sprites grow with the hero's growth stage)
+// ═══════════════════════════════════════════
+// w/h = base visual draw size (px) at growth scale 1; big = heavy class (slower,
+// worth more, bigger hp-bar); hp = spawn hit points; world = which world it belongs to.
+const ENEMIES = {
+  slime:    { file:'enemies/slime.png',     w:46, h:40, big:false, hp:40,  world:1 },
+  whelp:    { file:'enemies/whelp.png',     w:37, h:44, big:true,  hp:80,  world:1 },
+  tinbot:   { file:'enemies/tinbot.png',    w:31, h:44, big:false, hp:50,  world:1 },
+  neonbot:  { file:'enemies/neonbot.png',   w:53, h:32, big:false, hp:50,  world:2 },
+  ghoul:    { file:'enemies/ghoul.png',     w:33, h:44, big:false, hp:50,  world:2 },
+  jellymech:{ file:'enemies/jellymech.png', w:38, h:44, big:true,  hp:90,  world:3 },
+  lavaimp:  { file:'enemies/lavaimp.png',   w:28, h:44, big:false, hp:60,  world:4 },
+  golem:    { file:'enemies/golem.png',     w:47, h:42, big:true,  hp:120, world:4 },
+};
+function enemyBig(e){ const d=ENEMIES[e.type]; return !!(d && d.big); }
+function loadEnemies(){
+  return Promise.all(Object.entries(ENEMIES).map(([k,def]) => new Promise(res => {
+    const img = new Image();
+    img.onload  = () => { loadedSprites['en_'+k] = img; res(); };
+    img.onerror = () => { res(); };
+    img.src = def.file;
+  })));
+}
+
 function acResume(){ if(AC.state==='suspended') AC.resume(); }
 
 function sndChomp(){
@@ -350,13 +371,18 @@ function spawnFood(){
 
 function spawnEnemies(){
   const GY = 9*TS - 38;
+  // World 1 roster: slime, tin-bot, whelp. hp comes from the ENEMIES registry.
+  const mk = (x,y,dir,type,p0,p1) => ({
+    x, y, dir, type, hp:ENEMIES[type].hp, maxHp:ENEMIES[type].hp,
+    patrol:[p0,p1], stunMs:0, dead:false, flashMs:0,
+  });
   return [
-    {x:22*TS,y:GY,       dir:1, hp:40,maxHp:40, patrol:[18*TS,30*TS],stunMs:0,dead:false,flashMs:0,type:'slime'},
-    {x:44*TS,y:5*TS-38,  dir:-1,hp:40,maxHp:40, patrol:[40*TS,52*TS],stunMs:0,dead:false,flashMs:0,type:'slime'},
-    {x:62*TS,y:GY,       dir:1, hp:80,maxHp:80, patrol:[55*TS,70*TS],stunMs:0,dead:false,flashMs:0,type:'draglet'},
-    {x:76*TS,y:5*TS-38,  dir:-1,hp:40,maxHp:40, patrol:[72*TS,82*TS],stunMs:0,dead:false,flashMs:0,type:'slime'},
-    {x:88*TS,y:GY,       dir:1, hp:80,maxHp:80, patrol:[82*TS,96*TS],stunMs:0,dead:false,flashMs:0,type:'draglet'},
-    {x:103*TS,y:GY,      dir:-1,hp:40,maxHp:40, patrol:[98*TS,108*TS],stunMs:0,dead:false,flashMs:0,type:'slime'},
+    mk(22*TS,  GY,       1, 'slime',  18*TS, 30*TS),
+    mk(44*TS,  5*TS-38, -1, 'tinbot', 40*TS, 52*TS),
+    mk(62*TS,  GY,       1, 'whelp',  55*TS, 70*TS),
+    mk(76*TS,  5*TS-38, -1, 'slime',  72*TS, 82*TS),
+    mk(88*TS,  GY,       1, 'whelp',  82*TS, 96*TS),
+    mk(103*TS, GY,      -1, 'tinbot', 98*TS, 108*TS),
   ];
 }
 
@@ -539,7 +565,7 @@ function updatePlayer(dt, s){
          prevFeet <= eFeetTop+4 && pl.y+PH >= eFeetTop){
         e.stunMs = 2500;
         e.hp -= 25;
-        const stompScore = e.hp<=0 ? (e.type==='draglet'?300:100) : 25;
+        const stompScore = e.hp<=0 ? (enemyBig(e)?300:100) : 25;
         if(e.hp<=0){ e.dead=true; state.score+=stompScore; addShake(5,220); }
         else { addShake(3, 120); }
         pushNum(state, pl.x, pl.y, '-25', '#ff8844');
@@ -652,7 +678,7 @@ function doBite(s){
     if(Math.abs(ec - cx) < range){
       e.hp -= 20; e.stunMs = 700; e.flashMs = 250;
       pushNum(s, e.x, e.y-10, '-20', '#ffee44');
-      if(e.hp<=0){ e.dead=true; s.score+=e.type==='draglet'?200:80; addShake(4,150); }
+      if(e.hp<=0){ e.dead=true; s.score+=enemyBig(e)?200:80; addShake(4,150); }
       else addShake(2,80);
       hit = true;
       // Save adjacent citizen
@@ -679,12 +705,12 @@ function doFart(s){
   // Stun / kill enemies in radius — and rescue nearby citizens
   s.level.enemies.forEach(e=>{
     if(e.dead) return;
-    const ex = e.x + (e.type==='tank'?14:8);
-    const ey = e.y + (e.type==='tank'?9:19);
+    const ex = e.x + (enemyBig(e)?14:8);
+    const ey = e.y + (enemyBig(e)?9:19);
     const dx = ex - (pl.x+22), dy = ey - (pl.y+50);
     if(Math.sqrt(dx*dx+dy*dy) < radius){
       e.stunMs = [0,1500,3000,6000][size];
-      const bigEnemy = e.type==='tank'||e.type==='draglet';
+      const bigEnemy = enemyBig(e);
       const fartDmg = [0,15,30,99][size];
       if(size===3){ e.hp=0; e.dead=true; s.score+=bigEnemy?300:100; addShake(8,350); }
       else { e.hp -= fartDmg; if(e.hp<=0){ e.dead=true; s.score+=bigEnemy?300:100; addShake(5,200); } else addShake(3,120); }
@@ -717,7 +743,7 @@ function updateEnemies(dt, s){
     e.stunMs  = Math.max(0, e.stunMs-dt);
     if(e.stunMs > 0) return;  // stunned, don't move
 
-    const spd = (e.type==='tank'||e.type==='draglet') ? 0.5 : 0.9;
+    const spd = enemyBig(e) ? 0.5 : 0.9;
     // Face player direction & patrol
     e.x += spd * e.dir;
     if(e.x <= e.patrol[0]){ e.x=e.patrol[0]; e.dir=1; }
@@ -778,8 +804,8 @@ function updateCitizens(dt, s){
   });
 }
 
-function eW(e){ return (e.type==='tank'||e.type==='draglet')?36:20; }
-function eH(e){ return (e.type==='tank'||e.type==='draglet')?28:36; }
+function eW(e){ return enemyBig(e)?36:20; }
+function eH(e){ return enemyBig(e)?28:36; }
 
 function pushMsg(s, text, ms, clr, size){
   s.msgs.push({ text, timer:ms, maxTimer:ms, clr:clr||'#ffffff', size:size||'sm' });
@@ -916,14 +942,11 @@ function drawEnemies(s){
     const st=e.stunMs>0;
     const dir=e.dir;
 
-    if(e.type==='slime') drawSlime(ex, ey, dir, fl, st);
-    else if(e.type==='draglet') drawDraglet(ex, ey, dir, fl, st);
-    else if(e.type==='soldier') drawSoldier(ex, ey, dir, fl, st);
-    else drawTank(ex, ey, dir, fl, st);
+    drawEnemy(e, ex, ey, dir, fl, st);
 
     // HP bar
     if(e.hp<e.maxHp){
-      const bw=(e.type==='tank'||e.type==='draglet')?36:20;
+      const bw=enemyBig(e)?36:20;
       ctx.fillStyle='#1a0a0a'; ctx.fillRect(ex, ey-6, bw, 3);
       ctx.fillStyle=e.hp>e.maxHp*0.5?'#22cc22':'#cc4400';
       ctx.fillRect(ex, ey-6, Math.round(bw*e.hp/e.maxHp), 3);
@@ -932,7 +955,7 @@ function drawEnemies(s){
     // Stun stars
     if(st){
       ctx.font='10px serif'; ctx.textAlign='center';
-      const bx=ex+((e.type==='tank'||e.type==='draglet')?18:10);
+      const bx=ex+(enemyBig(e)?18:10);
       for(let i=0;i<3;i++){
         const a=Date.now()*0.005+i*2.1;
         ctx.fillText('⭐', bx+Math.cos(a)*10, ey-14+Math.sin(a)*4);
@@ -1063,25 +1086,22 @@ function _drawSprite(key, x, y, w, h, dir, flash){
   }
 }
 
-function drawSoldier(x, y, dir, flash, stun){
-  _drawSprite(stun?'soldier_stun':'soldier_walk', x-11, y-2, 36, 40, dir, flash);
-}
-function drawTank(x, y, dir, flash, stun){
-  _drawSprite(stun?'tank_stun':'tank_idle', x-4, y-20, 44, 32, dir, flash);
-}
-function drawSlime(x, y, dir, flash, stun){
-  // Flash orange when stunned, show sprite
-  _drawSprite('slime_walk', x-10, y-2, 38, 38, dir, flash);
+// Generic enemy draw: looks up the ENEMIES registry, scales with the hero's
+// growth stage (so enemies grow as the heroes grow), and anchors the sprite at
+// the feet (spawn ground line is 38px below e.y). x,y are screen coords.
+const ENEMY_FOOT = 38;
+function drawEnemy(e, x, y, dir, flash, stun){
+  const def = ENEMIES[e.type] || ENEMIES.slime;
+  const key = 'en_' + (ENEMIES[e.type] ? e.type : 'slime');
+  const sc  = _kaijuScale();                 // same growth curve as the heroes
+  const sw  = def.w * sc, sh = def.h * sc;
+  const cx  = x + (enemyBig(e) ? 18 : 10);    // horizontal centre over the hitbox
+  const dx  = cx - sw/2;
+  const dy  = (y + ENEMY_FOOT) - sh;          // feet planted on the ground line
+  _drawSprite(key, dx, dy, sw, sh, dir, flash);
   if(stun){
     ctx.save(); ctx.globalAlpha=0.55; ctx.fillStyle='#ffaa00';
-    ctx.fillRect(x-10, y-2, 38, 38); ctx.restore();
-  }
-}
-function drawDraglet(x, y, dir, flash, stun){
-  _drawSprite('draglet_walk', x-6, y-22, 46, 38, dir, flash);
-  if(stun){
-    ctx.save(); ctx.globalAlpha=0.55; ctx.fillStyle='#ffaa00';
-    ctx.fillRect(x-6, y-22, 46, 38); ctx.restore();
+    ctx.fillRect(dx, dy, sw, sh); ctx.restore();
   }
 }
 
@@ -1688,7 +1708,7 @@ function loop(ts){
   justDn.clear();
   requestAnimationFrame(loop);
 }
-Promise.all([loadSprites(), loadSkin(activeSkin)]).then(()=>{ spritesReady=true; lastT=performance.now(); });
+Promise.all([loadSprites(), loadSkin(activeSkin), loadEnemies()]).then(()=>{ spritesReady=true; lastT=performance.now(); });
 requestAnimationFrame(loop);
 </script>
 </body>
