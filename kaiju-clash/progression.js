@@ -43,4 +43,35 @@ Progression.stageForOrbs = function stageForOrbs(totalOrbs) {
   return idx;
 };
 
+const META_VERSION = 1;
+const RANK_ORDER = { C: 0, B: 1, A: 2, S: 3 };
+
+Progression.defaultMeta = function defaultMeta() {
+  return { version: META_VERSION, orbs: 0, growthStage: 0, levels: {} };
+};
+
+Progression.serializeMeta = function serializeMeta(meta) {
+  return JSON.stringify(meta);
+};
+
+Progression.deserializeMeta = function deserializeMeta(str) {
+  if (!str) return Progression.defaultMeta();
+  let parsed;
+  try { parsed = JSON.parse(str); } catch (e) { return Progression.defaultMeta(); }
+  if (!parsed || parsed.version !== META_VERSION) return Progression.defaultMeta();
+  return parsed;
+};
+
+Progression.applyResult = function applyResult(meta, { levelId, rank, citizensSaved, citizensTotal, sideQuestsDone }) {
+  const next = Progression.deserializeMeta(Progression.serializeMeta(meta)); // deep copy
+  next.orbs += Progression.orbsForResult({ rank, citizensSaved, sideQuestsDone });
+  const stars = Progression.starsForResult({ rank, citizensSaved, citizensTotal });
+  const prev = next.levels[levelId];
+  const bestStars = prev ? Math.max(prev.stars, stars) : stars;
+  const bestRank = prev && RANK_ORDER[prev.rank] >= RANK_ORDER[rank] ? prev.rank : rank;
+  next.levels[levelId] = { stars: bestStars, rank: bestRank, sideQuestsDone: sideQuestsDone };
+  next.growthStage = Progression.stageForOrbs(next.orbs);
+  return next;
+};
+
 if (typeof module !== 'undefined' && module.exports) module.exports = Progression;

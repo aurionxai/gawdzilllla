@@ -82,3 +82,49 @@ test('stageForOrbs maps orb totals to stage index', () => {
   assert.strictEqual(Progression.stageForOrbs(750), 3); // leviathan
   assert.strictEqual(Progression.stageForOrbs(99999), 4); // apex (capped)
 });
+
+test('defaultMeta shape', () => {
+  assert.deepStrictEqual(Progression.defaultMeta(),
+    { version: 1, orbs: 0, growthStage: 0, levels: {} });
+});
+
+test('serialize/deserialize round-trips', () => {
+  const m = Progression.defaultMeta();
+  m.orbs = 320;
+  const back = Progression.deserializeMeta(Progression.serializeMeta(m));
+  assert.strictEqual(back.orbs, 320);
+});
+
+test('deserializeMeta falls back to default on garbage', () => {
+  assert.deepStrictEqual(Progression.deserializeMeta('not json'), Progression.defaultMeta());
+  assert.deepStrictEqual(Progression.deserializeMeta(null), Progression.defaultMeta());
+  assert.deepStrictEqual(Progression.deserializeMeta('{"version":999}'), Progression.defaultMeta());
+});
+
+test('applyResult adds orbs, records level, recomputes growth stage', () => {
+  let m = Progression.defaultMeta();
+  m = Progression.applyResult(m, {
+    levelId: 'w1l1', rank: 'S', citizensSaved: 8, citizensTotal: 8, sideQuestsDone: 1,
+  });
+  // orbs = orbsForResult(S,8,1) = 160
+  assert.strictEqual(m.orbs, 160);
+  assert.strictEqual(m.growthStage, 1); // 160 >= 150
+  assert.strictEqual(m.levels['w1l1'].stars, 3);
+  assert.strictEqual(m.levels['w1l1'].rank, 'S');
+});
+
+test('applyResult keeps best stars on replay, still adds orbs', () => {
+  let m = Progression.defaultMeta();
+  m = Progression.applyResult(m, { levelId: 'w1l1', rank: 'A', citizensSaved: 8, citizensTotal: 8, sideQuestsDone: 0 });
+  const starsAfterFirst = m.levels['w1l1'].stars; // 3
+  m = Progression.applyResult(m, { levelId: 'w1l1', rank: 'C', citizensSaved: 1, citizensTotal: 8, sideQuestsDone: 0 });
+  assert.strictEqual(m.levels['w1l1'].stars, starsAfterFirst); // best kept (3 > 1)
+  assert.strictEqual(m.levels['w1l1'].rank, 'A'); // best kept
+});
+
+test('applyResult does not mutate the input meta', () => {
+  const m = Progression.defaultMeta();
+  Progression.applyResult(m, { levelId: 'w1l1', rank: 'C', citizensSaved: 0, citizensTotal: 8, sideQuestsDone: 0 });
+  assert.strictEqual(m.orbs, 0);
+  assert.deepStrictEqual(m.levels, {});
+});
