@@ -11,7 +11,7 @@
     const LH = rows.length;
     const LW = rows.reduce((m,r)=>Math.max(m,r.length), 0);
     const tiles = Array.from({length:LH}, ()=>new Array(LW).fill(T_AIR));
-    const spawns = { food:[], enemies:[], citizens:[], player:null, exit:null };
+    const spawns = { food:[], enemies:[], citizens:[], gems:[], player:null, exit:null };
     for(let r=0;r<LH;r++){
       for(let c=0;c<LW;c++){
         const ch = rows[r][c] || ' ';
@@ -20,6 +20,7 @@
         if(ch==='o') spawns.food.push({r,c});
         else if(ch in ENEMY) spawns.enemies.push({r,c,type:ENEMY[ch]});
         else if(ch==='C') spawns.citizens.push({r,c});
+        else if(ch==='g') spawns.gems.push({r,c});
         else if(ch==='P') spawns.player = {r,c};
         else if(ch==='E') spawns.exit = {r,c};
       }

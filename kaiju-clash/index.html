@@ -195,26 +195,44 @@ function sndChomp(){
   src.connect(gain); gain.connect(AC.destination); src.start();
 }
 
-function sndFart(size){ // 1=tiny 2=medium 3=mega
+let _noiseBuf = null;
+function _noiseBuffer(){
+  if(!_noiseBuf){
+    const n = Math.floor(AC.sampleRate * 2.5);
+    _noiseBuf = AC.createBuffer(1, n, AC.sampleRate);
+    const d = _noiseBuf.getChannelData(0);
+    for(let i=0;i<n;i++) d[i] = Math.random()*2 - 1;
+  }
+  return _noiseBuf;
+}
+function sndFart(size){ // 1=tiny 2=medium 3=mega — sputtery noise + brass-y pitch drop
   acResume();
-  const dur  = [0,0.35,0.9,2.2][size];
-  const sf   = [0,220,300,380][size];
-  const ef   = [0,70,55,40][size];
-  const osc  = AC.createOscillator();
-  const lfo  = AC.createOscillator();
-  const lfoG = AC.createGain();
-  const gain = AC.createGain();
-  osc.type='sawtooth';
-  osc.frequency.setValueAtTime(sf, AC.currentTime);
-  osc.frequency.exponentialRampToValueAtTime(ef, AC.currentTime+dur);
-  lfo.frequency.value = [0,14,9,5][size];
-  lfoG.gain.value = size*22;
-  lfo.connect(lfoG); lfoG.connect(osc.frequency);
-  gain.gain.setValueAtTime(0.55, AC.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, AC.currentTime+dur);
-  osc.connect(gain); gain.connect(AC.destination);
-  lfo.start(); osc.start();
-  lfo.stop(AC.currentTime+dur); osc.stop(AC.currentTime+dur);
+  const t0  = AC.currentTime;
+  const dur = [0,0.45,0.95,2.0][size];
+  // tonal "brass" body that glides down in pitch
+  const osc = AC.createOscillator(); osc.type='sawtooth';
+  osc.frequency.setValueAtTime([0,200,260,320][size], t0);
+  osc.frequency.exponentialRampToValueAtTime([0,55,46,36][size], t0+dur);
+  const oscG = AC.createGain(); oscG.gain.value = 0.5;
+  // square LFO chopping the amplitude -> the "pbpbpbpb" sputter
+  const lfo  = AC.createOscillator(); lfo.type='square'; lfo.frequency.value = [0,17,11,7][size];
+  const lfoG = AC.createGain(); lfoG.gain.value = 0.5;
+  lfo.connect(lfoG); lfoG.connect(oscG.gain);
+  // airy noise "splat" through a closing lowpass
+  const src = AC.createBufferSource(); src.buffer = _noiseBuffer(); src.loop = true;
+  const lp  = AC.createBiquadFilter(); lp.type='lowpass';
+  lp.frequency.setValueAtTime(1000, t0); lp.frequency.exponentialRampToValueAtTime(160, t0+dur);
+  const nG  = AC.createGain(); nG.gain.value = 0.45;
+  // master envelope (quick attack, long blubbery tail)
+  const master = AC.createGain();
+  master.gain.setValueAtTime(0.0001, t0);
+  master.gain.exponentialRampToValueAtTime(0.55, t0+0.03);
+  master.gain.exponentialRampToValueAtTime(0.001, t0+dur);
+  osc.connect(oscG); oscG.connect(master);
+  src.connect(lp);   lp.connect(nG); nG.connect(master);
+  master.connect(AC.destination);
+  lfo.start(t0); osc.start(t0); src.start(t0);
+  lfo.stop(t0+dur); osc.stop(t0+dur); src.stop(t0+dur);
 }
 
 function sndJump(){
@@ -460,11 +478,14 @@ function buildFromRows(rows){
     x: s.c*TS, y: surfaceTop(s.c, s.r) - 22, dir: i%2?1:-1, clr:'#ffd8a8', npc: NPC_TYPES[i % NPC_TYPES.length],
     saved:false, eaten:false, eatenTimer:0, savedTimer:0, particles:[],
   }));
+  const gems = (p.spawns.gems||[]).map((s,i)=>({
+    x: s.c*TS + TS/2, y: s.r*TS + TS/2, hidden:true, collected:false, revealMs:0, bob:i*0.7,
+  }));
   const ps = p.spawns.player || { r:7, c:2 };
   // Rest the player's 66px box ON the surface below its spawn char, not embedded in
   // the floor — otherwise resolveX reads the buried floor tile as a wall and marches
   // the player a tile/frame to the exit (the level "plays itself").
-  return { tiles:p.tiles, food, enemies, citizens,
+  return { tiles:p.tiles, food, enemies, citizens, gems,
            playerSpawn:{ x:ps.c*TS, y: surfaceTop(ps.c, ps.r) - 66 }, exit:p.spawns.exit, LW:p.LW, LH:p.LH };
 }
 
@@ -479,14 +500,14 @@ const W1L1_ROWS = [
   "                                                                     E  ",
   "                                                                     o  ",
   "                                                                        ",
-  "                                                                        ",
+  "                                            g                           ",
   "                                            Co                          ",
   "                                          =====                         ",
   "                                     Co                                 ",
-  "                                    ====          so                    ",
+  "                                    ====          so   g                ",
   "                               Co                ====                   ",
   "                              ====                                      ",
-  "                         Co                                             ",
+  "         g               Co                                             ",
   "                        ====                                    ##      ",
   " P  o  C o   s  s  s o           w                   Co  ^^ os  ##w o   ",
   "########################################################################",
@@ -537,6 +558,7 @@ function mkState(charKey, levelId){
     score:    0,
     savedCitizens: 0,
     lostCitizens:  0,
+    gemsCollected: 0,
     hitsTaken: 0,
     startTick: 0,
     msgs:     [],
@@ -739,6 +761,24 @@ function resolveY(pl, tiles, PW, PH){
 // ═══════════════════════════════════════════
 //  FOOD / FART SYSTEM
 // ═══════════════════════════════════════════
+// Hidden gems — the per-round collectible that isn't food. Invisible until a fart
+// reveals them (doFart flips g.hidden), then collected by touch like food.
+function updateGems(dt, s){
+  const pl = s.player, PW=44, PH=66;
+  const gems = s.level.gems || [];
+  gems.forEach(g=>{
+    if(g.revealMs>0) g.revealMs = Math.max(0, g.revealMs - dt);
+    if(g.collected || g.hidden) return;
+    if(pl.x < g.x+18 && pl.x+PW > g.x-18 && pl.y < g.y+18 && pl.y+PH > g.y-18){
+      g.collected = true; s.gemsCollected++;
+      s.score += 250; sndGiggle();
+      pushNum(s, g.x, g.y-12, '💎 +250', '#5ad6ff');
+      const total = gems.length;
+      if(s.gemsCollected >= total) pushMsg(s, '💎 ALL GEMS FOUND!', 1800, '#5ad6ff', 'lg');
+      else pushMsg(s, '💎 HIDDEN GEM! '+s.gemsCollected+'/'+total, 1100, '#5ad6ff', 'md');
+    }
+  });
+}
 function updateFood(dt, s){
   const pl = s.player;
   const PW=44, PH=66;
@@ -807,10 +847,20 @@ function doFart(s){
   pl.fartAnim = [0,500,1000,2500][size];
   const saying = FART_SAYINGS[Math.floor(Math.random()*FART_SAYINGS.length)];
   pushMsg(s, saying, [0,1200,1800,3000][size], ['','#88ffaa','#44ff88','#00ff66'][size], 'lg');
-  sndFart(size); sndGiggle();
+  sndFart(size);
+  // The little kaiju giggles on a full-power fart; grown-up stages just let it rip.
+  if(size===3 && (((meta&&meta.growthStage)||0)===0)) sndGiggle();
 
   const radius = [0,80,160,260][size];
   s.fartCloud = { x:pl.x+22, y:pl.y+50, r:0, maxR:radius, size, timer:[0,600,1100,2600][size] };
+
+  // Fart reveals nearby HIDDEN gems (the collectible that isn't food)
+  const fcx = pl.x+22, fcy = pl.y+50;
+  (s.level.gems||[]).forEach(g=>{
+    if(g.collected || !g.hidden) return;
+    const dx=g.x-fcx, dy=g.y-fcy;
+    if(Math.sqrt(dx*dx+dy*dy) < radius+24){ g.hidden=false; g.revealMs=600; pushNum(s, g.x, g.y-14, '✨', '#ffe14d'); }
+  });
 
   // Stun / kill enemies in radius — and rescue nearby citizens
   s.level.enemies.forEach(e=>{
@@ -1028,6 +1078,27 @@ function drawTiles(s){
 // ═══════════════════════════════════════════
 //  FOOD DRAWING
 // ═══════════════════════════════════════════
+function drawGems(s){
+  const cam = s.cam, t = Date.now()*0.004;
+  (s.level.gems||[]).forEach(g=>{
+    if(g.collected) return;
+    const gx=~~(g.x-cam.x), gy=~~(g.y-cam.y+Math.sin(t+g.bob)*3);
+    ctx.textAlign='center';
+    if(g.hidden){
+      // faint shimmer hint — barely-there sparkle so players know to fart here
+      const a = 0.10 + 0.08*Math.abs(Math.sin(t*0.7+g.bob));
+      ctx.globalAlpha=a; ctx.font='12px serif'; ctx.fillText('✨', gx, gy);
+      ctx.globalAlpha=1;
+    } else {
+      // revealed gem: glow ring + bright gem, extra pop right after reveal
+      const pop = g.revealMs>0 ? 1.4 : 1;
+      ctx.fillStyle='rgba(90,214,255,0.25)';
+      ctx.beginPath(); ctx.arc(gx, gy, (12+Math.sin(t*2+g.bob)*2)*pop, 0, Math.PI*2); ctx.fill();
+      ctx.font=Math.round(22*pop)+'px serif'; ctx.fillText('💎', gx, gy+8);
+    }
+    ctx.textAlign='left';
+  });
+}
 function drawFood(s){
   const t = Date.now()*0.003;
   const cam = s.cam;
@@ -1368,12 +1439,18 @@ function drawHUD(s){
   ctx.font='bold 8px monospace';
   ctx.fillStyle='#22ffaa';
   ctx.fillText('👥 SAVED: '+saved+'/'+total, VW-6, 12);
+  let yrow = 24;
   if(lost>0){
     ctx.fillStyle='#ff4444';
-    ctx.fillText('💀 LOST: '+lost+'/3', VW-6, 24);
+    ctx.fillText('💀 LOST: '+lost+'/3', VW-6, yrow); yrow+=12;
+  }
+  const gemTotal = (s.level.gems||[]).length;
+  if(gemTotal>0){
+    ctx.fillStyle='#5ad6ff';
+    ctx.fillText('💎 GEMS: '+s.gemsCollected+'/'+gemTotal+' (fart to find!)', VW-6, yrow); yrow+=12;
   }
   // Score
-  ctx.fillStyle='#ffdd44'; ctx.fillText('★ '+s.score, VW-6, lost>0?36:24);
+  ctx.fillStyle='#ffdd44'; ctx.fillText('★ '+s.score, VW-6, yrow);
   ctx.textAlign='left';
 
   // ── Stomp hint (first time only) ──
@@ -1639,6 +1716,7 @@ function update(dt){
 
   updatePlayer(dt, s);
   updateFood(dt, s);
+  updateGems(dt, s);
   updateFartCloud(dt, s);
   updateEnemies(dt, s);
   updateCitizens(dt, s);
@@ -1699,6 +1777,7 @@ function render(){
     drawBg(s.cam);
     drawTiles(s);
     drawFood(s);
+    drawGems(s);
     drawCitizens(s);
     drawFartCloud(s);
     drawEnemies(s);
