@@ -89,6 +89,8 @@ const SPRITES = {
   draglet_walk:  'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_184428_4224be1a-d18a-4eb1-8aa1-101ef240b65a.png',
   citizen_run:   'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_184431_cbbcd9db-aa37-4c9f-9f3e-f63475d3e3a3.png',
   citizen_saved: 'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_184433_86336736-3fa6-4b09-b68f-1bf1a7cb92d6.png',
+  // World backdrops (local, per Progression world). World 1 = Tokyo Day.
+  bg_w1:         'bg/world1.jpg',
 };
 const loadedSprites = {};
 let _spriteCount = 0, _spriteDone = 0;
@@ -760,205 +762,28 @@ function pushNum(s, x, y, text, clr){
 //  BACKGROUND DRAWING
 // ═══════════════════════════════════════════
 function drawBg(cam){
-  const t = Date.now();
+  // ── Image backdrop (per world). Falls back to a flat day sky until the image loads. ──
+  // World is derived from the active level id (w<N>l<M>); only World 1 art exists for now.
+  const world = (state && state.levelId) ? state.levelId.charAt(1) : '1';
+  const bgImg = loadedSprites['bg_w' + world];
+  if(bgImg){
+    const pf = 0.35;                       // parallax: backdrop drifts slower than camera
+    let ox = (cam.x * pf) % VW;
+    if(ox < 0) ox += VW;
+    ctx.drawImage(bgImg, -ox, 0, VW, VH);
+    ctx.drawImage(bgImg, VW - ox, 0, VW, VH);
+    // Soft scrim near the ground so foreground sprites stay readable over bright art.
+    const scrim = ctx.createLinearGradient(0, VH - 90, 0, VH);
+    scrim.addColorStop(0, 'rgba(8,10,24,0)');
+    scrim.addColorStop(1, 'rgba(8,10,24,0.34)');
+    ctx.fillStyle = scrim; ctx.fillRect(0, VH - 90, VW, 90);
+    return;
+  }
 
-  // ── Sky ──
+  // ── Loading fallback: flat day sky (only until the world backdrop image loads) ──
   const sky = ctx.createLinearGradient(0,0,0,VH);
-  sky.addColorStop(0,'#010508'); sky.addColorStop(0.5,'#060d1a'); sky.addColorStop(0.85,'#0a1530'); sky.addColorStop(1,'#1a1038');
+  sky.addColorStop(0,'#7ec8f0'); sky.addColorStop(1,'#cfeaff');
   ctx.fillStyle=sky; ctx.fillRect(0,0,VW,VH);
-
-  // ── Stars ──
-  ctx.fillStyle='rgba(255,255,255,0.85)';
-  [[30,10],[90,7],[155,18],[240,5],[320,14],[410,8],[500,20],[580,11],[640,6],
-   [50,22],[180,4],[290,16],[450,3],[530,25],[70,30],[200,12],[380,28]].forEach(([x,y])=>{
-    ctx.fillRect(~~(((x-cam.x*0.03)%760+760)%760), y, 1, 1);
-  });
-  ctx.fillStyle='rgba(255,255,200,0.5)';
-  [[120,14],[350,9],[480,19],[600,7]].forEach(([x,y])=>{
-    ctx.fillRect(~~(((x-cam.x*0.03)%760+760)%760), y, 2, 2);
-  });
-
-  // ── Moon ──
-  const mx = ~~(((500-cam.x*0.03)%900+900)%900);
-  ctx.fillStyle='rgba(255,240,200,0.12)';
-  ctx.beginPath(); ctx.arc(mx, 30, 26, 0, Math.PI*2); ctx.fill();
-  ctx.fillStyle='rgba(255,240,180,0.85)';
-  ctx.beginPath(); ctx.arc(mx, 30, 16, 0, Math.PI*2); ctx.fill();
-  // Moon craters
-  ctx.fillStyle='rgba(200,180,120,0.3)';
-  ctx.beginPath(); ctx.arc(mx+5, 28, 4, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc(mx-4, 33, 2.5, 0, Math.PI*2); ctx.fill();
-
-  // ── Mt Fuji (very far, parallax 0.03x) ──
-  const fjx = ~~(((160 - cam.x*0.03)%1400+1400)%1400);
-  ctx.fillStyle='#0e0820';
-  ctx.beginPath(); ctx.moveTo(fjx-70,VH-40); ctx.lineTo(fjx,VH-145); ctx.lineTo(fjx+70,VH-40); ctx.fill();
-  // Snow cap
-  ctx.fillStyle='rgba(220,230,255,0.35)';
-  ctx.beginPath(); ctx.moveTo(fjx-18,VH-112); ctx.lineTo(fjx,VH-145); ctx.lineTo(fjx+18,VH-112); ctx.lineTo(fjx+8,VH-108); ctx.lineTo(fjx-8,VH-108); ctx.fill();
-
-  // ── Tokyo Tower (parallax 0.07x) ──
-  const ttx = ~~(((440-cam.x*0.07)%1600+1600)%1600);
-  ctx.fillStyle='#160828';
-  ctx.beginPath();
-  ctx.moveTo(ttx,VH-18); ctx.lineTo(ttx-20,VH-95); ctx.lineTo(ttx-7,VH-95);
-  ctx.lineTo(ttx-5,VH-160); ctx.lineTo(ttx,VH-210); ctx.lineTo(ttx+5,VH-160);
-  ctx.lineTo(ttx+7,VH-95); ctx.lineTo(ttx+20,VH-95); ctx.fill();
-  // Platform
-  ctx.fillRect(ttx-10, VH-96, 20, 4);
-  // Beacon (blinking)
-  ctx.fillStyle=`rgba(255,80,60,${0.5+Math.sin(t*0.003)*0.5})`;
-  ctx.fillRect(ttx-1, VH-215, 2, 8);
-  // Tower struts
-  ctx.strokeStyle='rgba(50,20,80,0.8)'; ctx.lineWidth=1;
-  for(let i=0;i<5;i++){
-    const py = VH-30-i*16;
-    ctx.beginPath(); ctx.moveTo(ttx-20+i*3,py); ctx.lineTo(ttx+20-i*3,py); ctx.stroke();
-  }
-
-  // ── Far buildings (parallax 0.09x) ──
-  bgLayer(cam.x*0.09, '#0c0c22', '#11082a', 55, 40, 0.04);
-
-  // ── Mid buildings (parallax 0.20x) ──
-  bgLayer(cam.x*0.20, '#07101c', '#090e20', 85, 56, 0.06);
-
-  // ── Bullet train (Shinkansen) mid-layer (parallax 0.20x) ──
-  const trainPx = (cam.x*0.20);
-  const trainW = 200, trainH = 18;
-  const rawTX = ((t * 0.18) % (VW + trainW + 200));
-  const trainX = ~~(rawTX - (trainPx % (VW + trainW + 200)));
-  const trainY = VH - 105;
-  if(trainX > -trainW && trainX < VW+20){
-    // Track
-    ctx.fillStyle='#1a1a2e'; ctx.fillRect(trainX-4, trainY+trainH-2, trainW+20, 4);
-    // Train body
-    const tg = ctx.createLinearGradient(0,trainY,0,trainY+trainH);
-    tg.addColorStop(0,'#d0e8ff'); tg.addColorStop(1,'#8bbbd4');
-    ctx.fillStyle=tg; ctx.fillRect(trainX, trainY, trainW, trainH);
-    // Blue stripe
-    ctx.fillStyle='#1155cc'; ctx.fillRect(trainX, trainY+6, trainW, 4);
-    // Windows
-    ctx.fillStyle='rgba(180,220,255,0.7)';
-    for(let wi=0;wi<8;wi++) ctx.fillRect(trainX+10+wi*24, trainY+2, 14, 8);
-    // Nose
-    ctx.fillStyle='#c0d8f0';
-    ctx.beginPath(); ctx.moveTo(trainX,trainY); ctx.lineTo(trainX-18,trainY+trainH/2); ctx.lineTo(trainX,trainY+trainH); ctx.fill();
-    // Motion blur streaks
-    ctx.fillStyle='rgba(200,230,255,0.12)';
-    for(let s2=1;s2<=4;s2++) ctx.fillRect(trainX-s2*22, trainY+2, 16, trainH-4);
-  }
-
-  // ── Neon close buildings (parallax 0.36x) ──
-  bgLayerNeon(cam.x*0.36, 115, 70);
-
-  // ── Helicopter (parallax 0.50x) ──
-  const hxRaw = ((t * 0.04) % (VW + 120));
-  const hx = ~~(hxRaw - (cam.x*0.5 % (VW+120)));
-  const hy = 55 + Math.sin(t*0.0008)*12;
-  if(hx > -60 && hx < VW+60){
-    // Body
-    ctx.fillStyle='#222244'; ctx.fillRect(hx-14, hy, 28, 12);
-    ctx.fillStyle='#333366'; ctx.fillRect(hx-10, hy-5, 20, 7);
-    // Cockpit glass
-    ctx.fillStyle='rgba(100,180,255,0.4)'; ctx.fillRect(hx-9, hy+1, 14, 8);
-    // Rotor (spinning)
-    const ra = (t * 0.02) % (Math.PI*2);
-    ctx.strokeStyle='rgba(180,180,200,0.7)'; ctx.lineWidth=1.5;
-    ctx.beginPath();
-    ctx.moveTo(hx+Math.cos(ra)*22, hy-5+Math.sin(ra)*4);
-    ctx.lineTo(hx-Math.cos(ra)*22, hy-5-Math.sin(ra)*4);
-    ctx.stroke();
-    // Tail rotor
-    ctx.beginPath(); ctx.moveTo(hx+15, hy+Math.cos(ra)*5); ctx.lineTo(hx+15, hy+12-Math.cos(ra)*5); ctx.stroke();
-    // Tail boom
-    ctx.fillStyle='#222244'; ctx.fillRect(hx+14, hy+4, 16, 4);
-    // Searchlight beam
-    ctx.save();
-    const slg = ctx.createLinearGradient(hx, hy+12, hx+8, hy+80);
-    slg.addColorStop(0,'rgba(255,255,200,0.25)'); slg.addColorStop(1,'rgba(255,255,180,0)');
-    ctx.fillStyle=slg;
-    ctx.beginPath(); ctx.moveTo(hx-4,hy+12); ctx.lineTo(hx+18,hy+80); ctx.lineTo(hx-2,hy+80); ctx.closePath(); ctx.fill();
-    ctx.restore();
-    // Blinking light
-    ctx.fillStyle=`rgba(255,50,50,${0.4+Math.sin(t*0.005)*0.6})`;
-    ctx.fillRect(hx-14, hy+4, 3, 3);
-    // "NEWS" text
-    ctx.fillStyle='rgba(255,220,60,0.8)'; ctx.font='3px monospace'; ctx.textAlign='center';
-    ctx.fillText('NEWS 7', hx, hy+7); ctx.textAlign='left';
-  }
-
-  // ── Street level: sidewalk + detail ──
-  const GY = VH - 52;  // approximate visual ground line in bg
-  // Sidewalk slab
-  ctx.fillStyle='#0d1520'; ctx.fillRect(0, GY+8, VW, VH-GY-8);
-  // Crosswalk stripes
-  const cwOff = ~~(cam.x*0.70);
-  for(let i=0;i<4;i++){
-    const stripeX = ~~(((220 + i*14 - cwOff)%(VW+60)+VW+60)%VW+0);
-    ctx.fillStyle='rgba(255,255,255,0.07)'; ctx.fillRect(stripeX, GY+8, 9, 18);
-  }
-  // Lampposts (parallax 0.65x)
-  [80,240,420,590].forEach(px=>{
-    const lx = ~~(((px - cam.x*0.65)%(VW+100)+VW+100)%(VW+100));
-    ctx.fillStyle='#202840'; ctx.fillRect(lx-1, GY-28, 3, 36);
-    ctx.fillStyle='#303c50'; ctx.fillRect(lx-5, GY-30, 10, 4);
-    ctx.fillStyle=`rgba(255,220,120,${0.3+Math.sin(t*0.002+px)*0.1})`;
-    ctx.beginPath(); ctx.arc(lx, GY-28, 5, 0, Math.PI*2); ctx.fill();
-  });
-  // Vending machines (parallax 0.68x)
-  [140,380,640].forEach(px=>{
-    const vx = ~~(((px - cam.x*0.68)%(VW+120)+VW+120)%(VW+120));
-    ctx.fillStyle='#cc2233'; ctx.fillRect(vx, GY-22, 12, 22);
-    ctx.fillStyle='rgba(255,255,255,0.2)'; ctx.fillRect(vx+1, GY-20, 10, 10);
-    ctx.fillStyle='rgba(200,50,50,0.5)'; ctx.fillRect(vx+2, GY-8, 8, 4);
-  });
-  // Cars (parallax 0.72x)
-  [60,320,520,750].forEach((px,ci)=>{
-    const carX = ~~(((px + t*(ci%2===0?0.05:-0.03) - cam.x*0.72)%(VW+160)+VW+160)%(VW+160) - 40);
-    const carClrs = ['#cc2200','#0044cc','#226600','#886600'];
-    ctx.fillStyle=carClrs[ci]; ctx.fillRect(carX, GY-8, 38, 10);
-    ctx.fillStyle='rgba(150,200,255,0.4)'; ctx.fillRect(carX+4, GY-12, 14, 6);
-    ctx.fillStyle='#111'; ctx.fillRect(carX+2, GY+2, 8, 5); ctx.fillRect(carX+26, GY+2, 8, 5);
-    // Headlights
-    ctx.fillStyle='rgba(255,240,150,0.8)';
-    ctx.fillRect(ci%2===0?carX+34:carX, GY-5, 3, 3);
-  });
-  // Fleeing crowd silhouettes (parallax 0.78x)
-  [100,190,290,440,560,680].forEach((px,ci)=>{
-    const rx = ~~(((px + t*(0.02+ci*0.005) - cam.x*0.78)%(VW+200)+VW+200)%(VW+200) - 10);
-    const bob2 = Math.sin(t*0.015+ci)*2;
-    ctx.fillStyle='rgba(30,15,50,0.7)';
-    // Body
-    ctx.fillRect(rx, GY-16+bob2, 5, 12);
-    // Head
-    ctx.beginPath(); ctx.arc(rx+2.5, GY-18+bob2, 3, 0, Math.PI*2); ctx.fill();
-    // Running legs
-    const lp = Math.sin(t*0.025+ci*1.2);
-    ctx.fillRect(rx+1+lp, GY-4+bob2, 2, 6);
-    ctx.fillRect(rx+2-lp, GY-4+bob2, 2, 6);
-  });
-
-  // ── Fire/explosions on some buildings ──
-  [180, 450, 720].forEach((px, fi)=>{
-    const fx = ~~(((px - cam.x*0.36)%(VW+200)+VW+200)%(VW+200));
-    const fSz = 8 + Math.sin(t*0.004+fi*2)*4;
-    const fAlpha = 0.6 + Math.sin(t*0.008+fi)*0.3;
-    ctx.fillStyle=`rgba(255,${60+Math.sin(t*0.01+fi)*40},0,${fAlpha*0.8})`;
-    ctx.beginPath(); ctx.arc(fx, VH-118+fi*3, fSz, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle=`rgba(255,180,0,${fAlpha*0.6})`;
-    ctx.beginPath(); ctx.arc(fx, VH-122+fi*3, fSz*0.6, 0, Math.PI*2); ctx.fill();
-    // Smoke
-    ctx.fillStyle=`rgba(30,20,40,${0.3+Math.sin(t*0.003+fi)*0.1})`;
-    for(let si=0;si<3;si++){
-      ctx.beginPath();
-      ctx.arc(fx+(si-1)*5, VH-128-si*12+fi*3+Math.sin(t*0.002+fi+si)*3, 6+si*2, 0, Math.PI*2); ctx.fill();
-    }
-  });
-
-  // ── City glow ──
-  const glow = ctx.createLinearGradient(0, VH-80, 0, VH-10);
-  glow.addColorStop(0,'rgba(60,30,120,0)'); glow.addColorStop(1,'rgba(100,40,180,0.22)');
-  ctx.fillStyle=glow; ctx.fillRect(0, VH-80, VW, 80);
 }
 
 function bgLayer(offset, bldClr, roofClr, maxH, maxW, winAlpha){
@@ -976,59 +801,6 @@ function bgLayer(offset, bldClr, roofClr, maxH, maxW, winAlpha){
     }
   });
 }
-
-function bgLayerNeon(offset, maxH, maxW){
-  const bldgs=[
-    {bx:0,  w:72, h:95,  neon:'#ff2266', sign:'BAR'},
-    {bx:80, w:55, h:80,  neon:'#22aaff', sign:'ホテル'},
-    {bx:148,w:80, h:115, neon:'#ff8800', sign:'RAMEN'},
-    {bx:242,w:60, h:70,  neon:'#aa22ff', sign:'カラオケ'},
-    {bx:315,w:75, h:100, neon:'#22ffcc', sign:'SUSHI'},
-    {bx:405,w:65, h:85,  neon:'#ff4488', sign:'LOVE'},
-    {bx:480,w:78, h:108, neon:'#ffdd00', sign:'東京'},
-    {bx:568,w:55, h:75,  neon:'#00ccff', sign:'CLUB'},
-    {bx:632,w:70, h:92,  neon:'#ff6600', sign:'ラーメン'},
-    {bx:714,w:62, h:82,  neon:'#ee22ff', sign:'HOTEL'},
-    {bx:788,w:76, h:110, neon:'#22ff88', sign:'KAIJU'},
-  ];
-  bldgs.forEach(({bx,w,h,neon,sign})=>{
-    const wx = ~~(((bx-offset)%(VW+maxW)+VW+maxW)%(VW+maxW)-maxW);
-    // Building
-    ctx.fillStyle='#060d1c'; ctx.fillRect(wx, VH-h, w, h);
-    // Windows grid
-    ctx.fillStyle='rgba(255,220,130,0.10)';
-    const cols=Math.floor(w/10), rows=Math.floor((h-14)/12);
-    for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
-      if((r*3+c*7+bx)%4!==0) ctx.fillRect(wx+2+c*9, VH-h+5+r*11, 5, 7);
-    }
-    // Neon sign
-    const t=Date.now()*0.002;
-    const flicker = 0.7 + Math.sin(t*(bx%7+2))*0.3;
-    ctx.fillStyle=neon+Math.round(flicker*0xcc).toString(16).padStart(2,'0');
-    ctx.shadowColor=neon; ctx.shadowBlur=8*flicker;
-    ctx.font=`bold 5px monospace`; ctx.textAlign='center';
-    ctx.fillText(sign, wx+w/2, VH-h+14);
-    ctx.shadowBlur=0; ctx.textAlign='left';
-    // Roofline
-    ctx.fillStyle=neon+'44'; ctx.fillRect(wx, VH-h, w, 2);
-    // Billboard screen on some buildings
-    if(bx===480 || bx===242){
-      const t2=Date.now()*0.001;
-      const scrW=w-4, scrH=22, scrY=VH-h+18;
-      ctx.fillStyle='#000'; ctx.fillRect(wx+2, scrY, scrW, scrH);
-      // Scrolling text
-      const scrTxt = bx===480 ? '渋谷  SHIBUYA  ★  秋葉原  AKIHABARA  ★  新宿  SHINJUKU  ★' : 'KAIJU ALERT ⚠  EVACUATE NOW  ⚠  KAIJU ALERT';
-      const scrOff = (t2 * 40) % (scrTxt.length * 5);
-      ctx.fillStyle=bx===480?'#ff2200':'#ffdd00';
-      ctx.font='4px monospace'; ctx.textAlign='left';
-      ctx.save(); ctx.rect(wx+2, scrY, scrW, scrH); ctx.clip();
-      ctx.fillText(scrTxt, wx+2-scrOff, scrY+14);
-      ctx.fillText(scrTxt, wx+2-scrOff+scrTxt.length*5, scrY+14);
-      ctx.restore();
-    }
-  });
-}
-
 // ═══════════════════════════════════════════
 //  TILE DRAWING
 // ═══════════════════════════════════════════
