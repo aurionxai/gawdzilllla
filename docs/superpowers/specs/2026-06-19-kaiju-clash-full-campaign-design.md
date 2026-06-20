@@ -84,6 +84,7 @@ The finale. Mechanic: **vertical climb**.
   "saved all citizens" star. Replay hooks.
 - **Character unlock:** finishing the campaign unlocks a 3rd playable kaiju.
 - **Growth spine:** see §4a — the kaiju physically grows as quests are completed.
+- **Living NPCs + hub town:** see §4c — rescued citizens run shops and carry story arcs.
 - **Two endings:** the final boss is always beatable; reaching full **Apex** form
   unlocks a special "true ending" cutscene (see §4a).
 
@@ -120,7 +121,33 @@ world; side quests / collectibles award the **surplus** needed to reach full Ape
   Mario star-coin style.
 - **Optional mini-challenge** — e.g. "save all citizens without taking a hit," or a time goal.
 
-## 4c. Easter eggs (the delight layer)
+## 4c. NPCs — recurring characters with shops + stories
+
+The 8 named citizens stop being one-time rescues. Once rescued, each appears in the
+**hub town** running a **service**, and each carries a **small story arc** across the
+campaign. The hub visibly fills as you save more NPCs — a "look what I built" payoff.
+
+| NPC | Store / service | Story purpose |
+|---|---|---|
+| 👨‍🍳 **Chef** | Food stand — snacks that refill fart-charge / heal | Rebuilds his stomped ramen shop as you progress |
+| 🧓 **Obāchan** | Wisdom hut — sells hints, marks hidden orbs on map | Wise quest-giver; seeds the Rival Kaiju lore |
+| 🤓 **Otaku** | Gadget shop — easter-egg intel, secret-room maps | Knows everything; unlocks the Konami secret |
+| 🎤 **Idol** | Cheer stage — temporary buffs (speed, charge) | Fan-base grows as you save more citizens |
+| 📸 **Tourist** | — | "Collect-the-photos" side quest spanning all worlds |
+| 🤼 **Sumo** | Dojo — strength trial mini-game for big orb rewards | Trains you toward the next growth stage |
+| 💼 **Salaryman** | Bank — safely stores/banks Spirit Orbs | Overworked everyman comic relief |
+| 🎒 **Schoolgirl** | — | Lost-pet rescue chain; befriends the hidden whale |
+
+**Hub town:** an overworld base, unlocked after World 1, that the rescued NPCs populate.
+Revisitable between levels to shop, bank orbs, train, and advance NPC story beats.
+
+### Two economies (kept separate so shops never gate progression)
+
+- **Spirit Orbs** → growth / the Apex spine (§4a). The important currency.
+- **Yen / coins** → dropped by enemies and destruction; spent at NPC shops on
+  **consumables, buffs, hints, cosmetics**. Always optional, never required to finish.
+
+## 4d. Easter eggs (the delight layer)
 
 - **Gregg cameo** — the existing Gregg / soldier character hidden as a secret rescue.
 - **Secret room** behind a destructible wall in each world (dev-room nod + orb cache).
@@ -156,8 +183,9 @@ Each world needs a distinct skyline silhouette and one signature backdrop "hero"
 1. **Progression spine first** — world/level select + level loader + win/rank screen +
    **Spirit Orb count and growth-stage state**, so levels are data-driven and the campaign
    (including growth) has a skeleton.
-2. **World 1 (4 levels + Riot Mecha boss + Hatchling→Juvenile growth + first side quests)**
-   — proves the per-world rhythm *and* the growth/side-quest loop end to end.
+2. **World 1 (4 levels + Riot Mecha boss + Hatchling→Juvenile growth + first side quests +
+   hub town with first 2 rescued NPC shops)** — proves the per-world rhythm *and* the
+   growth / side-quest / NPC-economy loops end to end.
 3. **World 2 — Neon Shibuya** (light/dark mechanic).
 4. **World 3 — Sunken City** (swim physics — the centerpiece; biggest new-mechanic risk).
 5. **World 4 — Volcano Skyline** (vertical climb + final boss + ending).
