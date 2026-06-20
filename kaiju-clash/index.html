@@ -437,17 +437,26 @@ function spawnCitizens(){
 function buildFromRows(rows){
   const p = LevelParse.parseLevel(rows);
   LW = p.LW; LH = p.LH;                       // level dims are global, set on build
+  // Spawn chars only give a column; the entity must rest on the first solid/platform
+  // surface at or below that row (otherwise NPCs/enemies float in mid-air on a tall map).
+  const surfaceTop = (col, fromRow)=>{
+    for(let r=fromRow; r<p.LH; r++){
+      const v = p.tiles[r] && p.tiles[r][col];
+      if(v===T_SOLID || v===T_DEST || v===T_PLAT) return r*TS;
+    }
+    return p.LH*TS;                           // virtual floor below the map
+  };
   const food = p.spawns.food.map((s,i)=>({
     type: FOOD_TYPES[i % FOOD_TYPES.length],
-    x: s.c*TS + TS/2 - 10, y: s.r*TS - 20, collected:false, bobOff:i*0.8,
+    x: s.c*TS + TS/2 - 10, y: surfaceTop(s.c, s.r) - 30, collected:false, bobOff:i*0.8,
   }));
   const enemies = p.spawns.enemies.map(s=>({
-    x: s.c*TS, y: s.r*TS, dir:-1, type:s.type,
+    x: s.c*TS, y: surfaceTop(s.c, s.r) - ENEMY_FOOT, dir:-1, type:s.type,
     hp: ENEMIES[s.type].hp, maxHp: ENEMIES[s.type].hp,
     patrol:[(s.c-3)*TS, (s.c+3)*TS], stunMs:0, dead:false, flashMs:0,
   }));
   const citizens = p.spawns.citizens.map((s,i)=>({
-    x: s.c*TS, y: s.r*TS, dir: i%2?1:-1, clr:'#ffd8a8', npc: NPC_TYPES[i % NPC_TYPES.length],
+    x: s.c*TS, y: surfaceTop(s.c, s.r) - 22, dir: i%2?1:-1, clr:'#ffd8a8', npc: NPC_TYPES[i % NPC_TYPES.length],
     saved:false, eaten:false, eatenTimer:0, savedTimer:0, particles:[],
   }));
   const ps = p.spawns.player || { r:7, c:2 };
