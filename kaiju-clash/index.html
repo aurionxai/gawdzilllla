@@ -615,6 +615,10 @@ function updatePlayer(dt, s){
   const tx = pl.x + PW/2 - VW/2;
   s.cam.x += (tx - s.cam.x) * 0.11;
   s.cam.x = Math.max(0, Math.min(LW*TS - VW, s.cam.x));
+  // Vertical follow: keep the player ~55% down the screen; clamp to level height.
+  const tyc = pl.y - VH*0.55;
+  s.cam.y += (tyc - s.cam.y) * 0.11;
+  s.cam.y = Math.max(0, Math.min(Math.max(0, LH*TS - VH), s.cam.y));
 
   // ── Stomp enemies from above
   if(pl.vy > 0 && state){
