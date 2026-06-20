@@ -889,15 +889,18 @@ function updateCitizens(dt, s){
       const d = Math.abs(dx);
       if(d < nearestDist){ nearestDist=d; nearestDx=dx; }
     });
-    const panic = nearestDist < 180;
-    // Only turn when the threat is clearly to one side; a per-frame flip made
-    // cornered citizens vibrate (gyrate) in place and mirror their sprite every frame.
-    if(panic && Math.abs(nearestDx) > 24) c.dir = nearestDx > 0 ? -1 : 1;
-    const spd = panic ? 1.5 : 0.7;
-    const nx  = c.x + c.dir * spd;
+    const panic = nearestDist < 150;
     const lo = TS, hi = (LW-2)*TS;
-    // If fleeing into a wall, hold still instead of jittering against the clamp.
-    if(nx > lo && nx < hi) c.x = nx;
+    if(panic){
+      // Commit to ONE flee direction when the scare starts and keep it — re-picking the
+      // away-from-nearest direction every frame made trapped citizens ping-pong (gyrate).
+      if(!c.fleeing){ c.fleeing = true; c.dir = nearestDx > 0 ? -1 : 1; }
+      const nx = c.x + c.dir * 1.2;
+      if(nx > lo && nx < hi){ c.x = nx; c.moving = true; }
+      else { c.moving = false; }            // cornered against a wall: cower in place, don't jitter
+    } else {
+      c.fleeing = false; c.moving = false;  // safe: stand still and wait for rescue
+    }
 
     // Enemy catches citizen
     s.level.enemies.forEach(e=>{
@@ -1111,7 +1114,9 @@ function drawCitizens(s){
     }
 
     // Fleeing citizen — one of the 8 named townsfolk (NPC sprite), bobbing as it runs.
-    const bob  = Math.sin(t*0.015 + c.x*0.01) * 2;
+    // Stride-hop tied to actual movement (phase advances with x), and perfectly still
+    // when stopped — no constant time-based vibration.
+    const bob  = c.moving ? Math.abs(Math.sin(c.x*0.12)) * 1.6 : 0;
     const flip = c.dir < 0;
     // Shadow
     ctx.fillStyle='rgba(0,0,0,0.3)';
