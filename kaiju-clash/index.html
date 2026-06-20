@@ -1466,6 +1466,12 @@ function drawHUD(s){
   ctx.fillStyle='rgba(0,0,0,0.45)'; ctx.fillRect(0,VH-11,VW,11);
   ctx.fillStyle='#2a3a4a'; ctx.font='5px monospace';
   ctx.fillText('[← →] MOVE   [↑/SPACE] JUMP & STOMP from above   [Z/X] CHOMP nearby / FART when charged   👥 SAVE CITIZENS!', 4, VH-3);
+
+  // ── Growth stage + orb readout (bottom right) ──
+  ctx.save();
+  ctx.textAlign='right'; ctx.font='12px monospace'; ctx.fillStyle='#7CD7FF';
+  ctx.fillText('◈ '+meta.orbs+'  '+Progression.GROWTH_STAGES[meta.growthStage].name, VW-12, VH-12);
+  ctx.restore();
 }
 
 // ═══════════════════════════════════════════
@@ -1667,11 +1673,11 @@ function drawGameover(){
   ctx.font='8px monospace'; ctx.fillStyle='#884422';
   ctx.fillText('EAT FOOD · FART ON MONSTERS · STOMP THEM!', VW/2, VH/2+20);
   ctx.fillStyle='#664444';
-  ctx.fillText('PRESS ENTER / Z  or  TAP TO TRY AGAIN', VW/2, VH/2+42);
+  ctx.fillText('PRESS SPACE / ENTER  or  TAP TO RETURN', VW/2, VH/2+42);
   ctx.textAlign='left';
   const tapRestart = Object.keys(touches).length > 0 && !_lastTouchCount;
-  if(wasDown('Enter','KeyZ','Space') || tapRestart){
-    scene='overworld'; owIdx=0;
+  if(wasDown('Space','Enter','ArrowUp','KeyW') || _lastTouchCount>0){
+    scene='overworld';
   }
   _lastTouchCount = Object.keys(touches).length;
 }
