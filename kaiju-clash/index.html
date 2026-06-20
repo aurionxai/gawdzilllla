@@ -772,11 +772,13 @@ function drawBg(cam){
     if(ox < 0) ox += VW;
     ctx.drawImage(bgImg, -ox, 0, VW, VH);
     ctx.drawImage(bgImg, VW - ox, 0, VW, VH);
-    // Soft scrim near the ground so foreground sprites stay readable over bright art.
-    const scrim = ctx.createLinearGradient(0, VH - 90, 0, VH);
-    scrim.addColorStop(0, 'rgba(8,10,24,0)');
-    scrim.addColorStop(1, 'rgba(8,10,24,0.34)');
-    ctx.fillStyle = scrim; ctx.fillRect(0, VH - 90, VW, 90);
+    // Graduated scrim over the play band so foreground sprites read clearly against
+    // the busy street-level art — darkest at the very bottom, fading out by mid-screen.
+    const scrim = ctx.createLinearGradient(0, VH - 170, 0, VH);
+    scrim.addColorStop(0,    'rgba(8,12,28,0)');
+    scrim.addColorStop(0.55, 'rgba(8,12,28,0.32)');
+    scrim.addColorStop(1,    'rgba(8,12,28,0.52)');
+    ctx.fillStyle = scrim; ctx.fillRect(0, VH - 170, VW, 170);
     return;
   }
 
