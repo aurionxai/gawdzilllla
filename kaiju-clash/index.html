@@ -70,8 +70,11 @@ const SPRITES = {
   draglet_walk:  'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_184428_4224be1a-d18a-4eb1-8aa1-101ef240b65a.png',
   citizen_run:   'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_184431_cbbcd9db-aa37-4c9f-9f3e-f63475d3e3a3.png',
   citizen_saved: 'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_184433_86336736-3fa6-4b09-b68f-1bf1a7cb92d6.png',
-  // World backdrops (local, per Progression world). World 1 = Tokyo Day.
-  bg_w1:         'bg/world1.jpg',
+  // World backdrops (local, per Progression world): drawBg picks bg_w<N> by level id.
+  bg_w1:         'bg/world1.jpg',   // Tokyo Day
+  bg_w2:         'bg/world2.jpg',   // Neon Shibuya
+  bg_w3:         'bg/world3.jpg',   // Sunken City (underwater)
+  bg_w4:         'bg/world4.jpg',   // Volcano Skyline
 };
 const loadedSprites = {};
 let _spriteCount = 0, _spriteDone = 0;
