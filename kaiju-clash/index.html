@@ -143,6 +143,11 @@ const ENEMIES = {
   jellymech:{ file:'enemies/jellymech.png', w:38, h:44, big:true,  hp:90,  world:3 },
   lavaimp:  { file:'enemies/lavaimp.png',   w:28, h:44, big:false, hp:60,  world:4 },
   golem:    { file:'enemies/golem.png',     w:47, h:42, big:true,  hp:120, world:4 },
+  // World 4 volcano set — generated on Higgsfield + sliced by the asset-slicer agent.
+  magma_slug:    { file:'enemies/magma_slug.png',    w:40, h:36, big:false, hp:45,  world:4 },
+  ember_bat:     { file:'enemies/ember_bat.png',     w:46, h:34, big:false, hp:40,  world:4 },
+  obsidian_crab: { file:'enemies/obsidian_crab.png', w:48, h:40, big:true,  hp:100, world:4 },
+  flame_wisp:    { file:'enemies/flame_wisp.png',    w:30, h:42, big:false, hp:35,  world:4 },
 };
 function enemyBig(e){ const d=ENEMIES[e.type]; return !!(d && d.big); }
 function loadEnemies(){
