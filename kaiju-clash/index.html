@@ -280,13 +280,21 @@ const FART_SAYINGS = [
 ];
 
 const FOOD_TYPES = [
-  { emoji:'🍢', name:'YAKITORI',  gain:22, msg:'SPICY!',       clr:'#ff8800' },
-  { emoji:'🍕', name:'PIZZA',     gain:30, msg:'CHEESE BLAST!',clr:'#ffaa00' },
-  { emoji:'🍣', name:'SUSHI',     gain:12, msg:'WASABI POWER!',clr:'#22ccff' },
-  { emoji:'🌭', name:'HOT DOG',   gain:20, msg:'STREET FOOD!', clr:'#ff6622' },
-  { emoji:'🍦', name:'ICE CREAM', gain:15, msg:'BRAIN FREEZE?',clr:'#ffccee' },
-  { emoji:'🍌', name:'BANANA',    gain:18, msg:'MONKE MODE!',  clr:'#ffee22' },
+  { key:'yakitori', emoji:'🍢', name:'YAKITORI',  gain:22, msg:'SPICY!',       clr:'#ff8800' },
+  { key:'pizza',    emoji:'🍕', name:'PIZZA',     gain:30, msg:'CHEESE BLAST!',clr:'#ffaa00' },
+  { key:'sushi',    emoji:'🍣', name:'SUSHI',     gain:12, msg:'WASABI POWER!',clr:'#22ccff' },
+  { key:'hotdog',   emoji:'🌭', name:'HOT DOG',   gain:20, msg:'STREET FOOD!', clr:'#ff6622' },
+  { key:'icecream', emoji:'🍦', name:'ICE CREAM', gain:15, msg:'BRAIN FREEZE?',clr:'#ffccee' },
+  { key:'banana',   emoji:'🍌', name:'BANANA',    gain:18, msg:'MONKE MODE!',  clr:'#ffee22' },
 ];
+function loadFood(){
+  return Promise.all(FOOD_TYPES.map(f => new Promise(res => {
+    const img = new Image();
+    img.onload  = () => { loadedSprites['food_'+f.key] = img; res(); };
+    img.onerror = () => { res(); };
+    img.src = 'food/'+f.key+'.png';
+  })));
+}
 
 // ═══════════════════════════════════════════
 //  INPUT
@@ -934,7 +942,13 @@ function drawFood(s){
     ctx.beginPath();
     ctx.arc(fx, fy+10, 14+Math.sin(t+f.bobOff)*2, 0, Math.PI*2);
     ctx.fill();
-    ctx.fillText(f.type.emoji, fx, fy+15);
+    const img = loadedSprites['food_'+f.type.key];
+    if(img){
+      const SZ = 26;
+      _drawSprite('food_'+f.type.key, fx - SZ/2, fy + 10 - SZ/2, SZ, SZ, 1, false);
+    } else {
+      ctx.fillText(f.type.emoji, fx, fy+15);   // fallback until sprite loads
+    }
   });
   ctx.textAlign='left';
 }
@@ -1635,15 +1649,26 @@ function drawOverworld(){
     const unlocked = Progression.isLevelUnlocked(meta, n.id);
     // connector
     if(i>0){ ctx.strokeStyle='#4a3a66'; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(gap*i, cy); ctx.lineTo(cx, cy); ctx.stroke(); }
-    // node circle
-    ctx.beginPath(); ctx.arc(cx, cy, 26, 0, Math.PI*2);
-    ctx.fillStyle = unlocked ? '#ff6db0' : '#3a2f50';
-    ctx.fill();
-    if(i===owIdx){ ctx.strokeStyle='#fff'; ctx.lineWidth=3; ctx.stroke(); }
-    // number / lock
-    ctx.fillStyle = unlocked ? '#2a0c1c' : '#9a8fb5';
-    ctx.font='bold 20px monospace';
-    ctx.fillText(unlocked ? String(i+1) : '🔒', cx, cy+7);
+    // node circle — a window into the world's backdrop when unlocked
+    const R = 27;
+    ctx.save();
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2); ctx.clip();
+    const bg = unlocked ? loadedSprites['bg_w'+n.world] : null;
+    if(bg){ ctx.drawImage(bg, cx-R, cy-R, R*2, R*2); }
+    else  { ctx.fillStyle = unlocked ? '#ff6db0' : '#3a2f50'; ctx.fillRect(cx-R, cy-R, R*2, R*2); }
+    ctx.restore();
+    // ring (highlighted node gets a thick white ring)
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2);
+    ctx.strokeStyle = (i===owIdx) ? '#fff' : (unlocked ? '#ffd84a' : '#4a3a66');
+    ctx.lineWidth   = (i===owIdx) ? 3 : 2; ctx.stroke();
+    // number badge / lock
+    ctx.textAlign='center';
+    if(unlocked){
+      ctx.fillStyle='rgba(10,6,20,0.6)'; ctx.beginPath(); ctx.arc(cx, cy, 12, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle='#fff'; ctx.font='bold 16px monospace'; ctx.fillText(String(i+1), cx, cy+6);
+    } else {
+      ctx.fillStyle='#9a8fb5'; ctx.font='bold 20px monospace'; ctx.fillText('🔒', cx, cy+7);
+    }
     // name
     ctx.fillStyle = unlocked ? '#fff' : '#7d7299';
     ctx.font='12px monospace';
@@ -1683,7 +1708,7 @@ function loop(ts){
   justDn.clear();
   requestAnimationFrame(loop);
 }
-Promise.all([loadSprites(), loadSkin(activeSkin), loadEnemies(), loadNpcs()]).then(()=>{ spritesReady=true; lastT=performance.now(); });
+Promise.all([loadSprites(), loadSkin(activeSkin), loadEnemies(), loadNpcs(), loadFood()]).then(()=>{ spritesReady=true; lastT=performance.now(); });
 requestAnimationFrame(loop);
 </script>
 </body>
