@@ -527,9 +527,9 @@ const W1L2_ROWS = [
   "                                                                                                ",
   "                                                                                                ",
   "                                                                                                ",
-  "                               g                                     g                          ",
+  "                                         g                                              g       ",
   "                                                                                                ",
-  " P  o     o s       o C      o w       o C      o s       o C      o s       o C      o E       ",
+  " P  o     o s       o s      o C       o w      o s       o C      o s       o w      o E       ",
   "#######  ########  #######  ########  #######  ########  #######  ########  #######  ########   ",
   "#######  ########  #######  ########  #######  ########  #######  ########  #######  ########   ",
   "#######  ########  #######  ########  #######  ########  #######  ########  #######  ########   ",
@@ -550,7 +550,7 @@ const W1L3_ROWS = [
   "      E   o         ",
   "  =========         ",
   "                    ",
-  "         o          ",
+  "         o   s      ",
   "         =========  ",
   "                    ",
   "   C      o         ",
@@ -559,7 +559,7 @@ const W1L3_ROWS = [
   "         o   s      ",
   "         =========  ",
   "                    ",
-  "          o         ",
+  "      s   o         ",
   "  =========         ",
   "                    ",
   "         oC         ",
@@ -568,7 +568,7 @@ const W1L3_ROWS = [
   "      w   o         ",
   "  =========         ",
   "             g      ",
-  "         o          ",
+  "         o   s      ",
   "         =========  ",
   "                    ",
   "   C      o         ",
@@ -609,9 +609,13 @@ function saveMeta(){
 
 function mkState(charKey, levelId){
   const build = (LEVEL_BUILDERS[levelId] || LEVEL_BUILDERS.w1l1)();
+  // Difficulty tier drives enemy speed/aggression so later levels actually feel harder.
+  const _lvl = (typeof Progression!=='undefined') && Progression.LEVELS.find(l=>l.id===levelId);
+  const diff = _lvl ? ((_lvl.world-1)*4 + _lvl.order) : 1;   // w1l1=1, w1l2=2, w1l3=3, ...
   return {
     charKey,
     levelId,
+    diff,
     player: {
       x: (build.playerSpawn ? build.playerSpawn.x : 2*TS),
       y: (build.playerSpawn ? build.playerSpawn.y : 7*TS),
@@ -689,7 +693,7 @@ function updatePlayer(dt, s){
   pl.biteCooldown= Math.max(0, (pl.biteCooldown||0) - dt);
 
   // ── Input
-  const spd = s.charKey==='poppy' ? 2.9 : 2.3;
+  const spd = s.charKey==='poppy' ? 3.4 : 2.9;   // snappier base pace
   if(isMoveL()){ pl.vx=-spd; pl.dir=-1; }
   else if(isMoveR()){ pl.vx=spd; pl.dir=1; }
   else { pl.vx *= 0.60; if(Math.abs(pl.vx)<0.35) pl.vx=0; }
@@ -983,9 +987,20 @@ function updateEnemies(dt, s){
     e.stunMs  = Math.max(0, e.stunMs-dt);
     if(e.stunMs > 0) return;  // stunned, don't move
 
-    const spd = enemyBig(e) ? 0.5 : 0.9;
-    // Face player direction & patrol
-    e.x += spd * e.dir;
+    // Difficulty-scaled movement: later levels patrol faster, chase from farther, hunt harder.
+    const d = s.diff || 1;
+    const patrolSpd = (enemyBig(e) ? 0.7 : 1.1) * (1 + 0.18*(d-1));
+    const chaseRange = 90 + 34*d;                       // how close before it locks on
+    const chaseSpd   = patrolSpd * 2.0;
+    const dxP = pl.x - e.x, sameLevel = Math.abs(pl.y - e.y) < 50;
+    if(sameLevel && Math.abs(dxP) < chaseRange){
+      // Hunt the player (clamped to its patrol span so it won't walk off a ledge)
+      e.dir = dxP > 0 ? 1 : -1;
+      e.x += chaseSpd * e.dir;
+      e.chaseMs = 200;
+    } else {
+      e.x += patrolSpd * e.dir;                          // normal patrol
+    }
     if(e.x <= e.patrol[0]){ e.x=e.patrol[0]; e.dir=1; }
     if(e.x+eW(e) >= e.patrol[1]){ e.x=e.patrol[1]-eW(e); e.dir=-1; }
 
