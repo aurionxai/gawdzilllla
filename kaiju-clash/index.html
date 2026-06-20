@@ -61,18 +61,7 @@ const AC = new (window.AudioContext||window.webkitAudioContext)();
 //  SPRITES
 // ═══════════════════════════════════════════
 const SPRITES = {
-  // Hero (Lulah) frames now come from the active SKIN (see SKINS below), not here.
-  // Poppy is still hardcoded until its skin frames are produced.
-  poppy_idle:    'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_183300_90a09ad9-aa85-4065-acb7-b27b0329b39a.png',
-  poppy_walk_1:  'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_183303_5977026d-1cf4-4188-9431-836b2ac07197.png',
-  poppy_walk_2:  'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_183305_de870dcd-51f1-4cfd-b401-5fe548f549e3.png',
-  poppy_walk_3:  'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_183308_f1bcb8d7-114f-4c1f-89be-8f1e22d00f82.png',
-  poppy_walk_4:  'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_183310_6a695ffe-9158-4030-8fa1-4a8e1e5420f7.png',
-  poppy_jump:    'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_183313_d448cd6e-7a26-4c1b-86b2-1e4fce696d58.png',
-  poppy_eat_1:   'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_183315_473ee97a-8b79-4118-8b68-38456826f7e4.png',
-  poppy_eat_2:   'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_183319_90ac7840-52fa-4a72-9d85-fb1250203831.png',
-  poppy_fart_1:  'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_183322_a87fd573-8cf8-4d8c-a0d2-15be5c944252.png',
-  poppy_fart_2:  'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_183324_e34bccb9-29d3-4a77-b383-0a25a6eef69f.png',
+  // Hero frames (Lulah + Poppy) come from the active SKIN (see SKINS below), not here.
   soldier_walk: 'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_183326_e71cfc32-2dde-4131-8be9-5b1fabb92707.png',
   soldier_stun: 'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_183329_cf774ead-7742-48d2-b3a3-4779ebf4eedb.png',
   tank_idle:    'https://d8j0ntlcm91z4.cloudfront.net/user_3FKGFs6sLsOdWSallSQRAW5kCEu/hf_20260619_183332_d2703d44-21a3-4db3-9472-376b776e34e9.png',
@@ -118,6 +107,16 @@ const SKINS = {
       lulah_eat_2:  'skins/default/lulah_idle.png',
       lulah_fart_1: 'skins/default/lulah_fart.png',
       lulah_fart_2: 'skins/default/lulah_fart.png',
+      poppy_idle:   'skins/default/poppy_idle.png',
+      poppy_walk_1: 'skins/default/poppy_walk_1.png',
+      poppy_walk_2: 'skins/default/poppy_walk_2.png',
+      poppy_walk_3: 'skins/default/poppy_walk_3.png',
+      poppy_walk_4: 'skins/default/poppy_walk_4.png',
+      poppy_jump:   'skins/default/poppy_jump.png',
+      poppy_eat_1:  'skins/default/poppy_eat_1.png',
+      poppy_eat_2:  'skins/default/poppy_eat_2.png',
+      poppy_fart_1: 'skins/default/poppy_fart_1.png',
+      poppy_fart_2: 'skins/default/poppy_fart_2.png',
     },
   },
 };
