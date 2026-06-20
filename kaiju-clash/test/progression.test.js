@@ -129,12 +129,14 @@ test('applyResult does not mutate the input meta', () => {
   assert.deepStrictEqual(m.levels, {});
 });
 
-test('LEVELS: world 1 has 4 ordered entries, only w1l1 playable now', () => {
+test('LEVELS: world 1 has 4 ordered entries; w1l1-w1l3 playable, boss not yet', () => {
   const w1 = Progression.LEVELS.filter(l => l.world === 1);
   assert.strictEqual(w1.length, 4);
   assert.strictEqual(w1[0].id, 'w1l1');
   assert.strictEqual(w1[0].playable, true);
-  assert.strictEqual(w1[1].playable, false);
+  assert.strictEqual(w1[1].playable, true);   // w1l2 Rooftop Run
+  assert.strictEqual(w1[2].playable, true);   // w1l3 Tower Climb
+  assert.strictEqual(w1[3].playable, false);  // w1l4 Riot Mecha boss — not built yet
 });
 
 test('isLevelUnlocked: first level always unlocked', () => {
@@ -147,12 +149,17 @@ test('isLevelUnlocked: locked when prior level incomplete', () => {
 
 test('isLevelUnlocked: non-playable stays locked even if prior complete', () => {
   let m = Progression.defaultMeta();
-  m.levels['w1l1'] = { stars: 1, rank: 'C', sideQuestsDone: 0 };
-  // w1l2 is not playable in this milestone
-  assert.strictEqual(Progression.isLevelUnlocked(m, 'w1l2'), false);
+  // clear all of world 1 except the boss
+  m.levels['w1l1'] = { stars: 3, rank: 'A', sideQuestsDone: 0 };
+  m.levels['w1l2'] = { stars: 3, rank: 'A', sideQuestsDone: 0 };
+  m.levels['w1l3'] = { stars: 3, rank: 'A', sideQuestsDone: 0 };
+  // w1l4 (Riot Mecha boss) is not playable yet -> stays locked
+  assert.strictEqual(Progression.isLevelUnlocked(m, 'w1l4'), false);
 });
 
 test('nextLevelId returns next playable or null', () => {
-  // w1l1 is the only playable level this milestone -> no next playable
-  assert.strictEqual(Progression.nextLevelId('w1l1'), null);
+  assert.strictEqual(Progression.nextLevelId('w1l1'), 'w1l2');
+  assert.strictEqual(Progression.nextLevelId('w1l2'), 'w1l3');
+  // after w1l3 the only remaining level is the non-playable boss -> null
+  assert.strictEqual(Progression.nextLevelId('w1l3'), null);
 });
