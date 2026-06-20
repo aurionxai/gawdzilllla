@@ -63,3 +63,22 @@ test('starsForResult: A rank + all citizens is 3 stars', () => {
     Progression.starsForResult({ rank: 'A', citizensSaved: 8, citizensTotal: 8 }),
     3);
 });
+
+test('GROWTH_STAGES has 5 named ascending stages', () => {
+  assert.strictEqual(Progression.GROWTH_STAGES.length, 5);
+  assert.deepStrictEqual(
+    Progression.GROWTH_STAGES.map(s => s.key),
+    ['hatchling', 'juvenile', 'adolescent', 'leviathan', 'apex']);
+  for (let i = 1; i < Progression.GROWTH_STAGES.length; i++) {
+    assert.ok(Progression.GROWTH_STAGES[i].minOrbs > Progression.GROWTH_STAGES[i - 1].minOrbs);
+  }
+});
+
+test('stageForOrbs maps orb totals to stage index', () => {
+  assert.strictEqual(Progression.stageForOrbs(0), 0);   // hatchling
+  assert.strictEqual(Progression.stageForOrbs(149), 0);
+  assert.strictEqual(Progression.stageForOrbs(150), 1); // juvenile
+  assert.strictEqual(Progression.stageForOrbs(400), 2); // adolescent
+  assert.strictEqual(Progression.stageForOrbs(750), 3); // leviathan
+  assert.strictEqual(Progression.stageForOrbs(99999), 4); // apex (capped)
+});

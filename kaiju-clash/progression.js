@@ -27,4 +27,20 @@ Progression.starsForResult = function starsForResult({ rank, citizensSaved, citi
   return stars;
 };
 
+Progression.GROWTH_STAGES = [
+  { key: 'hatchling',  name: 'Hatchling',  minOrbs: 0 },
+  { key: 'juvenile',   name: 'Juvenile',   minOrbs: 150 },
+  { key: 'adolescent', name: 'Adolescent', minOrbs: 400 },
+  { key: 'leviathan',  name: 'Leviathan',  minOrbs: 750 },
+  { key: 'apex',       name: 'Apex',       minOrbs: 1200 },
+];
+
+Progression.stageForOrbs = function stageForOrbs(totalOrbs) {
+  let idx = 0;
+  for (let i = 0; i < Progression.GROWTH_STAGES.length; i++) {
+    if (totalOrbs >= Progression.GROWTH_STAGES[i].minOrbs) idx = i;
+  }
+  return idx;
+};
+
 if (typeof module !== 'undefined' && module.exports) module.exports = Progression;
