@@ -356,7 +356,7 @@ function isFart(){  return wasDown('KeyZ','KeyJ','KeyX','KeyB') || touchInBtn('f
 //  LEVEL DATA
 // ═══════════════════════════════════════════
 // T=0 air, T=1 solid, T=2 one-way platform, T=3 destructible
-const T_AIR=0, T_SOLID=1, T_PLAT=2, T_DEST=3;
+const T_AIR=0, T_SOLID=1, T_PLAT=2, T_DEST=3, T_HAZARD=4;
 
 function buildLevel(){
   const map = Array.from({length:LH}, ()=>new Array(LW).fill(T_AIR));
@@ -606,6 +606,21 @@ function updatePlayer(dt, s){
   pl.y += pl.vy;
   pl.onGround = false;
   resolveY(pl, tiles, PW, PH);
+
+  // ── Spikes / hazards: damage if the player's box overlaps a hazard tile ──
+  if((pl.invincMs||0) <= 0){
+    const c0 = Math.floor(pl.x / TS), c1 = Math.floor((pl.x+PW) / TS);
+    const r0 = Math.floor(pl.y / TS), r1 = Math.floor((pl.y+PH) / TS);
+    let onHazard = false;
+    for(let r=r0;r<=r1;r++) for(let c=c0;c<=c1;c++) if(tile(tiles,r,c)===T_HAZARD) onHazard=true;
+    if(onHazard){
+      pl.hp = Math.max(0, pl.hp - 12);
+      pl.invincMs = 1000;
+      s.hitsTaken++;
+      pl.vy = -6;                     // small knock-up
+      addShake(5, 180);
+    }
+  }
 
   // ── Bounds
   pl.x = Math.max(0, Math.min(LW*TS - PW, pl.x));
