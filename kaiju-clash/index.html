@@ -885,7 +885,9 @@ function updateCitizens(dt, s){
     // Enemy catches citizen
     s.level.enemies.forEach(e=>{
       if(e.dead || e.stunMs>0 || c.eaten) return;
-      if(Math.abs(e.x + eW(e)/2 - c.x) < 20){
+      // Must be at roughly the same height (vertical levels: ground enemy can't eat
+      // a citizen on a rooftop just because they share an x column).
+      if(Math.abs(e.x + eW(e)/2 - c.x) < 20 && Math.abs(e.y - c.y) < 40){
         c.eaten = true;
         c.eatenTimer = 600;
         s.lostCitizens++;
