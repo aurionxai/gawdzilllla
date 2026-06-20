@@ -669,6 +669,7 @@ function updatePlayer(dt, s){
       if(pl.x+PW-6 > e.x && pl.x+6 < e.x+ew &&
          prevFeet <= eFeetTop+4 && pl.y+PH >= eFeetTop){
         e.stunMs = Math.max(e.stunMs, 900);
+        e.flashMs = 140;                 // brief sprite-shaped hit flash (not a box)
         e.hp -= 25;
         // Combo: each stomp before landing chains for escalating points (100,200,400,...).
         pl.stompCombo = (pl.stompCombo||0) + 1;
@@ -1161,18 +1162,36 @@ function _kaijuKey(char, pl, tick){
   return char+'_idle';
 }
 
+// Cached white silhouette of a sprite, so a hit-flash follows the character shape
+// instead of painting a square over its bounding box.
+const _whiteMaskCache = new Map();
+function _whiteMask(img){
+  let m = _whiteMaskCache.get(img);
+  if(!m){
+    m = document.createElement('canvas');
+    m.width = img.naturalWidth || img.width; m.height = img.naturalHeight || img.height;
+    const mx = m.getContext('2d');
+    mx.drawImage(img, 0, 0);
+    mx.globalCompositeOperation = 'source-in';   // keep only the sprite's opaque pixels
+    mx.fillStyle = '#ffffff'; mx.fillRect(0, 0, m.width, m.height);
+    _whiteMaskCache.set(img, m);
+  }
+  return m;
+}
 function _drawSprite(key, x, y, w, h, dir, flash){
   const img = loadedSprites[key]; if(!img) return;
   x=Math.round(x); y=Math.round(y);
   ctx.save();
   ctx.imageSmoothingEnabled = false;
-  if(dir<0){ ctx.translate(x+w,y); ctx.scale(-1,1); ctx.drawImage(img,0,0,w,h); }
-  else       ctx.drawImage(img,x,y,w,h);
-  ctx.restore();
-  if(flash){
-    ctx.save(); ctx.globalAlpha=0.55; ctx.fillStyle='#ffffff';
-    ctx.fillRect(x,y,w,h); ctx.restore();
+  if(dir<0){
+    ctx.translate(x+w,y); ctx.scale(-1,1);
+    ctx.drawImage(img,0,0,w,h);
+    if(flash){ ctx.globalAlpha=0.6; ctx.drawImage(_whiteMask(img),0,0,w,h); }
+  } else {
+    ctx.drawImage(img,x,y,w,h);
+    if(flash){ ctx.globalAlpha=0.6; ctx.drawImage(_whiteMask(img),x,y,w,h); }
   }
+  ctx.restore();
 }
 
 // Generic enemy draw: looks up the ENEMIES registry, scales with the hero's
@@ -1187,11 +1206,9 @@ function drawEnemy(e, x, y, dir, flash, stun){
   const cx  = x + (enemyBig(e) ? 18 : 10);    // horizontal centre over the hitbox
   const dx  = cx - sw/2;
   const dy  = (y + ENEMY_FOOT) - sh;          // feet planted on the ground line
+  // Brief white silhouette on hit (via flashMs); stun is shown by the ⭐ stars only —
+  // no orange box over the sprite (that read as a square around the enemy).
   _drawSprite(key, dx, dy, sw, sh, dir, flash);
-  if(stun){
-    ctx.save(); ctx.globalAlpha=0.55; ctx.fillStyle='#ffaa00';
-    ctx.fillRect(dx, dy, sw, sh); ctx.restore();
-  }
 }
 
 // ═══════════════════════════════════════════
