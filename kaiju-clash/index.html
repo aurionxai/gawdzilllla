@@ -407,7 +407,7 @@ function finishLevel(){
   if(scene==='victory') return; // already finished
   const s = state;
   const total = s.level.citizens.length;
-  const timeSec = Math.max(0, Math.round((s.tick - s.startTick)/60));
+  const timeSec = Math.max(0, Math.round((tick - s.startTick)/60));
   const rank = Progression.computeRank({
     timeSec, hitsTaken: s.hitsTaken, citizensSaved: s.savedCitizens, citizensTotal: total,
   });
@@ -1799,11 +1799,13 @@ function updateOverworld(){
   if(wasDown('ArrowLeft','KeyA')  || touchInBtn('left'))  owIdx = Math.max(0, owIdx-1);
   const sel = nodes[owIdx];
   const unlocked = Progression.isLevelUnlocked(meta, sel.id);
-  if((isFart() || wasDown('Space','ArrowUp','KeyW','Enter') || touchInBtn('jump')) && unlocked && sel.playable){
+  const freshTap = Object.keys(touches).length > 0 && !_lastTouchCount;
+  if((isFart() || wasDown('Space','ArrowUp','KeyW','Enter') || (freshTap && touchInBtn('jump'))) && unlocked && sel.playable){
     state = mkState(SEL_CHARS[selIdx], sel.id);
     scene = 'playing';
-    state.startTick = state.tick;
+    state.startTick = tick;
   }
+  _lastTouchCount = Object.keys(touches).length;
 }
 
 function drawOverworld(){
