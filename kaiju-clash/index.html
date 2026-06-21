@@ -999,6 +999,9 @@ function updatePlayer(dt, s){
       s.hitsTaken++;
       pl.vy = -6;                     // small knock-up
       addShake(5, 180);
+      sndHurt();                      // feedback so spike damage isn't silent
+      pushNum(s, pl.x, pl.y-20, '-12', '#ff3333');
+      pushMsg(s, '🌵 OUCH!', 600, '#ff5555', 'md');
     }
   }
 
