@@ -5,7 +5,9 @@ royalty-free. Downloaded as .ogg and converted to .mp3 (mono, trimmed) for brows
 
 name              source (actions.google.com/sounds/v1/...)
 jump            <- cartoon/cartoon_boing
-fart            <- cartoon/fart_toot
+fart            <- cartoon/fart_toot   (now only a fallback)
+fart1/2/3.mp3   <- "apebble" fart pack (via Pixabay, Pixabay Content License, no attribution
+                   required). tiny/medium/mega — chosen by fart-meter charge. mono, normalized.
 fall            <- cartoon/falling_whistle
 cheer           <- crowds/team_cheer
 victory         <- crowds/battle_crowd_celebration

@@ -198,7 +198,7 @@ function acResume(){ if(AC.state!=='running'){ try{ AC.resume(); }catch(e){} } }
 // Each sound prefers a real sample at sounds/<name>.{mp3,wav}; if none is present it
 // falls back to the procedural synth (the `if(playSample('x'))return;` guards below).
 // Drop Higgsfield-generated SFX into kaiju-clash/sounds/ and they auto-override the synth.
-const SFX_NAMES = ['jump','chomp','fart','giggle','hurt','fall','victory','gameover','cheer',
+const SFX_NAMES = ['jump','chomp','fart','fart1','fart2','fart3','giggle','hurt','fall','victory','gameover','cheer',
   'combo','roar','gem','eat_yakitori','eat_pizza','eat_sushi','eat_hotdog','eat_icecream',
   'eat_banana','enemy_squish','enemy_clank','enemy_screech','enemy_sizzle','enemy_thud','music'];
 const loadedSfx = {};
@@ -262,7 +262,8 @@ function _noiseBuffer(){
 }
 function sndFart(size){ // 1=tiny 2=medium 3=mega — sputtery noise + brass-y pitch drop
   acResume();
-  if(playSample("fart"))return;
+  if(playSample("fart"+size, [0,0.72,0.86,1.0][size]||0.8))return;  // per-size real fart (louder as it grows)
+  if(playSample("fart"))return;                                     // generic fallback if a size clip is missing
   const t0  = AC.currentTime;
   const dur = [0,0.45,0.95,2.0][size];
   // tonal "brass" body that glides down in pitch
