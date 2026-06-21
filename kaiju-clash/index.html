@@ -242,7 +242,6 @@ function playSample(name, vol, when){
   s.buffer=buf; g.gain.value=(vol==null?0.8:vol); s.connect(g); g.connect(_sfxBus);
   _sfxVoices++; s.onended = ()=>{ _sfxVoices = Math.max(0, _sfxVoices-1); };
   s.start(now + (when||0));   // `when` lets a sample ring out after another (e.g. giggle after the fart)
-  _duckMusic();
   return true;
 }
 // iOS/desktop Safari won't make a sound until a buffer is played inside a user gesture —

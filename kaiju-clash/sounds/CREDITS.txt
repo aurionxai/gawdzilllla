@@ -17,7 +17,7 @@ combo           <- cartoon/cartoon_ringing_hit
 gem             <- cartoon/pop
 hurt            <- cartoon/slap_with_glove
 enemy_squish    <- cartoon/rubber_squeaking
-enemy_clank     <- cartoon/metal_strike
+enemy_clank     <- short onset of phatphrogstudio "robot voice damage" (robot HIT, ~0.2s)
 enemy_thud      <- cartoon/cartoon_metal_thunk
 enemy_screech   <- cartoon/metallic_twang_high
 
