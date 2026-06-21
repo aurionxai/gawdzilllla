@@ -78,7 +78,7 @@ Progression.LEVELS = [
   { id: 'w1l1', world: 1, name: 'Tokyo Streets', order: 1, playable: true },
   { id: 'w1l2', world: 1, name: 'Rooftop Run',   order: 2, playable: true },
   { id: 'w1l3', world: 1, name: 'Tower Climb',    order: 3, playable: true },
-  { id: 'w1l4', world: 1, name: 'Riot Mecha',     order: 4, playable: false },
+  { id: 'w1l4', world: 1, name: 'Riot Mecha',     order: 4, playable: true },
 ];
 
 function levelById(id) { return Progression.LEVELS.find(l => l.id === id) || null; }

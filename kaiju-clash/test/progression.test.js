@@ -129,14 +129,12 @@ test('applyResult does not mutate the input meta', () => {
   assert.deepStrictEqual(m.levels, {});
 });
 
-test('LEVELS: world 1 has 4 ordered entries; w1l1-w1l3 playable, boss not yet', () => {
+test('LEVELS: world 1 has 4 ordered entries, all playable (incl. the boss)', () => {
   const w1 = Progression.LEVELS.filter(l => l.world === 1);
   assert.strictEqual(w1.length, 4);
   assert.strictEqual(w1[0].id, 'w1l1');
-  assert.strictEqual(w1[0].playable, true);
-  assert.strictEqual(w1[1].playable, true);   // w1l2 Rooftop Run
-  assert.strictEqual(w1[2].playable, true);   // w1l3 Tower Climb
-  assert.strictEqual(w1[3].playable, false);  // w1l4 Riot Mecha boss — not built yet
+  assert.deepStrictEqual(w1.map(l => l.playable), [true, true, true, true]);
+  assert.strictEqual(w1[3].id, 'w1l4');       // Riot Mecha boss
 });
 
 test('isLevelUnlocked: first level always unlocked', () => {
@@ -147,19 +145,18 @@ test('isLevelUnlocked: locked when prior level incomplete', () => {
   assert.strictEqual(Progression.isLevelUnlocked(Progression.defaultMeta(), 'w1l2'), false);
 });
 
-test('isLevelUnlocked: non-playable stays locked even if prior complete', () => {
+test('isLevelUnlocked: the boss unlocks once w1l3 is cleared', () => {
   let m = Progression.defaultMeta();
-  // clear all of world 1 except the boss
+  assert.strictEqual(Progression.isLevelUnlocked(m, 'w1l4'), false);  // locked at first
   m.levels['w1l1'] = { stars: 3, rank: 'A', sideQuestsDone: 0 };
   m.levels['w1l2'] = { stars: 3, rank: 'A', sideQuestsDone: 0 };
   m.levels['w1l3'] = { stars: 3, rank: 'A', sideQuestsDone: 0 };
-  // w1l4 (Riot Mecha boss) is not playable yet -> stays locked
-  assert.strictEqual(Progression.isLevelUnlocked(m, 'w1l4'), false);
+  assert.strictEqual(Progression.isLevelUnlocked(m, 'w1l4'), true);   // unlocked after w1l3
 });
 
 test('nextLevelId returns next playable or null', () => {
   assert.strictEqual(Progression.nextLevelId('w1l1'), 'w1l2');
-  assert.strictEqual(Progression.nextLevelId('w1l2'), 'w1l3');
-  // after w1l3 the only remaining level is the non-playable boss -> null
-  assert.strictEqual(Progression.nextLevelId('w1l3'), null);
+  assert.strictEqual(Progression.nextLevelId('w1l3'), 'w1l4');
+  // the boss is the last level in world 1 -> nothing after it (until world 2 ships)
+  assert.strictEqual(Progression.nextLevelId('w1l4'), null);
 });
