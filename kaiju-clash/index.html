@@ -315,9 +315,9 @@ const _VOICE = {
 };
 function sndCreature(voice, dying){
   acResume();
-  const t=AC.currentTime, dur=dying?0.34:0.13;
+  const t=AC.currentTime, dur=dying?0.38:0.15;
   const g=AC.createGain(); g.connect(AC.destination);
-  g.gain.setValueAtTime(dying?0.26:0.2, t); g.gain.exponentialRampToValueAtTime(0.001, t+dur);
+  g.gain.setValueAtTime(dying?0.45:0.36, t); g.gain.exponentialRampToValueAtTime(0.001, t+dur);
   const osc=(type,f0,f1)=>{ const o=AC.createOscillator(); o.type=type; o.frequency.setValueAtTime(f0,t); o.frequency.exponentialRampToValueAtTime(f1,t+dur); o.connect(g); o.start(t); o.stop(t+dur+0.02); };
   const noise=(filt,fc)=>{ const s=AC.createBufferSource(); s.buffer=_noiseBuffer(); const bq=AC.createBiquadFilter(); bq.type=filt; bq.frequency.setValueAtTime(fc,t); s.connect(bq); bq.connect(g); s.start(t); s.stop(t+dur); return bq; };
   if(voice==='squish'){ const bq=noise('lowpass',dying?500:900); bq.frequency.exponentialRampToValueAtTime(120,t+dur); osc('sine',dying?260:380,dying?70:150); }
@@ -371,53 +371,78 @@ function sndFall(){ // falling-into-the-void "wheeee" downward swoop
   g.gain.setValueAtTime(0.18,AC.currentTime); g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+0.6);
   o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime+0.6);
 }
+function sndGameOver(){ // sad descending "defeat" sting
+  acResume();
+  [392,330,294,233].forEach((f,i)=>{ const o=AC.createOscillator(), g=AC.createGain(); const t=AC.currentTime+i*0.16;
+    o.type='square'; o.frequency.setValueAtTime(f,t); o.frequency.exponentialRampToValueAtTime(f*0.94,t+0.15);
+    g.gain.setValueAtTime(0.16,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.22);
+    o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t+0.24); });
+}
 
 // ═══════════════════════════════════════════
 //  THEME MUSIC — a looping chiptune (square lead + triangle bass)
 // ═══════════════════════════════════════════
-const _musicGain = AC.createGain(); _musicGain.gain.value = 0.10; _musicGain.connect(AC.destination);
+const _musicGain = AC.createGain(); _musicGain.gain.value = 0.16; _musicGain.connect(AC.destination);
 let musicOn = true;
-const _N = { R:0, A2:110, C3:130.81, D3:146.83, E3:164.81, F3:174.61, G3:196, A3:220,
-             C4:261.63, D4:293.66, E4:329.63, F4:349.23, G4:392, A4:440, B4:493.88,
-             C5:523.25, D5:587.33, E5:659.25, F5:698.46, G5:783.99 };
-// A cheerful kaiju-march loop. [note, beats]
-const _LEAD = [['E4',1],['G4',1],['C5',1],['B4',1],['A4',1],['G4',1],['E4',2],
-               ['F4',1],['A4',1],['C5',1],['A4',1],['G4',2],['R',2],
-               ['D4',1],['F4',1],['A4',1],['G4',1],['F4',1],['E4',1],['D4',2],
-               ['C4',1],['E4',1],['G4',1],['E4',1],['C4',2],['R',2]];
-const _BASS = [['C3',2],['G3',2],['A2',2],['E3',2],['F3',2],['C3',2],['G3',2],['G3',2],
-               ['F3',2],['C3',2],['D3',2],['G3',2],['C3',2],['A2',2],['F3',2],['G3',2]];
-const _BEAT = 0.30;            // seconds per beat (~200bpm feel, bouncy)
-let _music = { on:false, leadT:0, bassT:0, li:0, bi:0, timer:null };
+const _NF = { '.':0, A2:110, F2:87.31, C3:130.81, G2:98, A3:220, C4:261.63, D4:293.66,
+              E4:329.63, F4:349.23, G4:392, A4:440, C5:523.25, D5:587.33, E5:659.25, G5:783.99 };
+const _BPM = 158, _STEP = 60/_BPM/4;          // 16th-note grid — driving tempo
+const _ROOTS = ['A2','F2','C3','G2'];          // 4-bar loop: Am F C G
+const _KICK  = '1001001010010010';             // four-on-floor-ish with a push
+const _SNARE = '0000100000001000';
+const _HAT   = '1011101110111011';
+// bouncy A-minor-pentatonic lead, one note per cell ('.'=rest), 16 cells per bar
+const _LEADBARS = [
+  ['A4','.','C5','.','E5','.','D5','.','C5','.','A4','.','E5','.','D5','.'],
+  ['C5','.','A4','.','C5','.','E5','.','D5','.','C5','.','A4','.','G4','.'],
+  ['E5','.','D5','.','C5','.','A4','.','G4','.','A4','.','C5','.','D5','.'],
+  ['E5','.','G5','.','E5','.','D5','.','C5','.','A4','.','G4','.','E4','.'],
+];
+let _music = { on:false, t:0, bar:0, timer:null };
 function _noteAt(note, t, dur, type, vol){
-  if(note==='R' || !_N[note]) return;
+  const f=_NF[note]; if(!f) return;
   const o=AC.createOscillator(), g=AC.createGain();
-  o.type=type; o.frequency.value=_N[note];
-  const end=t+dur*0.92;
+  o.type=type; o.frequency.setValueAtTime(f,t);
+  const end=t+dur*0.9;
   g.gain.setValueAtTime(0.0001,t);
   g.gain.exponentialRampToValueAtTime(vol,t+0.02);
   g.gain.exponentialRampToValueAtTime(0.0001,end);
   o.connect(g); g.connect(_musicGain); o.start(t); o.stop(end+0.02);
 }
+function _drum(kind, t){
+  if(kind==='K'){ const o=AC.createOscillator(), g=AC.createGain(); o.type='sine';
+    o.frequency.setValueAtTime(150,t); o.frequency.exponentialRampToValueAtTime(45,t+0.12);
+    g.gain.setValueAtTime(0.95,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.15);
+    o.connect(g); g.connect(_musicGain); o.start(t); o.stop(t+0.16); }
+  else { const s=AC.createBufferSource(); s.buffer=_noiseBuffer();
+    const hp=AC.createBiquadFilter(); hp.type='highpass';
+    hp.frequency.setValueAtTime(kind==='S'?1200:7000, t);
+    const g=AC.createGain(); const v=kind==='S'?0.5:0.2, d=kind==='S'?0.13:0.04;
+    g.gain.setValueAtTime(v,t); g.gain.exponentialRampToValueAtTime(0.001,t+d);
+    s.connect(hp); hp.connect(g); g.connect(_musicGain); s.start(t); s.stop(t+d+0.01); }
+}
+function _scheduleBar(t0){
+  const bar=_music.bar%4, root=_ROOTS[bar], lead=_LEADBARS[bar];
+  for(let st=0; st<16; st++){
+    const t=t0+st*_STEP;
+    if(_KICK[st]==='1')  _drum('K',t);
+    if(_SNARE[st]==='1') _drum('S',t);
+    if(_HAT[st]==='1')   _drum('H',t);
+    if(st%2===0)         _noteAt(root, t, _STEP*1.7, 'triangle', 0.55);   // pumping 8th bass
+    if(lead[st]!=='.')   _noteAt(lead[st], t, _STEP*1.5, 'square', 0.4);  // bouncy lead
+  }
+}
 function _musicTick(){
   if(!_music.on) return;
   try {
-    const ahead = AC.currentTime + 0.4;
-    while(_music.leadT < ahead){
-      const [n,b]=_LEAD[_music.li]; _noteAt(n,_music.leadT,b*_BEAT,'square',0.5);
-      _music.leadT += b*_BEAT; _music.li=(_music.li+1)%_LEAD.length;
-    }
-    while(_music.bassT < ahead){
-      const [n,b]=_BASS[_music.bi]; _noteAt(n,_music.bassT,b*_BEAT,'triangle',0.7);
-      _music.bassT += b*_BEAT; _music.bi=(_music.bi+1)%_BASS.length;
-    }
+    while(_music.t < AC.currentTime + 0.5){ _scheduleBar(_music.t); _music.t += 16*_STEP; _music.bar++; }
   } catch(e){}
-  _music.timer = setTimeout(_musicTick, 100);   // keep ticking even if a note errored
+  _music.timer = setTimeout(_musicTick, 110);
 }
 function startMusic(){
   if(_music.on || !musicOn) return;
   acResume();
-  _music.on=true; _music.leadT=_music.bassT=AC.currentTime+0.05; _music.li=_music.bi=0;
+  _music.on=true; _music.t=AC.currentTime+0.1; _music.bar=0;
   _musicTick();
 }
 function stopMusic(){ _music.on=false; if(_music.timer) clearTimeout(_music.timer); _music.timer=null; }
@@ -1108,9 +1133,9 @@ function doFart(s){
   const saying = FART_SAYINGS[Math.floor(Math.random()*FART_SAYINGS.length)];
   pushMsg(s, saying, [0,1200,1800,3000][size], ['','#88ffaa','#44ff88','#00ff66'][size], 'lg');
   sndFart(size);
-  // The little kaiju girls giggle whenever they fart (delayed so it rings out after the
-  // fart, not buried under it); grown-up stages just let it rip.
-  if((((meta&&meta.growthStage)||0)===0)) sndGiggle(0.18);
+  // The kaiju girls giggle on every fart (delayed so it rings out after the fart blast,
+  // not buried under it).
+  sndGiggle(0.16);
 
   const radius = [0,80,160,260][size];
   s.fartCloud = { x:pl.x+22, y:pl.y+50, r:0, maxR:radius, size, timer:[0,600,1100,2600][size] };
@@ -1241,7 +1266,7 @@ function updateCitizens(dt, s){
         c.eatenTimer = 600;
         s.lostCitizens++;
         pushMsg(s, '😱 CITIZEN EATEN!', 1400, '#ff4444', 'md');
-        if(s.lostCitizens >= 3 && scene==='playing'){ scene='gameover'; }
+        if(s.lostCitizens >= 3 && scene==='playing'){ scene='gameover'; sndGameOver(); }
       }
     });
   });
@@ -2137,7 +2162,7 @@ function update(dt){
     if(_shakeMs<=0){ _shakeX=0; _shakeY=0; _shakeAmt=0; }
   }
 
-  if(s.player.hp<=0 && scene==='playing') scene='gameover';
+  if(s.player.hp<=0 && scene==='playing'){ scene='gameover'; sndGameOver(); }
 }
 
 // ═══════════════════════════════════════════
