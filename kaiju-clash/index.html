@@ -78,7 +78,9 @@ _master.connect(_masterLP); _masterLP.connect(_masterGain); _masterGain.connect(
 // nothing fights. Voice throttling stops identical sounds (e.g. 5 enemies dying to one
 // fart) from stacking into a wall, and a global cap limits total simultaneous voices.
 const _sfxBus   = AC.createGain(); _sfxBus.gain.value   = 0.85; _sfxBus.connect(_master);
-const _musicBus = AC.createGain(); _musicBus.gain.value = 1.0;  _musicBus.connect(_master);
+// Music connects AFTER the compressor (at _masterGain), NOT through it — otherwise every loud SFX
+// makes the shared compressor clamp the whole mix and the music audibly pumps/"interrupts".
+const _musicBus = AC.createGain(); _musicBus.gain.value = 0.7;  _musicBus.connect(_masterGain);
 const _sfxLast  = {};         // name -> last start time, to throttle re-triggers
 let   _sfxVoices = 0;         // currently-ringing SFX voices
 let   _lastDuck  = 0;
