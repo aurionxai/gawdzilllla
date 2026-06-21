@@ -209,11 +209,12 @@ function loadSfx(){
       .then(buf => { if(!loadedSfx[n]) loadedSfx[n]=buf; }).catch(()=>{})
   )));
 }
-function playSample(name, vol){
+function playSample(name, vol, when){
   const buf = loadedSfx[name]; if(!buf) return false;
   acResume();
   const s=AC.createBufferSource(), g=AC.createGain();
-  s.buffer=buf; g.gain.value=(vol==null?0.8:vol); s.connect(g); g.connect(_master); s.start();
+  s.buffer=buf; g.gain.value=(vol==null?0.8:vol); s.connect(g); g.connect(_master);
+  s.start(AC.currentTime + (when||0));   // `when` lets a sample ring out after another (e.g. giggle after the fart)
   return true;
 }
 // iOS/desktop Safari won't make a sound until a buffer is played inside a user gesture —
@@ -332,7 +333,7 @@ function sndVictory(){
 
 function sndGiggle(delay){
   acResume();
-  if(playSample("giggle"))return;
+  if(playSample("giggle", 0.95, delay))return;   // real clip (sounds/giggle.mp3): loud + delayed like the synth
   const t0 = AC.currentTime + (delay||0);     // delay lets it ring out AFTER the fart, not under it
   // bright bouncy "hee-hee-hee-hee" — LOUD, two stacked oscillators for body, and routed
   // straight to the output (bypassing the master compressor) so nothing ducks it.
