@@ -35,6 +35,7 @@
 const VW = 640, VH = 360;
 const canvas = document.getElementById('c');
 const ctx    = canvas.getContext('2d');
+let _baseTransform = null;   // declared here: resize() assigns it before the line below runs
 
 function resize() {
   const vvp = window.visualViewport;
@@ -534,7 +535,7 @@ const GRAV  = 0.38;
 const MAXVY = 11;
 
 // ── Screen shake ──
-let _shakeX=0, _shakeY=0, _shakeMs=0, _shakeAmt=0, _baseTransform=null;
+let _shakeX=0, _shakeY=0, _shakeMs=0, _shakeAmt=0;   // _baseTransform declared near the canvas setup
 function addShake(amt, ms){ _shakeMs=Math.max(_shakeMs,ms); _shakeAmt=Math.max(_shakeAmt,amt); }
 
 const FART_SAYINGS = [
