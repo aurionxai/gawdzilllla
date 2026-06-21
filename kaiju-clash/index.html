@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#000000">
-<title>KAIJU CHOMP</title>
+<title>KAIJU CLASH</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>%F0%9F%A6%96</text></svg>">
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
@@ -1103,7 +1103,7 @@ function doBite(s){
   if((pl.biteCooldown||0) > 0) return;
   pl.biteCooldown = 900;
   pl.eatAnim = 420;
-  sndRoar();
+  sndChomp(); sndRoar();   // crunchy chomp + the kaiju roar
   const range = 90;
   const cx = pl.x + (pl.dir > 0 ? 44+20 : -20);
   let hit = false;
@@ -1232,6 +1232,11 @@ function updateCitizens(dt, s){
       return p.life > 0;
     });
     if(c.saved || c.eaten) return;
+
+    // Walk into a townsfolk to rescue them (intuitive + always reachable, unlike the
+    // old "defeat an enemy next to them" which was impossible once they were spaced apart).
+    const pl = s.player;
+    if(pl.x < c.x+16 && pl.x+44 > c.x-16 && pl.y < c.y+22 && pl.y+66 > c.y-22){ saveCitizen(c, s); return; }
 
     // Run away from the nearest active enemy that's on roughly the same level — an enemy
     // far above/below (a rooftop vs the street) isn't a threat, so it shouldn't cause panic.
@@ -1735,8 +1740,8 @@ function drawHUD(s){
   ctx.textAlign='right';
   ctx.font='bold 8px monospace';
   ctx.fillStyle='#22ffaa';
-  ctx.fillText('👥 SAVED: '+saved+'/'+total, VW-6, 12);
-  let yrow = 24;
+  ctx.fillText('👥 SAVED: '+saved+'/'+total, VW-6, 26);   // dropped a row so the 🔊 button (top-right) doesn't overlap
+  let yrow = 38;
   if(lost>0){
     ctx.fillStyle='#ff4444';
     ctx.fillText('💀 LOST: '+lost+'/3', VW-6, yrow); yrow+=12;
@@ -1784,7 +1789,7 @@ function drawHUD(s){
   // ── Controls hint (bottom, subtle) ──
   ctx.fillStyle='rgba(0,0,0,0.45)'; ctx.fillRect(0,VH-11,VW,11);
   ctx.fillStyle='#2a3a4a'; ctx.font='5px monospace';
-  ctx.fillText('[← →] MOVE   [↑/SPACE] JUMP & STOMP from above   [Z/X] CHOMP nearby / FART when charged   👥 SAVE CITIZENS!', 4, VH-3);
+  ctx.fillText('[← →] MOVE   [↑/SPACE] JUMP & STOMP   [Z/X] CHOMP / FART   👥 REACH TOWNSFOLK TO RESCUE (bonus)', 4, VH-3);
 
   // ── Growth stage + orb readout (bottom right) ──
   ctx.save();
@@ -1813,7 +1818,7 @@ function drawSelect(){
   ctx.textAlign='center';
   ctx.font='bold 26px monospace';
   ctx.fillStyle='#22ffaa'; ctx.shadowColor='#22ffaa'; ctx.shadowBlur=18;
-  ctx.fillText('KAIJU CHOMP', VW/2, 36);
+  ctx.fillText('KAIJU CLASH', VW/2, 36);
   ctx.shadowBlur=0;
   ctx.font='8px monospace'; ctx.fillStyle='#558866';
   ctx.fillText('EAT FOOD. BUILD PRESSURE. UNLEASH.', VW/2, 50);
@@ -1905,7 +1910,7 @@ function drawTouchControls(){
   // Portrait overlay — show rotate hint but still allow play
   const isPortrait = window.innerHeight > window.innerWidth * 1.15;
   if(isPortrait){
-    ctx.fillStyle='rgba(0,0,0,0.82)'; ctx.fillRect(0,0,VW,VH);
+    ctx.fillStyle='rgba(0,0,0,0.82)'; ctx.fillRect(-24,-24,VW+48,VH+48);
     ctx.textAlign='center';
     ctx.font='bold 22px monospace'; ctx.fillStyle='#22ffaa';
     ctx.fillText('📱 ROTATE YOUR PHONE', VW/2, VH/2-16);
@@ -1961,7 +1966,7 @@ function drawTouchControls(){
 //  WIN / LOSE
 // ═══════════════════════════════════════════
 function drawVictory(){
-  ctx.fillStyle='rgba(8,4,20,0.78)'; ctx.fillRect(0,0,VW,VH);
+  ctx.fillStyle='rgba(8,4,20,0.78)'; ctx.fillRect(-24,-24,VW+48,VH+48);  // padded for screen-shake offset
   ctx.textAlign='center';
   ctx.fillStyle='#7CFF8A'; ctx.font='bold 34px monospace';
   ctx.fillText('LEVEL CLEAR!', VW/2, VH/2-90);
@@ -1981,7 +1986,7 @@ function drawVictory(){
 }
 
 function drawGameover(){
-  ctx.fillStyle='rgba(20,0,0,0.86)'; ctx.fillRect(0,0,VW,VH);
+  ctx.fillStyle='rgba(20,0,0,0.86)'; ctx.fillRect(-24,-24,VW+48,VH+48);  // padded for screen-shake offset
   ctx.textAlign='center';
   ctx.font='bold 28px monospace'; ctx.fillStyle='#cc2200';
   ctx.shadowColor='#cc2200'; ctx.shadowBlur=18;
@@ -2129,12 +2134,12 @@ function drawBoss(s){
   if(vuln){ ctx.fillStyle='#ffee44'; ctx.font='9px monospace'; ctx.textAlign='center'; ctx.fillText('▼ STOMP', cx, by-16); ctx.textAlign='left'; }
   ctx.restore();
 
-  // HP pips (screen-fixed)
+  // HP pips (screen-fixed) — sits BELOW the center fart meter so they don't overlap
   const pips=b.maxHp, pw=18, gap=4, tot=pips*pw+(pips-1)*gap, x0=VW/2-tot/2;
   ctx.fillStyle='#fff'; ctx.font='bold 7px monospace'; ctx.textAlign='center';
-  ctx.fillText('⚙ RIOT MECHA', VW/2, 12); ctx.textAlign='left';
-  ctx.fillStyle='rgba(0,0,0,.5)'; ctx.fillRect(x0-4,16,tot+8,14);
-  for(let i=0;i<pips;i++){ ctx.fillStyle=i<b.hp?'#ff4444':'#553333'; ctx.fillRect(x0+i*(pw+gap),18,pw,10); }
+  ctx.fillText('⚙ RIOT MECHA', VW/2, 38); ctx.textAlign='left';
+  ctx.fillStyle='rgba(0,0,0,.5)'; ctx.fillRect(x0-4,42,tot+8,14);
+  for(let i=0;i<pips;i++){ ctx.fillStyle=i<b.hp?'#ff4444':'#553333'; ctx.fillRect(x0+i*(pw+gap),44,pw,10); }
 }
 
 function update(dt){
@@ -2244,7 +2249,7 @@ function render(){
     if(state) drawBg(state.cam); drawVictory();
   }
   if(scene==='gameover') { if(state) drawBg(state.cam); drawGameover(); }
-  if(scene==='overworld'){ drawOverworld(); }
+  if(scene==='overworld'){ drawOverworld(); drawTouchControls(); }  // touch buttons so phones can navigate the map
   if(_shakeMs>0) ctx.restore();
 }
 
@@ -2253,12 +2258,13 @@ function render(){
 // ═══════════════════════════════════════════
 function updateOverworld(){
   const nodes = Progression.LEVELS;
-  if(wasDown('ArrowRight','KeyD') || touchInBtn('right')) owIdx = Math.min(nodes.length-1, owIdx+1);
-  if(wasDown('ArrowLeft','KeyA')  || touchInBtn('left'))  owIdx = Math.max(0, owIdx-1);
+  const freshTap = Object.keys(touches).length > 0 && !_lastTouchCount;
+  // Touch nav moves ONE node per fresh tap (held would skip straight to the end).
+  if(wasDown('ArrowRight','KeyD') || (freshTap && touchInBtn('right'))) owIdx = Math.min(nodes.length-1, owIdx+1);
+  if(wasDown('ArrowLeft','KeyA')  || (freshTap && touchInBtn('left')))  owIdx = Math.max(0, owIdx-1);
   const sel = nodes[owIdx];
   const unlocked = Progression.isLevelUnlocked(meta, sel.id);
-  const freshTap = Object.keys(touches).length > 0 && !_lastTouchCount;
-  if((isFart() || wasDown('Space','ArrowUp','KeyW','Enter') || (freshTap && touchInBtn('jump'))) && unlocked && sel.playable){
+  if((wasDown('Space','ArrowUp','KeyW','Enter','KeyZ') || (freshTap && (touchInBtn('jump')||touchInBtn('fart')))) && unlocked && sel.playable){
     state = mkState(SEL_CHARS[selIdx], sel.id);
     scene = 'playing';
     state.startTick = tick;
@@ -2270,7 +2276,7 @@ function drawOverworld(){
   ctx.fillStyle='#1b1030'; ctx.fillRect(0,0,VW,VH);
   ctx.textAlign='center';
   ctx.fillStyle='#ffd84a'; ctx.font='bold 28px monospace';
-  ctx.fillText('KAIJU KID\'S QUEST', VW/2, 48);
+  ctx.fillText('KAIJU CLASH', VW/2, 48);
   ctx.font='14px monospace'; ctx.fillStyle='#cfc6e6';
   ctx.fillText('Spirit Orbs: '+meta.orbs+'   Growth: '+(Progression.GROWTH_STAGES[meta.growthStage]||Progression.GROWTH_STAGES[0]).name, VW/2, 74);
 
