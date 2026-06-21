@@ -188,12 +188,16 @@ function acResume(){ if(AC.state!=='running'){ try{ AC.resume(); }catch(e){} } }
 let _audioUnlocked = false;
 function unlockAudio(){
   acResume();
-  if(_audioUnlocked) return;
-  try{
-    const b=AC.createBuffer(1,1,22050), s=AC.createBufferSource();
-    s.buffer=b; s.connect(AC.destination); s.start(0);
-    _audioUnlocked=true;
-  }catch(e){}
+  if(!_audioUnlocked){
+    try{
+      const b=AC.createBuffer(1,1,22050), s=AC.createBufferSource();
+      s.buffer=b; s.connect(AC.destination); s.start(0);
+      _audioUnlocked=true;
+    }catch(e){}
+  }
+  // Safari freezes AC.currentTime while suspended, so any music scheduled before the
+  // unlock is lost — force a clean restart now that the context is actually running.
+  if(typeof stopMusic==='function') stopMusic();
 }
 ['pointerdown','touchstart','mousedown','keydown','click'].forEach(ev =>
   window.addEventListener(ev, unlockAudio, {passive:true}));
@@ -416,6 +420,22 @@ function startMusic(){
 }
 function stopMusic(){ _music.on=false; if(_music.timer) clearTimeout(_music.timer); _music.timer=null; }
 function toggleMusic(){ musicOn=!musicOn; if(musicOn){ if(scene==='playing') startMusic(); } else stopMusic(); }
+// Always-visible audio toggle (top-right). Tapping it is also a guaranteed gesture that
+// unlocks audio on Safari/iOS.
+const AUDIO_BTN = { x: 640-24, y: 3, w: 20, h: 18 };
+function drawAudioBtn(){
+  const r=AUDIO_BTN;
+  ctx.globalAlpha=0.7; ctx.fillStyle='rgba(18,26,38,0.8)'; rrect(r.x,r.y,r.w,r.h,5); ctx.fill();
+  ctx.globalAlpha=1; ctx.font='12px serif'; ctx.textAlign='center';
+  ctx.fillText(musicOn?'🔊':'🔇', r.x+r.w/2, r.y+r.h*0.78); ctx.textAlign='left';
+}
+window.addEventListener('pointerdown', e=>{
+  if(!canvas) return;
+  const rect=canvas.getBoundingClientRect(); if(!rect.width) return;
+  const cxp=(e.clientX-rect.left)*(640/rect.width), cyp=(e.clientY-rect.top)*(360/rect.height);
+  const r=AUDIO_BTN;
+  if(cxp>=r.x-5 && cxp<=r.x+r.w+5 && cyp>=r.y-5 && cyp<=r.y+r.h+5) toggleMusic();
+}, {passive:true});
 
 // ═══════════════════════════════════════════
 //  CONSTANTS
@@ -2038,22 +2058,48 @@ function drawBoss(s){
 
   ctx.save();
   if(tele) ctx.translate(Math.sin(Date.now()*0.03)*2, 0);    // wind-up wobble
-  // legs
-  ctx.fillStyle='#3a4252';
-  ctx.fillRect(bx+12, by+bh-26, 22, 26); ctx.fillRect(bx+bw-34, by+bh-26, 22, 26);
-  // body
-  ctx.fillStyle = flash?'#fff':'#566173'; ctx.fillRect(bx+6, by+34, bw-12, bh-54);
-  ctx.fillStyle = flash?'#fff':'#444e5e'; ctx.fillRect(bx+6, by+34, bw-12, 8);
-  // shoulder shields
-  ctx.fillStyle = flash?'#fff':'#6b7689';
-  ctx.fillRect(bx, by+40, 12, 30); ctx.fillRect(bx+bw-12, by+40, 12, 30);
-  // head / cockpit = weak point (glows gold when vulnerable, riot-red otherwise)
-  ctx.fillStyle = flash?'#fff':(vuln?'#ffd24d':'#7a2530'); ctx.fillRect(bx+bw/2-18, by, 36, 30);
-  if(vuln){
-    ctx.fillStyle='#fff2a8'; ctx.fillRect(bx+bw/2-12, by+8, 24, 8);
-    ctx.fillStyle='#ffee44'; ctx.font='9px monospace'; ctx.textAlign='center';
-    ctx.fillText('▼ STOMP', bx+bw/2, by-6); ctx.textAlign='left';
-  } else { ctx.fillStyle='#ff5a5a'; ctx.fillRect(bx+bw/2-12, by+11, 24, 6); }
+  const cx = bx+bw/2, dir=b.dir;
+  const STEEL  = flash?'#ffffff':'#6b7a93';
+  const STEEL_D= flash?'#ffffff':'#454f63';
+  const STEEL_L= flash?'#ffffff':'#8b9bb5';
+  const fillR=(x,y,w,h,r)=>{ rrect(x,y,w,h,r); ctx.fill(); };
+
+  // ── tank-tread base ──
+  ctx.fillStyle = flash?'#fff':'#2b323d'; fillR(bx+8, by+bh-26, bw-16, 26, 8);
+  for(const wx of [bx+22, cx, bx+bw-22]){
+    ctx.fillStyle = flash?'#fff':'#161b22'; ctx.beginPath(); ctx.arc(wx, by+bh-13, 8, 0, 7); ctx.fill();
+    ctx.fillStyle = flash?'#bbb':'#3a4351'; ctx.beginPath(); ctx.arc(wx, by+bh-13, 3, 0, 7); ctx.fill();
+  }
+  // ── torso ──
+  ctx.fillStyle = STEEL; fillR(bx+15, by+30, bw-30, 56, 9);
+  ctx.fillStyle = STEEL_D; ctx.fillRect(bx+15, by+30, bw-30, 6);
+  ctx.fillStyle = STEEL_D; for(let i=0;i<3;i++) ctx.fillRect(cx-11, by+44+i*8, 22, 4);   // chest vents
+  ctx.fillStyle = flash?'#fff':'#d8a33a'; ctx.fillRect(bx+15, by+78, bw-30, 6);          // hazard stripe
+  // ── shoulders ──
+  ctx.fillStyle = STEEL_L; fillR(bx+4, by+27, 22, 22, 7); fillR(bx+bw-26, by+27, 22, 22, 7);
+  // ── RIOT shield on the leading arm + a fist on the other ──
+  const shieldX = dir<0 ? bx-3 : bx+bw-15;
+  const fistX   = dir<0 ? bx+bw-13 : bx-5;
+  ctx.fillStyle = STEEL_D; fillR(fistX, by+40, 12, 26, 5);
+  ctx.fillStyle = STEEL;   fillR(fistX-2, by+60, 16, 13, 5);
+  ctx.fillStyle = flash?'#fff':'#e8b53a'; fillR(shieldX, by+33, 18, 42, 4);
+  ctx.strokeStyle = flash?'#fff':'#7a5a14'; ctx.lineWidth=2; rrect(shieldX, by+33, 18, 42, 4); ctx.stroke();
+  ctx.save(); ctx.translate(shieldX+9, by+54); ctx.rotate(-Math.PI/2);
+  ctx.fillStyle = flash?'#888':'#3a2c08'; ctx.font='bold 8px monospace'; ctx.textAlign='center'; ctx.fillText('RIOT',0,3); ctx.restore(); ctx.textAlign='left';
+  // ── head / helmet ──
+  ctx.fillStyle = STEEL; fillR(cx-18, by, 36, 28, 9);
+  ctx.fillStyle = STEEL_D; ctx.fillRect(cx-18, by, 36, 5);
+  // single red cyclops eye = weak point (pulses; glows gold + opens when vulnerable)
+  ctx.save();
+  ctx.shadowColor = vuln?'#ffd24d':'#ff3b30';
+  ctx.shadowBlur  = vuln ? 16 : 7+Math.sin(Date.now()*0.012)*3;
+  ctx.fillStyle   = flash?'#fff':(vuln?'#ffe27a':'#ff3b30');
+  fillR(cx-13, by+9, 26, vuln?11:8, 3);
+  ctx.restore();
+  // antenna
+  ctx.strokeStyle=STEEL_D; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(cx+11,by+1); ctx.lineTo(cx+17,by-9); ctx.stroke();
+  ctx.fillStyle='#ff3b30'; ctx.beginPath(); ctx.arc(cx+17,by-10,2,0,7); ctx.fill();
+  if(vuln){ ctx.fillStyle='#ffee44'; ctx.font='9px monospace'; ctx.textAlign='center'; ctx.fillText('▼ STOMP', cx, by-16); ctx.textAlign='left'; }
   ctx.restore();
 
   // HP pips (screen-fixed)
@@ -2266,6 +2312,7 @@ function loop(ts){
   lastT = ts;
   update(dt);
   render();
+  drawAudioBtn();
   // Theme music plays during levels, stops in menus / on death (victory jingle plays clean).
   if(scene==='playing') startMusic(); else stopMusic();
   justDn.clear();
