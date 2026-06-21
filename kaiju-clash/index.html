@@ -58,6 +58,14 @@ resize();
 //  AUDIO  (Web Audio API — procedural)
 // ═══════════════════════════════════════════
 const AC = new (window.AudioContext||window.webkitAudioContext)();
+// Master bus: a compressor (tames clipping + evens levels) into a gentle low-pass (cuts the
+// harsh synth fizz). Every sound + the music route through here, so nothing sounds piercing.
+const _master = AC.createDynamicsCompressor();
+_master.threshold.value=-16; _master.knee.value=24; _master.ratio.value=3.2;
+_master.attack.value=0.004; _master.release.value=0.22;
+const _masterLP = AC.createBiquadFilter(); _masterLP.type='lowpass'; _masterLP.frequency.value=8500; _masterLP.Q.value=0.5;
+const _masterGain = AC.createGain(); _masterGain.gain.value=1.4;   // makeup for the compression
+_master.connect(_masterLP); _masterLP.connect(_masterGain); _masterGain.connect(AC.destination);
 
 // ═══════════════════════════════════════════
 //  SPRITES
@@ -203,7 +211,7 @@ function playSample(name, vol){
   const buf = loadedSfx[name]; if(!buf) return false;
   acResume();
   const s=AC.createBufferSource(), g=AC.createGain();
-  s.buffer=buf; g.gain.value=(vol==null?0.8:vol); s.connect(g); g.connect(AC.destination); s.start();
+  s.buffer=buf; g.gain.value=(vol==null?0.8:vol); s.connect(g); g.connect(_master); s.start();
   return true;
 }
 // iOS/desktop Safari won't make a sound until a buffer is played inside a user gesture —
@@ -214,7 +222,7 @@ function unlockAudio(){
   if(!_audioUnlocked){
     try{
       const b=AC.createBuffer(1,1,22050), s=AC.createBufferSource();
-      s.buffer=b; s.connect(AC.destination); s.start(0);
+      s.buffer=b; s.connect(_master); s.start(0);
       _audioUnlocked=true;
     }catch(e){}
   }
@@ -236,7 +244,7 @@ function sndChomp(){
   const src  = AC.createBufferSource();
   const gain = AC.createGain();
   src.buffer=buf; gain.gain.value=0.45;
-  src.connect(gain); gain.connect(AC.destination); src.start();
+  src.connect(gain); gain.connect(_master); src.start();
 }
 
 let _noiseBuf = null;
@@ -275,7 +283,7 @@ function sndFart(size){ // 1=tiny 2=medium 3=mega — sputtery noise + brass-y p
   master.gain.exponentialRampToValueAtTime(0.001, t0+dur);
   osc.connect(oscG); oscG.connect(master);
   src.connect(lp);   lp.connect(nG); nG.connect(master);
-  master.connect(AC.destination);
+  master.connect(_master);
   lfo.start(t0); osc.start(t0); src.start(t0);
   lfo.stop(t0+dur); osc.stop(t0+dur); src.stop(t0+dur);
 }
@@ -289,7 +297,7 @@ function sndJump(){
   osc.frequency.exponentialRampToValueAtTime(520,AC.currentTime+0.09);
   g.gain.setValueAtTime(0.09,AC.currentTime);
   g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+0.12);
-  osc.connect(g); g.connect(AC.destination);
+  osc.connect(g); g.connect(_master);
   osc.start(); osc.stop(AC.currentTime+0.12);
 }
 
@@ -302,7 +310,7 @@ function sndHurt(){
   osc.frequency.exponentialRampToValueAtTime(90,AC.currentTime+0.25);
   g.gain.setValueAtTime(0.2,AC.currentTime);
   g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+0.25);
-  osc.connect(g); g.connect(AC.destination);
+  osc.connect(g); g.connect(_master);
   osc.start(); osc.stop(AC.currentTime+0.25);
 }
 
@@ -315,7 +323,7 @@ function sndVictory(){
     o.type='square'; o.frequency.value=f;
     g.gain.setValueAtTime(0.12,t);
     g.gain.exponentialRampToValueAtTime(0.001,t+0.28);
-    o.connect(g); g.connect(AC.destination);
+    o.connect(g); g.connect(_master);
     o.start(t); o.stop(t+0.28);
   });
 }
@@ -331,7 +339,7 @@ function sndGiggle(delay){
     o.frequency.setValueAtTime(f,t);
     o.frequency.exponentialRampToValueAtTime(f*1.14,t+0.06);
     g.gain.setValueAtTime(0.17,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.12);   // louder
-    o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t+0.12);
+    o.connect(g); g.connect(_master); o.start(t); o.stop(t+0.12);
   });
 }
 // Per-enemy "voice" — slimes squish, robots clank, ghosts screech, fire sizzles, big things thud.
@@ -346,7 +354,7 @@ function sndCreature(voice, dying){
   acResume();
   if(playSample('enemy_'+voice)) return;
   const t=AC.currentTime, dur=dying?0.38:0.15;
-  const g=AC.createGain(); g.connect(AC.destination);
+  const g=AC.createGain(); g.connect(_master);
   g.gain.setValueAtTime(dying?0.45:0.36, t); g.gain.exponentialRampToValueAtTime(0.001, t+dur);
   const osc=(type,f0,f1)=>{ const o=AC.createOscillator(); o.type=type; o.frequency.setValueAtTime(f0,t); o.frequency.exponentialRampToValueAtTime(f1,t+dur); o.connect(g); o.start(t); o.stop(t+dur+0.02); };
   const noise=(filt,fc)=>{ const s=AC.createBufferSource(); s.buffer=_noiseBuffer(); const bq=AC.createBiquadFilter(); bq.type=filt; bq.frequency.setValueAtTime(fc,t); s.connect(bq); bq.connect(g); s.start(t); s.stop(t+dur); return bq; };
@@ -363,7 +371,7 @@ function sndCheer(){     // townsfolk rescued — quick happy arpeggio
   if(playSample("cheer"))return;
   [660,880,1100].forEach((f,i)=>{ const o=AC.createOscillator(), g=AC.createGain(); const t=AC.currentTime+i*0.06;
     o.type='triangle'; o.frequency.value=f; g.gain.setValueAtTime(0.13,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.16);
-    o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t+0.16); });
+    o.connect(g); g.connect(_master); o.start(t); o.stop(t+0.16); });
 }
 // Per-food "nom" — pitch + timbre vary by food, savory ones get a crunch layer.
 const _FOODSND = { yakitori:[520,'square',1], pizza:[440,'sawtooth',1], sushi:[680,'sine',0],
@@ -371,7 +379,7 @@ const _FOODSND = { yakitori:[520,'square',1], pizza:[440,'sawtooth',1], sushi:[6
 function sndEat(food){
   acResume();
   if(playSample('eat_'+(food&&food.key)) || playSample('chomp')) return;
-  const t=AC.currentTime, g=AC.createGain(); g.connect(AC.destination);
+  const t=AC.currentTime, g=AC.createGain(); g.connect(_master);
   g.gain.setValueAtTime(0.28,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.17);
   const [f,type,crunch] = _FOODSND[food&&food.key] || [560,'square',1];
   if(crunch){ const s=AC.createBufferSource(); s.buffer=_noiseBuffer(); const bp=AC.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=1700; bp.Q.value=0.8; s.connect(bp); bp.connect(g); s.start(t); s.stop(t+0.1); }
@@ -384,7 +392,7 @@ function sndCombo(n){    // chain-stomp ding, rises a step each hit in the chain
   const t=AC.currentTime, o=AC.createOscillator(), g=AC.createGain();
   o.type='square'; o.frequency.value = 440 * Math.pow(1.18, Math.min(n,8));
   g.gain.setValueAtTime(0.16,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.14);
-  o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t+0.15);
+  o.connect(g); g.connect(_master); o.start(t); o.stop(t+0.15);
 }
 function sndRoar(){
   acResume();
@@ -394,7 +402,7 @@ function sndRoar(){
   o.frequency.setValueAtTime(130,AC.currentTime);
   o.frequency.exponentialRampToValueAtTime(55,AC.currentTime+0.28);
   g.gain.setValueAtTime(0.32,AC.currentTime); g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+0.28);
-  o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime+0.28);
+  o.connect(g); g.connect(_master); o.start(); o.stop(AC.currentTime+0.28);
 }
 function sndFall(){ // falling-into-the-void "wheeee" downward swoop
   acResume();
@@ -404,7 +412,7 @@ function sndFall(){ // falling-into-the-void "wheeee" downward swoop
   o.frequency.setValueAtTime(700,AC.currentTime);
   o.frequency.exponentialRampToValueAtTime(90,AC.currentTime+0.55);
   g.gain.setValueAtTime(0.18,AC.currentTime); g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+0.6);
-  o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime+0.6);
+  o.connect(g); g.connect(_master); o.start(); o.stop(AC.currentTime+0.6);
 }
 function sndGameOver(){ // sad descending "defeat" sting
   acResume();
@@ -412,13 +420,13 @@ function sndGameOver(){ // sad descending "defeat" sting
   [392,330,294,233].forEach((f,i)=>{ const o=AC.createOscillator(), g=AC.createGain(); const t=AC.currentTime+i*0.16;
     o.type='square'; o.frequency.setValueAtTime(f,t); o.frequency.exponentialRampToValueAtTime(f*0.94,t+0.15);
     g.gain.setValueAtTime(0.16,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.22);
-    o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t+0.24); });
+    o.connect(g); g.connect(_master); o.start(t); o.stop(t+0.24); });
 }
 
 // ═══════════════════════════════════════════
 //  THEME MUSIC — a looping chiptune (square lead + triangle bass)
 // ═══════════════════════════════════════════
-const _musicGain = AC.createGain(); _musicGain.gain.value = 0.16; _musicGain.connect(AC.destination);
+const _musicGain = AC.createGain(); _musicGain.gain.value = 0.16; _musicGain.connect(_master);
 let musicOn = true;
 const _NF = { '.':0, A2:110, F2:87.31, C3:130.81, G2:98, A3:220, C4:261.63, D4:293.66,
               E4:329.63, F4:349.23, G4:392, A4:440, C5:523.25, D5:587.33, E5:659.25, G5:783.99 };
