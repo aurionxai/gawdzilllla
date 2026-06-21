@@ -21,6 +21,12 @@ enemy_clank     <- cartoon/metal_strike
 enemy_thud      <- cartoon/cartoon_metal_thunk
 enemy_screech   <- cartoon/metallic_twang_high
 
+Per-enemy DEATH sounds (played only on the kill; the cartoon sounds above are the non-fatal
+hits). All Pixabay Content License — free, no attribution required. Mono, trimmed, normalized:
+enemy_squish_die <- "slime impact" by universfield        (slime death)
+enemy_clank_die  <- "robot voice damage" by phatphrogstudio (robot/tinbot death)
+enemy_thud_die   <- "dramatic death collapse" by universfield (whelp/dragon death)
+
 giggle.mp3 = "Baby giggle" from the Freesound Community (via Pixabay), Pixabay Content License
 (free to use, no attribution required). Trimmed to ~2.2s, mono, loudness-normalized.
 

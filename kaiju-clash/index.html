@@ -215,7 +215,8 @@ function acResume(){ if(AC.state!=='running'){ try{ AC.resume(); }catch(e){} } }
 // Drop Higgsfield-generated SFX into kaiju-clash/sounds/ and they auto-override the synth.
 const SFX_NAMES = ['jump','chomp','fart','fart1','fart2','fart3','giggle','hurt','fall','victory','gameover','cheer',
   'combo','roar','gem','eat_yakitori','eat_pizza','eat_sushi','eat_hotdog','eat_icecream',
-  'eat_banana','enemy_squish','enemy_clank','enemy_screech','enemy_sizzle','enemy_thud','music','boss_music'];
+  'eat_banana','enemy_squish','enemy_clank','enemy_screech','enemy_sizzle','enemy_thud',
+  'enemy_squish_die','enemy_clank_die','enemy_thud_die','music','boss_music'];
 const loadedSfx = {};
 function loadSfx(){
   return Promise.all(SFX_NAMES.flatMap(n => ['mp3','wav'].map(ext =>
@@ -389,7 +390,8 @@ const _VOICE = {
 };
 function sndCreature(voice, dying){
   acResume();
-  if(playSample('enemy_'+voice, 0.6)) return;   // the squishy/funny stomp sound, not blaring
+  if(dying && playSample('enemy_'+voice+'_die', 0.72)) return;   // dramatic per-enemy DEATH sound
+  if(playSample('enemy_'+voice, 0.6)) return;                    // short HIT/stomp sound, not blaring
   const t=AC.currentTime, dur=dying?0.38:0.15;
   const g=AC.createGain(); g.connect(_master);
   g.gain.setValueAtTime(dying?0.45:0.36, t); g.gain.exponentialRampToValueAtTime(0.001, t+dur);
