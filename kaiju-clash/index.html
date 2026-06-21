@@ -288,17 +288,66 @@ function sndVictory(){
   });
 }
 
-function sndGiggle(){
+function sndGiggle(delay){
   acResume();
-  [560,720,900,1100,900,720].forEach((f,i)=>{
+  const t0 = AC.currentTime + (delay||0);     // delay lets it ring out AFTER the fart, not under it
+  [620,780,960,1180,960,780].forEach((f,i)=>{
     const o=AC.createOscillator(), g=AC.createGain();
-    const t=AC.currentTime+i*0.065;
+    const t=t0+i*0.072;
     o.type='sine';
     o.frequency.setValueAtTime(f,t);
-    o.frequency.exponentialRampToValueAtTime(f*1.12,t+0.055);
-    g.gain.setValueAtTime(0.07,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.1);
-    o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t+0.1);
+    o.frequency.exponentialRampToValueAtTime(f*1.14,t+0.06);
+    g.gain.setValueAtTime(0.17,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.12);   // louder
+    o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t+0.12);
   });
+}
+// Per-enemy "voice" — slimes squish, robots clank, ghosts screech, fire sizzles, big things thud.
+const _VOICE = {
+  slime:'squish', whelp:'thud', tinbot:'clank', neonbot:'clank', ghoul:'screech',
+  jellymech:'squish', lavaimp:'sizzle', golem:'thud', magma_slug:'sizzle', ember_bat:'screech',
+  obsidian_crab:'thud', flame_wisp:'sizzle', glitch_drone:'clank', karaoke_bot:'clank',
+  pixel_ghost:'screech', neon_serpent:'squish', mecha_pufferfish:'clank', anchor_bot:'clank',
+  bubble_eel:'squish', coral_crab:'thud',
+};
+function sndCreature(voice, dying){
+  acResume();
+  const t=AC.currentTime, dur=dying?0.34:0.13;
+  const g=AC.createGain(); g.connect(AC.destination);
+  g.gain.setValueAtTime(dying?0.26:0.2, t); g.gain.exponentialRampToValueAtTime(0.001, t+dur);
+  const osc=(type,f0,f1)=>{ const o=AC.createOscillator(); o.type=type; o.frequency.setValueAtTime(f0,t); o.frequency.exponentialRampToValueAtTime(f1,t+dur); o.connect(g); o.start(t); o.stop(t+dur+0.02); };
+  const noise=(filt,fc)=>{ const s=AC.createBufferSource(); s.buffer=_noiseBuffer(); const bq=AC.createBiquadFilter(); bq.type=filt; bq.frequency.value=fc; s.connect(bq); bq.connect(g); s.start(t); s.stop(t+dur); return bq; };
+  if(voice==='squish'){ const bq=noise('lowpass',dying?500:900); bq.frequency.exponentialRampToValueAtTime(120,t+dur); osc('sine',dying?260:380,dying?70:150); }
+  else if(voice==='clank'){ osc('square',dying?180:300,dying?90:150); osc('square',dying?245:410,dying?120:205); }
+  else if(voice==='screech'){ osc('sawtooth',dying?960:1220,dying?180:480); }
+  else if(voice==='sizzle'){ noise('highpass',dying?800:1400); osc('triangle',dying?300:210,60); }
+  else { osc('sine',dying?150:210,45); noise('lowpass',300); }   // thud
+}
+function sndEnemyHit(e){ sndCreature(_VOICE[e.type]||'squish', false); }
+function sndEnemyDie(e){ sndCreature(_VOICE[e.type]||'squish', true); }
+function sndCheer(){     // townsfolk rescued — quick happy arpeggio
+  acResume();
+  [660,880,1100].forEach((f,i)=>{ const o=AC.createOscillator(), g=AC.createGain(); const t=AC.currentTime+i*0.06;
+    o.type='triangle'; o.frequency.value=f; g.gain.setValueAtTime(0.13,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.16);
+    o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t+0.16); });
+}
+// Per-food "nom" — pitch + timbre vary by food, savory ones get a crunch layer.
+const _FOODSND = { yakitori:[520,'square',1], pizza:[440,'sawtooth',1], sushi:[680,'sine',0],
+                   hotdog:[480,'square',1], icecream:[820,'sine',0], banana:[600,'triangle',0] };
+function sndEat(food){
+  acResume();
+  const t=AC.currentTime, g=AC.createGain(); g.connect(AC.destination);
+  g.gain.setValueAtTime(0.28,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.17);
+  const [f,type,crunch] = _FOODSND[food&&food.key] || [560,'square',1];
+  if(crunch){ const s=AC.createBufferSource(); s.buffer=_noiseBuffer(); const bp=AC.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=1700; bp.Q.value=0.8; s.connect(bp); bp.connect(g); s.start(t); s.stop(t+0.1); }
+  const o=AC.createOscillator(); o.type=type; o.frequency.setValueAtTime(f,t); o.frequency.exponentialRampToValueAtTime(f*1.5,t+0.13);
+  o.connect(g); o.start(t); o.stop(t+0.17);
+}
+function sndCombo(n){    // chain-stomp ding, rises a step each hit in the chain
+  acResume();
+  const t=AC.currentTime, o=AC.createOscillator(), g=AC.createGain();
+  o.type='square'; o.frequency.value = 440 * Math.pow(1.18, Math.min(n,8));
+  g.gain.setValueAtTime(0.16,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.14);
+  o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t+0.15);
 }
 function sndRoar(){
   acResume();
@@ -773,7 +822,8 @@ function finishLevel(){
 //  TILE HELPERS
 // ═══════════════════════════════════════════
 function tile(t,r,c){
-  if(r<0||r>=LH||c<0||c>=LW) return r>=LH?T_SOLID:T_AIR;
+  // No virtual floor below the map: holes are bottomless so falling in is lethal.
+  if(r<0||r>=LH||c<0||c>=LW) return T_AIR;
   return t[r][c];
 }
 function solid(t,r,c){ const v=tile(t,r,c); return v===T_SOLID||v===T_DEST; }
@@ -877,12 +927,12 @@ function updatePlayer(dt, s){
         pl.stompCombo = (pl.stompCombo||0) + 1;
         const mult = pl.stompCombo;
         const base = e.hp<=0 ? (enemyBig(e)?300:100) : 25;
-        if(e.hp<=0){ e.dead=true; addShake(5,220); }
-        else { addShake(3, 120); }
+        if(e.hp<=0){ e.dead=true; addShake(5,220); sndEnemyDie(e); }
+        else { addShake(3, 120); sndEnemyHit(e); }
         state.score += base * mult;
         pushNum(state, pl.x, pl.y, '-25', '#ff8844');
         pl.vy = -8 - Math.min(mult,5)*0.4;  // bounce a touch higher each chain
-        sndJump();
+        sndJump(); sndCombo(mult);
         pushMsg(state, mult>1 ? ('👊 STOMP x'+mult+'!') : '👊 STOMP!', 700, '#ffee44', 'md');
         // Save nearby citizen
         state.level.citizens.forEach(c=>{
@@ -975,7 +1025,7 @@ function updateFood(dt, s){
     if(pl.x < f.x+20 && pl.x+PW > f.x &&
        pl.y < f.y+20 && pl.y+PH > f.y){
       f.collected=true;
-      sndChomp();
+      sndEat(f.type);
       pl.eatAnim = 400;
       // Poppy gets bonus on banana
       const bonus = (s.charKey==='poppy' && f.type.name==='BANANA') ? 1.4 : 1;
@@ -990,6 +1040,7 @@ function saveCitizen(c, s){
   c.saved = true;
   c.savedTimer = 1200;
   s.savedCitizens++;
+  sndCheer();
   s.score += 200;
   for(let i=0;i<8;i++) c.particles.push({
     vx:(Math.random()-0.5)*3, vy:-(Math.random()*3+1),
@@ -1015,8 +1066,8 @@ function doBite(s){
     if(Math.abs(ec - cx) < range){
       e.hp -= 20; e.stunMs = 700; e.flashMs = 250;
       pushNum(s, e.x, e.y-10, '-20', '#ffee44');
-      if(e.hp<=0){ e.dead=true; s.score+=enemyBig(e)?200:80; addShake(4,150); }
-      else addShake(2,80);
+      if(e.hp<=0){ e.dead=true; s.score+=enemyBig(e)?200:80; addShake(4,150); sndEnemyDie(e); }
+      else { addShake(2,80); sndEnemyHit(e); }
       hit = true;
       // Save adjacent citizen
       s.level.citizens.forEach(c=>{
@@ -1035,8 +1086,9 @@ function doFart(s){
   const saying = FART_SAYINGS[Math.floor(Math.random()*FART_SAYINGS.length)];
   pushMsg(s, saying, [0,1200,1800,3000][size], ['','#88ffaa','#44ff88','#00ff66'][size], 'lg');
   sndFart(size);
-  // The little kaiju girls giggle whenever they fart; grown-up stages just let it rip.
-  if((((meta&&meta.growthStage)||0)===0)) sndGiggle();
+  // The little kaiju girls giggle whenever they fart (delayed so it rings out after the
+  // fart, not buried under it); grown-up stages just let it rip.
+  if((((meta&&meta.growthStage)||0)===0)) sndGiggle(0.18);
 
   const radius = [0,80,160,260][size];
   s.fartCloud = { x:pl.x+22, y:pl.y+50, r:0, maxR:radius, size, timer:[0,600,1100,2600][size] };
@@ -1059,8 +1111,8 @@ function doFart(s){
       e.stunMs = [0,1500,3000,6000][size];
       const bigEnemy = enemyBig(e);
       const fartDmg = [0,15,30,99][size];
-      if(size===3){ e.hp=0; e.dead=true; s.score+=bigEnemy?300:100; addShake(8,350); }
-      else { e.hp -= fartDmg; if(e.hp<=0){ e.dead=true; s.score+=bigEnemy?300:100; addShake(5,200); } else addShake(3,120); }
+      if(size===3){ e.hp=0; e.dead=true; s.score+=bigEnemy?300:100; addShake(8,350); sndEnemyDie(e); }
+      else { e.hp -= fartDmg; if(e.hp<=0){ e.dead=true; s.score+=bigEnemy?300:100; addShake(5,200); sndEnemyDie(e); } else { addShake(3,120); sndEnemyHit(e); } }
       pushNum(s, e.x, e.y-10, '-'+fartDmg, '#44ff88');
       // Save citizens near this enemy
       s.level.citizens.forEach(c=>{
@@ -1942,6 +1994,7 @@ function updateBoss(dt, s){
     const prevFeet = pl.y+PH - pl.vy;
     if(pl.x+PW-8>bx && pl.x+8<bx+bw && prevFeet<=headTop+12 && pl.y+PH>=headTop){
       b.hp--; b.flashMs=200; b.vulnerable=false; addShake(7,280);
+      sndCreature('clank', b.hp<=0); if(b.hp<=0) sndRoar();
       pl.vy=-10; pl.stompCombo=0; s.score+=250;
       pushMsg(s,'💥 WEAK POINT!',900,'#ffee44','lg'); pushNum(s,bx+bw/2,by-12,'HIT!','#ff8844');
       if(b.hp<=0){ b.state='defeated'; b.stateMs=1700; s.score+=1500; pushMsg(s,'🏆 RIOT MECHA DOWN!',2600,'#22ffaa','lg'); }
