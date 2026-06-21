@@ -589,6 +589,21 @@ const FART_SAYINGS = [
   'NATURE CALLING!', 'TOKYO HAS BEEN WARNED!', 'TOO MUCH YAKITORI!',
 ];
 
+// Rescued townsfolk thank you in Japanese — rotates so kids pick up real words (kana + romaji + meaning).
+const JP_SAYINGS = [
+  { jp:'ありがとう！', ro:'Arigatō!',   en:'Thank you!' },
+  { jp:'たすかった！', ro:'Tasukatta!', en:'You saved me!' },
+  { jp:'やったー！',   ro:'Yattā!',     en:'Hooray!' },
+  { jp:'すごい！',     ro:'Sugoi!',     en:'Amazing!' },
+  { jp:'だいじょうぶ！',ro:'Daijōbu!',  en:"I'm okay!" },
+  { jp:'ともだち！',   ro:'Tomodachi!', en:'Friend!' },
+  { jp:'ヒーロー！',   ro:'Hīrō!',      en:'Hero!' },
+  { jp:'げんき！',     ro:'Genki!',     en:'Full of pep!' },
+  { jp:'バンザイ！',   ro:'Banzai!',    en:'Hurray!' },
+  { jp:'かわいい！',   ro:'Kawaii!',    en:'So cute!' },
+];
+let _npcSayIdx = 0;
+
 const FOOD_TYPES = [
   { key:'yakitori', emoji:'🍢', name:'YAKITORI',  gain:22, msg:'SPICY!',       clr:'#ff8800' },
   { key:'pizza',    emoji:'🍕', name:'PIZZA',     gain:30, msg:'CHEESE BLAST!',clr:'#ffaa00' },
@@ -1193,7 +1208,8 @@ function updateFood(dt, s){
 
 function saveCitizen(c, s){
   c.saved = true;
-  c.savedTimer = 1200;
+  c.savedTimer = 2200;                                  // long enough to read the phrase
+  c.saying = JP_SAYINGS[_npcSayIdx++ % JP_SAYINGS.length];   // rotate: each rescue teaches a new word
   s.savedCitizens++;
   sndCheer();
   s.score += 200;
@@ -1594,9 +1610,22 @@ function drawCitizens(s){
     }
     if(c.saved){
       if(c.savedTimer>0){
-        ctx.font='16px serif'; ctx.textAlign='center';
-        ctx.globalAlpha = c.savedTimer/1200;
-        ctx.fillText('🎉', cx2, cy2-16);
+        const a = Math.min(1, c.savedTimer/500);        // hold, then fade out in the last 500ms
+        const sy = c.saying;
+        ctx.textAlign='center'; ctx.globalAlpha=a;
+        ctx.font='14px serif'; ctx.fillText('🎉', cx2, cy2+4);   // celebrate on the NPC
+        if(sy){
+          // speech bubble sized to the text
+          ctx.font='bold 12px sans-serif'; const w1=ctx.measureText(sy.jp).width;
+          ctx.font='8px monospace';        const w2=ctx.measureText(sy.ro+'  ·  '+sy.en).width;
+          const bw=Math.max(w1,w2)+18, bh=30, bx=cx2-bw/2, byT=cy2-56;
+          ctx.fillStyle='rgba(255,255,255,0.97)'; ctx.strokeStyle='#1faa55'; ctx.lineWidth=2;
+          rrect(bx,byT,bw,bh,7); ctx.fill(); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(cx2-6,byT+bh-1); ctx.lineTo(cx2+6,byT+bh-1); ctx.lineTo(cx2,byT+bh+7); ctx.closePath();
+          ctx.fillStyle='rgba(255,255,255,0.97)'; ctx.fill();
+          ctx.fillStyle='#d11f55'; ctx.font='bold 12px sans-serif'; ctx.fillText(sy.jp, cx2, byT+14);     // kana
+          ctx.fillStyle='#1f7a44'; ctx.font='8px monospace';        ctx.fillText(sy.ro+'  ·  '+sy.en, cx2, byT+25); // romaji · meaning
+        }
         ctx.globalAlpha=1; ctx.textAlign='left';
       }
       return;
