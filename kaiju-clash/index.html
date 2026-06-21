@@ -254,16 +254,16 @@ function playSample(name, vol, when){
 // resume() alone isn't enough. Play one silent buffer on the first interaction to unlock.
 let _audioUnlocked = false;
 function unlockAudio(){
-  acResume();
-  if(!_audioUnlocked){
-    try{
-      const b=AC.createBuffer(1,1,22050), s=AC.createBufferSource();
-      s.buffer=b; s.connect(_master); s.start(0);
-      _audioUnlocked=true;
-    }catch(e){}
-  }
-  // Safari freezes AC.currentTime while suspended, so any music scheduled before the
-  // unlock is lost — force a clean restart now that the context is actually running.
+  acResume();                       // safe every time — resumes the context if it got suspended
+  if(_audioUnlocked) return;        // everything below runs ONCE, not on every keydown/click
+  try{
+    const b=AC.createBuffer(1,1,22050), s=AC.createBufferSource();
+    s.buffer=b; s.connect(_master); s.start(0);
+  }catch(e){}
+  _audioUnlocked=true;
+  // Safari freezes AC.currentTime while suspended, so music scheduled before the unlock is lost —
+  // force ONE clean restart now that the context is actually running. (Previously this ran on every
+  // keystroke, restarting the track from the top each time — the "music re-loops on keypress" bug.)
   if(typeof stopMusic==='function') stopMusic();
 }
 ['pointerdown','touchstart','mousedown','keydown','click'].forEach(ev =>
