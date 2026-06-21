@@ -182,7 +182,23 @@ function loadNpcs(){
   })));
 }
 
-function acResume(){ if(AC.state==='suspended') AC.resume(); }
+function acResume(){ if(AC.state!=='running'){ try{ AC.resume(); }catch(e){} } }   // 'suspended' AND iOS 'interrupted'
+// iOS/desktop Safari won't make a sound until a buffer is played inside a user gesture —
+// resume() alone isn't enough. Play one silent buffer on the first interaction to unlock.
+let _audioUnlocked = false;
+function unlockAudio(){
+  acResume();
+  if(_audioUnlocked) return;
+  try{
+    const b=AC.createBuffer(1,1,22050), s=AC.createBufferSource();
+    s.buffer=b; s.connect(AC.destination); s.start(0);
+    _audioUnlocked=true;
+  }catch(e){}
+}
+['pointerdown','touchstart','mousedown','keydown','click'].forEach(ev =>
+  window.addEventListener(ev, unlockAudio, {passive:true}));
+// iOS suspends audio when the tab backgrounds — resume when it returns.
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) acResume(); });
 
 function sndChomp(){
   acResume();
