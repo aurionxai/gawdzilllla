@@ -47,6 +47,7 @@ function resize() {
   canvas.style.width  = Math.round(VW * sc) + 'px';
   canvas.style.height = Math.round(VH * sc) + 'px';
   ctx.setTransform(sc * dpr, 0, 0, sc * dpr, 0, 0);
+  _baseTransform = ctx.getTransform();   // base for the per-frame shake reset (see render)
   ctx.imageSmoothingEnabled = false;
 }
 window.addEventListener('resize', resize);
@@ -530,7 +531,7 @@ const GRAV  = 0.38;
 const MAXVY = 11;
 
 // ── Screen shake ──
-let _shakeX=0, _shakeY=0, _shakeMs=0, _shakeAmt=0;
+let _shakeX=0, _shakeY=0, _shakeMs=0, _shakeAmt=0, _baseTransform=null;
 function addShake(amt, ms){ _shakeMs=Math.max(_shakeMs,ms); _shakeAmt=Math.max(_shakeAmt,amt); }
 
 const FART_SAYINGS = [
@@ -1796,9 +1797,11 @@ function drawHUD(s){
   const lost  = s.lostCitizens;
   ctx.textAlign='right';
   ctx.font='bold 8px monospace';
-  ctx.fillStyle='#22ffaa';
-  ctx.fillText('👥 SAVED: '+saved+'/'+total, VW-6, 26);   // dropped a row so the 🔊 button (top-right) doesn't overlap
-  let yrow = 38;
+  let yrow = 26;
+  if(total > 0){   // no rescue counter in the boss arena (0 citizens) — it read as "SAVED 0/0"
+    ctx.fillStyle='#22ffaa';
+    ctx.fillText('👥 SAVED: '+saved+'/'+total, VW-6, yrow); yrow += 12;
+  }
   if(lost>0){
     ctx.fillStyle='#ff4444';
     ctx.fillText('💀 LOST: '+lost+'/3', VW-6, yrow); yrow+=12;
@@ -2231,8 +2234,11 @@ function update(dt){
 //  MAIN RENDER
 // ═══════════════════════════════════════════
 function render(){
+  // Reset to the base transform every frame (absolute), then apply shake — so the early
+  // returns in the select/playing branches can't leak an unbalanced save() and drift.
+  if(_baseTransform) ctx.setTransform(_baseTransform);
+  if(_shakeMs>0) ctx.translate(_shakeX, _shakeY);
   ctx.clearRect(0,0,VW,VH);
-  if(_shakeMs>0) ctx.save(), ctx.translate(_shakeX, _shakeY);
   ctx.font='8px monospace';
 
   if(scene==='overworld'){ updateOverworld(); }
@@ -2307,7 +2313,6 @@ function render(){
   }
   if(scene==='gameover') { if(state) drawBg(state.cam); drawGameover(); }
   if(scene==='overworld'){ drawOverworld(); drawTouchControls(); }  // touch buttons so phones can navigate the map
-  if(_shakeMs>0) ctx.restore();
 }
 
 // ═══════════════════════════════════════════
