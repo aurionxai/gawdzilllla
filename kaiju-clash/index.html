@@ -231,6 +231,15 @@ function loadSfx(){
       .then(buf => { if(!loadedSfx[n]) loadedSfx[n]=buf; }).catch(()=>{})
   )));
 }
+// Spoken Japanese vocab clips (sounds/jp/<key>.mp3) -> loadedSfx['jp_<key>']
+function loadJpVoices(){
+  const keys = Object.values(WORLD_VOCAB).flat().map(v=>v.key);
+  return Promise.all(keys.map(k =>
+    fetch(_av('sounds/jp/'+k+'.mp3')).then(r => r.ok ? r.arrayBuffer() : Promise.reject())
+      .then(b => new Promise((res,rej)=>AC.decodeAudioData(b,res,rej)))
+      .then(buf => { loadedSfx['jp_'+k]=buf; }).catch(()=>{})
+  ));
+}
 function playSample(name, vol, when){
   const buf = loadedSfx[name]; if(!buf) return false;
   acResume();
@@ -589,19 +598,38 @@ const FART_SAYINGS = [
   'NATURE CALLING!', 'TOKYO HAS BEEN WARNED!', 'TOO MUCH YAKITORI!',
 ];
 
-// Rescued townsfolk thank you in Japanese — rotates so kids pick up real words (kana + romaji + meaning).
-const JP_SAYINGS = [
-  { jp:'ありがとう！', ro:'Arigatō!',   en:'Thank you!' },
-  { jp:'たすかった！', ro:'Tasukatta!', en:'You saved me!' },
-  { jp:'やったー！',   ro:'Yattā!',     en:'Hooray!' },
-  { jp:'すごい！',     ro:'Sugoi!',     en:'Amazing!' },
-  { jp:'だいじょうぶ！',ro:'Daijōbu!',  en:"I'm okay!" },
-  { jp:'ともだち！',   ro:'Tomodachi!', en:'Friend!' },
-  { jp:'ヒーロー！',   ro:'Hīrō!',      en:'Hero!' },
-  { jp:'げんき！',     ro:'Genki!',     en:'Full of pep!' },
-  { jp:'バンザイ！',   ro:'Banzai!',    en:'Hurray!' },
-  { jp:'かわいい！',   ro:'Kawaii!',    en:'So cute!' },
-];
+// Rescued townsfolk speak a rotating Japanese word — kana + romaji + meaning on screen AND a real
+// spoken clip (sounds/jp/<key>.mp3) so kids hear the pronunciation and learn without realizing it.
+// Vocab is per-world (each world teaches a fresh set); add WORLD_VOCAB[2], [3]... as worlds ship.
+const WORLD_VOCAB = {
+  1: [
+    { key:'arigato',    jp:'ありがとう！', ro:'Arigatō!',   en:'Thank you!' },
+    { key:'konnichiwa', jp:'こんにちは！', ro:'Konnichiwa!', en:'Hello!' },
+    { key:'tasukatta',  jp:'たすかった！', ro:'Tasukatta!', en:'You saved me!' },
+    { key:'sugoi',      jp:'すごい！',     ro:'Sugoi!',     en:'Amazing!' },
+    { key:'yatta',      jp:'やったー！',   ro:'Yattā!',     en:'Hooray!' },
+    { key:'daijobu',    jp:'だいじょうぶ！',ro:'Daijōbu!',   en:"I'm okay!" },
+    { key:'tomodachi',  jp:'ともだち！',   ro:'Tomodachi!', en:'Friend!' },
+    { key:'hero',       jp:'ヒーロー！',   ro:'Hīrō!',      en:'Hero!' },
+    { key:'genki',      jp:'げんき！',     ro:'Genki!',     en:'Full of pep!' },
+    { key:'banzai',     jp:'バンザイ！',   ro:'Banzai!',    en:'Hurray!' },
+    { key:'kawaii',     jp:'かわいい！',   ro:'Kawaii!',    en:'So cute!' },
+    { key:'sayonara',   jp:'さようなら！', ro:'Sayōnara!',  en:'Goodbye!' },
+    { key:'ganbatte',   jp:'がんばって！', ro:'Ganbatte!',  en:'Do your best!' },
+    { key:'daisuki',    jp:'だいすき！',   ro:'Daisuki!',   en:'I love it!' },
+    { key:'ureshii',    jp:'うれしい！',   ro:'Ureshii!',   en:'Happy!' },
+    { key:'neko',       jp:'ねこ',         ro:'Neko',       en:'Cat' },
+    { key:'inu',        jp:'いぬ',         ro:'Inu',        en:'Dog' },
+    { key:'tori',       jp:'とり',         ro:'Tori',       en:'Bird' },
+    { key:'sakana',     jp:'さかな',       ro:'Sakana',     en:'Fish' },
+    { key:'hoshi',      jp:'ほし',         ro:'Hoshi',      en:'Star' },
+    { key:'tsuki',      jp:'つき',         ro:'Tsuki',      en:'Moon' },
+    { key:'hana',       jp:'はな',         ro:'Hana',       en:'Flower' },
+    { key:'mizu',       jp:'みず',         ro:'Mizu',       en:'Water' },
+    { key:'oishii',     jp:'おいしい！',   ro:'Oishii!',    en:'Delicious!' },
+  ],
+};
+function _vocab(){ const m = state && String(state.levelId||'').match(/w(\d)/); const w = m?+m[1]:1; return WORLD_VOCAB[w] || WORLD_VOCAB[1]; }
 let _npcSayIdx = 0;
 
 const FOOD_TYPES = [
@@ -1209,9 +1237,11 @@ function updateFood(dt, s){
 function saveCitizen(c, s){
   c.saved = true;
   c.savedTimer = 2200;                                  // long enough to read the phrase
-  c.saying = JP_SAYINGS[_npcSayIdx++ % JP_SAYINGS.length];   // rotate: each rescue teaches a new word
+  const v = _vocab();
+  c.saying = v[_npcSayIdx++ % v.length];                // rotate: each rescue teaches a new word
   s.savedCitizens++;
   sndCheer();
+  playSample('jp_'+c.saying.key, 0.95, 0.22);          // SPEAK it (just after the cheer) so kids hear the word
   s.score += 200;
   for(let i=0;i<8;i++) c.particles.push({
     vx:(Math.random()-0.5)*3, vy:-(Math.random()*3+1),
@@ -2555,6 +2585,7 @@ function loop(ts){
   requestAnimationFrame(loop);
 }
 loadSfx();   // try real samples (sounds/*.{mp3,wav}); silently no-ops until they exist
+loadJpVoices();   // spoken Japanese vocab clips (sounds/jp/*.mp3)
 Promise.all([loadSprites(), loadSkin(activeSkin), loadEnemies(), loadNpcs(), loadFood()]).then(()=>{ spritesReady=true; lastT=performance.now(); });
 requestAnimationFrame(loop);
 </script>

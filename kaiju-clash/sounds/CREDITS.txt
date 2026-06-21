@@ -36,5 +36,11 @@ music.mp3      = "Kids Happy Background Music" by bombinsound (via Pixabay). 128
 boss_music.mp3 = "Final Boss" by davidgallie (via Pixabay). 128kbps stereo, ~0:54. Plays only
                  on boss levels (w1l4); the main theme plays everywhere else.
 
+JAPANESE VOCAB VOICES (sounds/jp/*.mp3)
+24 World-1 words spoken by macOS built-in TTS (voice: Kyoko, ja_JP), normalized to -15 LUFS mono.
+NOTE: macOS system-voice output is fine for prototype/demo; for a commercial launch, regenerate
+these with a TTS that explicitly licenses commercial use of the audio (Google Cloud TTS, Amazon
+Polly, or ElevenLabs) to be airtight.
+
 Still procedural-synth (no sample yet): roar, enemy_sizzle.
 Drop a matching <name>.mp3 here to override any of those too.
