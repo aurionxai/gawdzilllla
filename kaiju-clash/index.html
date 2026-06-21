@@ -204,6 +204,8 @@ function loadEnemies(){
 
 // The 8 named townsfolk the player rescues (the "citizens"). Loaded as npc_<name>.
 const NPC_TYPES = ['chef','obachan','otaku','idol','tourist','sumo','salaryman','schoolgirl'];
+// Gender per townsperson, so the spoken Japanese uses a matching male/female voice.
+const NPC_GENDER = { chef:'m', obachan:'f', otaku:'m', idol:'f', tourist:'f', sumo:'m', salaryman:'m', schoolgirl:'f' };
 function loadNpcs(){
   return Promise.all(NPC_TYPES.map(n => new Promise(res => {
     const img = new Image();
@@ -231,13 +233,14 @@ function loadSfx(){
       .then(buf => { if(!loadedSfx[n]) loadedSfx[n]=buf; }).catch(()=>{})
   )));
 }
-// Spoken Japanese vocab clips (sounds/jp/<key>.mp3) -> loadedSfx['jp_<key>']
+// Spoken Japanese vocab clips, male + female (sounds/jp/<key>_<g>.mp3) -> loadedSfx['jp_<key>_<g>']
 function loadJpVoices(){
   const keys = Object.values(WORLD_VOCAB).flat().map(v=>v.key);
-  return Promise.all(keys.map(k =>
-    fetch(_av('sounds/jp/'+k+'.mp3')).then(r => r.ok ? r.arrayBuffer() : Promise.reject())
+  const files = keys.flatMap(k => ['f','m'].map(g => [k+'_'+g]));
+  return Promise.all(files.map(([nm]) =>
+    fetch(_av('sounds/jp/'+nm+'.mp3')).then(r => r.ok ? r.arrayBuffer() : Promise.reject())
       .then(b => new Promise((res,rej)=>AC.decodeAudioData(b,res,rej)))
-      .then(buf => { loadedSfx['jp_'+k]=buf; }).catch(()=>{})
+      .then(buf => { loadedSfx['jp_'+nm]=buf; }).catch(()=>{})
   ));
 }
 function playSample(name, vol, when){
@@ -1241,7 +1244,8 @@ function saveCitizen(c, s){
   c.saying = v[_npcSayIdx++ % v.length];                // rotate: each rescue teaches a new word
   s.savedCitizens++;
   sndCheer();
-  playSample('jp_'+c.saying.key, 0.95, 0.22);          // SPEAK it (just after the cheer) so kids hear the word
+  const _g = NPC_GENDER[c.npc] || 'f';                 // voice matches the NPC's gender
+  playSample('jp_'+c.saying.key+'_'+_g, 0.95, 0.22);   // SPEAK it (just after the cheer) so kids hear the word
   s.score += 200;
   for(let i=0;i<8;i++) c.particles.push({
     vx:(Math.random()-0.5)*3, vy:-(Math.random()*3+1),

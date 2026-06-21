@@ -36,8 +36,13 @@ music.mp3      = "Kids Happy Background Music" by bombinsound (via Pixabay). 128
 boss_music.mp3 = "Final Boss" by davidgallie (via Pixabay). 128kbps stereo, ~0:54. Plays only
                  on boss levels (w1l4); the main theme plays everywhere else.
 
-JAPANESE VOCAB VOICES (sounds/jp/*.mp3)
-24 World-1 words spoken by macOS built-in TTS (voice: Kyoko, ja_JP), normalized to -15 LUFS mono.
+JAPANESE VOCAB VOICES (sounds/jp/<word>_f.mp3 female, _m.mp3 male)
+24 World-1 words × 2 voices, to match each NPC's gender. Female = macOS TTS Kyoko (ja_JP). Male =
+the same Kyoko clip pitch-shifted down ~5 semitones (the only ja_JP voice actually installed here;
+Otoya/Hattori show in the voice list but their data isn't downloaded, so they output silence).
+Pronunciation is identical/correct — only the pitch differs. For a true male voice, install Otoya
+via System Settings > Accessibility > Spoken Content > System Voices, then regenerate _m clips.
+All normalized to -15 LUFS mono.
 NOTE: macOS system-voice output is fine for prototype/demo; for a commercial launch, regenerate
 these with a TTS that explicitly licenses commercial use of the audio (Google Cloud TTS, Amazon
 Polly, or ElevenLabs) to be airtight.
