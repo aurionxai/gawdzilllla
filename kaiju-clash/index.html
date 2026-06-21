@@ -319,7 +319,7 @@ function sndCreature(voice, dying){
   const g=AC.createGain(); g.connect(AC.destination);
   g.gain.setValueAtTime(dying?0.26:0.2, t); g.gain.exponentialRampToValueAtTime(0.001, t+dur);
   const osc=(type,f0,f1)=>{ const o=AC.createOscillator(); o.type=type; o.frequency.setValueAtTime(f0,t); o.frequency.exponentialRampToValueAtTime(f1,t+dur); o.connect(g); o.start(t); o.stop(t+dur+0.02); };
-  const noise=(filt,fc)=>{ const s=AC.createBufferSource(); s.buffer=_noiseBuffer(); const bq=AC.createBiquadFilter(); bq.type=filt; bq.frequency.value=fc; s.connect(bq); bq.connect(g); s.start(t); s.stop(t+dur); return bq; };
+  const noise=(filt,fc)=>{ const s=AC.createBufferSource(); s.buffer=_noiseBuffer(); const bq=AC.createBiquadFilter(); bq.type=filt; bq.frequency.setValueAtTime(fc,t); s.connect(bq); bq.connect(g); s.start(t); s.stop(t+dur); return bq; };
   if(voice==='squish'){ const bq=noise('lowpass',dying?500:900); bq.frequency.exponentialRampToValueAtTime(120,t+dur); osc('sine',dying?260:380,dying?70:150); }
   else if(voice==='clank'){ osc('square',dying?180:300,dying?90:150); osc('square',dying?245:410,dying?120:205); }
   else if(voice==='screech'){ osc('sawtooth',dying?960:1220,dying?180:480); }
@@ -401,16 +401,18 @@ function _noteAt(note, t, dur, type, vol){
 }
 function _musicTick(){
   if(!_music.on) return;
-  const ahead = AC.currentTime + 0.4;
-  while(_music.leadT < ahead){
-    const [n,b]=_LEAD[_music.li]; _noteAt(n,_music.leadT,b*_BEAT,'square',0.5);
-    _music.leadT += b*_BEAT; _music.li=(_music.li+1)%_LEAD.length;
-  }
-  while(_music.bassT < ahead){
-    const [n,b]=_BASS[_music.bi]; _noteAt(n,_music.bassT,b*_BEAT,'triangle',0.7);
-    _music.bassT += b*_BEAT; _music.bi=(_music.bi+1)%_BASS.length;
-  }
-  _music.timer = setTimeout(_musicTick, 100);
+  try {
+    const ahead = AC.currentTime + 0.4;
+    while(_music.leadT < ahead){
+      const [n,b]=_LEAD[_music.li]; _noteAt(n,_music.leadT,b*_BEAT,'square',0.5);
+      _music.leadT += b*_BEAT; _music.li=(_music.li+1)%_LEAD.length;
+    }
+    while(_music.bassT < ahead){
+      const [n,b]=_BASS[_music.bi]; _noteAt(n,_music.bassT,b*_BEAT,'triangle',0.7);
+      _music.bassT += b*_BEAT; _music.bi=(_music.bi+1)%_BASS.length;
+    }
+  } catch(e){}
+  _music.timer = setTimeout(_musicTick, 100);   // keep ticking even if a note errored
 }
 function startMusic(){
   if(_music.on || !musicOn) return;
@@ -2310,10 +2312,10 @@ function loop(ts){
   }
   const dt = Math.min(ts-lastT, 50);
   lastT = ts;
-  update(dt);
-  render();
-  drawAudioBtn();
-  // Theme music plays during levels, stops in menus / on death (victory jingle plays clean).
+  // A thrown error (e.g. a Safari Web Audio quirk in a sound call) must never freeze the
+  // game or kill the music — isolate the frame.
+  try { update(dt); render(); drawAudioBtn(); }
+  catch(err){ if(!loop._logged){ console.error('frame error:', err); loop._logged=true; } }
   if(scene==='playing') startMusic(); else stopMusic();
   justDn.clear();
   requestAnimationFrame(loop);
