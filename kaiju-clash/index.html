@@ -2386,6 +2386,30 @@ function update(dt){
 // ═══════════════════════════════════════════
 //  MAIN RENDER
 // ═══════════════════════════════════════════
+// Dead-simple "how to play" card shown once before level 1.
+function drawHowTo(){
+  ctx.fillStyle='rgba(8,6,20,0.74)'; ctx.fillRect(0,0,VW,VH);     // dim the world behind
+  const cw=470, ch=250, cx=VW/2-cw/2, cy=VH/2-ch/2;
+  ctx.fillStyle='#fff7ea'; ctx.strokeStyle='#22cc77'; ctx.lineWidth=4;
+  rrect(cx,cy,cw,ch,16); ctx.fill(); ctx.stroke();
+  ctx.fillStyle='#22cc77'; rrect(cx,cy,cw,42,16); ctx.fill(); ctx.fillRect(cx,cy+26,cw,16);   // header band
+  ctx.textAlign='center';
+  ctx.fillStyle='#fff'; ctx.font='bold 21px sans-serif'; ctx.fillText('🦖  HOW TO PLAY', VW/2, cy+29);
+  // big, few-words rows
+  ctx.textAlign='left'; const lx=cx+34; let ry=cy+78;
+  const row=(icon,label)=>{ ctx.textAlign='left'; ctx.font='24px serif'; ctx.fillText(icon, lx, ry+3);
+    ctx.font='bold 16px sans-serif'; ctx.fillStyle='#333'; ctx.fillText(label, lx+50, ry); ry+=41; };
+  row('⬅️ ➡️', 'MOVE');
+  row('⬆️', 'JUMP   (or SPACE)');
+  row('💨', 'Eat 🍣 then press Z to FART!');
+  row('🚩', 'Save your friends & reach the flag!');
+  const pulse = 0.55+0.45*Math.sin(Date.now()*0.006);              // pulsing start prompt
+  ctx.globalAlpha=pulse; ctx.textAlign='center';
+  ctx.fillStyle='#ee2266'; ctx.font='bold 18px sans-serif';
+  ctx.fillText('▶  PRESS SPACE  /  TAP TO PLAY!', VW/2, cy+ch-16);
+  ctx.globalAlpha=1; ctx.textAlign='left';
+}
+
 function render(){
   // Reset to the base transform every frame (absolute), then apply shake — so the early
   // returns in the select/playing branches can't leak an unbalanced save() and drift.
@@ -2395,6 +2419,18 @@ function render(){
   ctx.font='8px monospace';
 
   if(scene==='overworld'){ updateOverworld(); }
+
+  if(scene==='howto'){
+    if(state) drawBg(state.cam);
+    drawHowTo();
+    const freshTap = Object.keys(touches).length>0 && !_lastTouchCount;
+    if(wasDown('Space','Enter','KeyZ','ArrowUp','KeyW','KeyX') || freshTap){
+      scene='playing'; state.startTick = tick;          // start the clock when play actually begins
+    }
+    _lastTouchCount = Object.keys(touches).length;
+    drawAudioBtn();
+    return;
+  }
 
   if(scene==='select'){
     // Keyboard input
@@ -2481,8 +2517,8 @@ function updateOverworld(){
   const unlocked = Progression.isLevelUnlocked(meta, sel.id);
   if((wasDown('Space','ArrowUp','KeyW','Enter','KeyZ') || (freshTap && (touchInBtn('jump')||touchInBtn('fart')))) && unlocked && sel.playable){
     state = mkState(SEL_CHARS[selIdx], sel.id);
-    scene = 'playing';
-    state.startTick = tick;
+    if(sel.id==='w1l1'){ scene = 'howto'; }              // quick how-to before the very first level
+    else { scene = 'playing'; state.startTick = tick; }
   }
   _lastTouchCount = Object.keys(touches).length;
 }
