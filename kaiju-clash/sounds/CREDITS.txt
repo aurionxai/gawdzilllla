@@ -19,5 +19,11 @@ enemy_clank     <- cartoon/metal_strike
 enemy_thud      <- cartoon/cartoon_metal_thunk
 enemy_screech   <- cartoon/metallic_twang_high
 
-Still procedural-synth (no sample yet): giggle, roar, enemy_sizzle, music.
+MUSIC
+music.mp3 = "Pixelland" by Kevin MacLeod (incompetech.com), trimmed to a ~52s loop.
+Licensed under Creative Commons: By Attribution 4.0 — http://creativecommons.org/licenses/by/4.0/
+REQUIRED in-game/credits attribution: "Music: 'Pixelland' by Kevin MacLeod (incompetech.com),
+licensed under CC BY 4.0."
+
+Still procedural-synth (no sample yet): giggle, roar, enemy_sizzle.
 Drop a matching <name>.mp3 here to override any of those too.
