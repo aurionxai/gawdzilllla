@@ -45,6 +45,8 @@ via System Settings > Accessibility > Spoken Content > System Voices, then regen
 All normalized to -15 LUFS mono.
 Plus 24 FOOD words (sounds/jp/<food>_f.mp3, female only — the hero is a girl) spoken on eat, same
 Kyoko TTS, -15 LUFS mono. Food rotates through all 24 so kids hear a new food word each pickup.
+Plus 20 ENEMY words (sounds/jp/<enemy>_m.mp3, male voice — monsters) spoken on defeat: real
+animal/monster words (hebi/snake, kani/crab, kurage/jellyfish, doragon/dragon, robotto/robot…).
 NOTE: macOS system-voice output is fine for prototype/demo; for a commercial launch, regenerate
 these with a TTS that explicitly licenses commercial use of the audio (Google Cloud TTS, Amazon
 Polly, or ElevenLabs) to be airtight.

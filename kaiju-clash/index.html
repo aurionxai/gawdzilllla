@@ -167,30 +167,32 @@ function loadSkin(id){
 // ═══════════════════════════════════════════
 // w/h = base visual draw size (px) at growth scale 1; big = heavy class (slower,
 // worth more, bigger hp-bar); hp = spawn hit points; world = which world it belongs to.
+// Each enemy also carries a Japanese word (real animal/monster words) spoken in the male voice on
+// defeat — kids learn 'snake / crab / ghost / dragon…' by beating baddies. jp clip: jp/<type>_m.mp3
 const ENEMIES = {
-  slime:    { file:'enemies/slime.png',     w:46, h:40, big:false, hp:40,  world:1 },
-  whelp:    { file:'enemies/whelp.png',     w:37, h:44, big:true,  hp:80,  world:1 },
-  tinbot:   { file:'enemies/tinbot.png',    w:31, h:44, big:false, hp:50,  world:1 },
-  neonbot:  { file:'enemies/neonbot.png',   w:53, h:32, big:false, hp:50,  world:2 },
-  ghoul:    { file:'enemies/ghoul.png',     w:33, h:44, big:false, hp:50,  world:2 },
-  jellymech:{ file:'enemies/jellymech.png', w:38, h:44, big:true,  hp:90,  world:3 },
-  lavaimp:  { file:'enemies/lavaimp.png',   w:28, h:44, big:false, hp:60,  world:4 },
-  golem:    { file:'enemies/golem.png',     w:47, h:42, big:true,  hp:120, world:4 },
+  slime:    { file:'enemies/slime.png',     w:46, h:40, big:false, hp:40,  world:1, jp:'スライム', ro:'Suraimu', en:'slime' },
+  whelp:    { file:'enemies/whelp.png',     w:37, h:44, big:true,  hp:80,  world:1, jp:'ドラゴン', ro:'Doragon', en:'dragon' },
+  tinbot:   { file:'enemies/tinbot.png',    w:31, h:44, big:false, hp:50,  world:1, jp:'ロボット', ro:'Robotto', en:'robot' },
+  neonbot:  { file:'enemies/neonbot.png',   w:53, h:32, big:false, hp:50,  world:2, jp:'ロボット', ro:'Robotto', en:'robot' },
+  ghoul:    { file:'enemies/ghoul.png',     w:33, h:44, big:false, hp:50,  world:2, jp:'おばけ',   ro:'Obake',   en:'monster' },
+  jellymech:{ file:'enemies/jellymech.png', w:38, h:44, big:true,  hp:90,  world:3, jp:'クラゲ',   ro:'Kurage',  en:'jellyfish' },
+  lavaimp:  { file:'enemies/lavaimp.png',   w:28, h:44, big:false, hp:60,  world:4, jp:'おに',     ro:'Oni',     en:'ogre' },
+  golem:    { file:'enemies/golem.png',     w:47, h:42, big:true,  hp:120, world:4, jp:'ゴーレム', ro:'Gōremu',  en:'golem' },
   // World 4 volcano set — generated on Higgsfield + sliced by the asset-slicer agent.
-  magma_slug:    { file:'enemies/magma_slug.png',    w:40, h:36, big:false, hp:45,  world:4 },
-  ember_bat:     { file:'enemies/ember_bat.png',     w:46, h:34, big:false, hp:40,  world:4 },
-  obsidian_crab: { file:'enemies/obsidian_crab.png', w:48, h:40, big:true,  hp:100, world:4 },
-  flame_wisp:    { file:'enemies/flame_wisp.png',    w:30, h:42, big:false, hp:35,  world:4 },
+  magma_slug:    { file:'enemies/magma_slug.png',    w:40, h:36, big:false, hp:45,  world:4, jp:'なめくじ', ro:'Namekuji', en:'slug' },
+  ember_bat:     { file:'enemies/ember_bat.png',     w:46, h:34, big:false, hp:40,  world:4, jp:'こうもり', ro:'Kōmori',   en:'bat' },
+  obsidian_crab: { file:'enemies/obsidian_crab.png', w:48, h:40, big:true,  hp:100, world:4, jp:'かに',     ro:'Kani',     en:'crab' },
+  flame_wisp:    { file:'enemies/flame_wisp.png',    w:30, h:42, big:false, hp:35,  world:4, jp:'おにび',   ro:'Onibi',    en:'fire spirit' },
   // World 2 Neon Shibuya set — asset-pipeline (Higgsfield + asset-slicer agent).
-  glitch_drone:  { file:'enemies/glitch_drone.png',  w:44, h:32, big:false, hp:45,  world:2 },
-  karaoke_bot:   { file:'enemies/karaoke_bot.png',   w:36, h:44, big:false, hp:55,  world:2 },
-  pixel_ghost:   { file:'enemies/pixel_ghost.png',   w:34, h:40, big:false, hp:40,  world:2 },
-  neon_serpent:  { file:'enemies/neon_serpent.png',  w:46, h:36, big:false, hp:50,  world:2 },
+  glitch_drone:  { file:'enemies/glitch_drone.png',  w:44, h:32, big:false, hp:45,  world:2, jp:'ドローン', ro:'Dorōn',  en:'drone' },
+  karaoke_bot:   { file:'enemies/karaoke_bot.png',   w:36, h:44, big:false, hp:55,  world:2, jp:'うた',     ro:'Uta',    en:'song' },
+  pixel_ghost:   { file:'enemies/pixel_ghost.png',   w:34, h:40, big:false, hp:40,  world:2, jp:'ゆうれい', ro:'Yūrei',  en:'ghost' },
+  neon_serpent:  { file:'enemies/neon_serpent.png',  w:46, h:36, big:false, hp:50,  world:2, jp:'へび',     ro:'Hebi',   en:'snake' },
   // World 3 Sunken City set — asset-pipeline (Higgsfield + asset-slicer agent).
-  mecha_pufferfish:{ file:'enemies/mecha_pufferfish.png', w:42, h:40, big:false, hp:60, world:3 },
-  anchor_bot:    { file:'enemies/anchor_bot.png',    w:36, h:44, big:true,  hp:90,  world:3 },
-  bubble_eel:    { file:'enemies/bubble_eel.png',    w:46, h:34, big:false, hp:45,  world:3 },
-  coral_crab:    { file:'enemies/coral_crab.png',    w:46, h:40, big:true,  hp:90,  world:3 },
+  mecha_pufferfish:{ file:'enemies/mecha_pufferfish.png', w:42, h:40, big:false, hp:60, world:3, jp:'ふぐ',   ro:'Fugu',   en:'pufferfish' },
+  anchor_bot:    { file:'enemies/anchor_bot.png',    w:36, h:44, big:true,  hp:90,  world:3, jp:'いかり',   ro:'Ikari',  en:'anchor' },
+  bubble_eel:    { file:'enemies/bubble_eel.png',    w:46, h:34, big:false, hp:45,  world:3, jp:'うなぎ',   ro:'Unagi',  en:'eel' },
+  coral_crab:    { file:'enemies/coral_crab.png',    w:46, h:40, big:true,  hp:90,  world:3, jp:'かに',     ro:'Kani',   en:'crab' },
 };
 function enemyBig(e){ const d=ENEMIES[e.type]; return !!(d && d.big); }
 function loadEnemies(){
@@ -239,6 +241,7 @@ function loadJpVoices(){
   const files = [
     ...vocab.flatMap(k => ['f','m'].map(g => k+'_'+g)),   // rescue words: both voices
     ...FOOD_TYPES.map(f => f.key+'_f'),                    // food words: female (the girl hero)
+    ...Object.keys(ENEMIES).map(k => k+'_m'),             // enemy words: male (monster voice)
   ];
   return Promise.all(files.map(nm =>
     fetch(_av('sounds/jp/'+nm+'.mp3')).then(r => r.ok ? r.arrayBuffer() : Promise.reject())
@@ -424,7 +427,14 @@ function sndCreature(voice, dying){
   else { osc('sine',dying?150:210,45); noise('lowpass',300); }   // thud
 }
 function sndEnemyHit(e){ sndCreature(_VOICE[e.type]||'squish', false); }
-function sndEnemyDie(e){ sndCreature(_VOICE[e.type]||'squish', true); }
+function sndEnemyDie(e){
+  sndCreature(_VOICE[e.type]||'squish', true);
+  const d = ENEMIES[e.type];
+  if(d && d.jp && typeof state!=='undefined' && state){
+    pushNum(state, e.x, e.y-18, d.jp+' '+d.ro, '#ffd24d');   // float the Japanese name up
+    playSample('jp_'+e.type+'_m', 0.82, 0.25);               // speak it (male voice), after the death sound
+  }
+}
 function sndCheer(){     // townsfolk rescued — quick happy arpeggio
   acResume();
   if(playSample("cheer"))return;
