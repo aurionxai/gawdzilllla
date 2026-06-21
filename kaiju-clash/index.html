@@ -1099,7 +1099,7 @@ function updateGems(dt, s){
     if(g.collected || g.hidden) return;
     if(pl.x < g.x+18 && pl.x+PW > g.x-18 && pl.y < g.y+18 && pl.y+PH > g.y-18){
       g.collected = true; s.gemsCollected++;
-      s.score += 250; sndGiggle();
+      s.score += 250; if(!playSample('gem')) sndGiggle();
       pushNum(s, g.x, g.y-12, '💎 +250', '#5ad6ff');
       const total = gems.length;
       if(s.gemsCollected >= total) pushMsg(s, '💎 ALL GEMS FOUND!', 1800, '#5ad6ff', 'lg');

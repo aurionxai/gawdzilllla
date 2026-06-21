@@ -1,0 +1,23 @@
+Sound effects in this folder are from the Google Sound Library
+(https://developers.google.com/assistant/tools/sound-library), which is free to use,
+royalty-free. Downloaded as .ogg and converted to .mp3 (mono, trimmed) for browser
+(incl. Safari) compatibility.
+
+name              source (actions.google.com/sounds/v1/...)
+jump            <- cartoon/cartoon_boing
+fart            <- cartoon/fart_toot
+fall            <- cartoon/falling_whistle
+cheer           <- crowds/team_cheer
+victory         <- crowds/battle_crowd_celebration
+gameover        <- cartoon/punchline_drum
+chomp           <- impacts/chop          (also used for eating food)
+combo           <- cartoon/cartoon_ringing_hit
+gem             <- cartoon/pop
+hurt            <- cartoon/slap_with_glove
+enemy_squish    <- cartoon/rubber_squeaking
+enemy_clank     <- cartoon/metal_strike
+enemy_thud      <- cartoon/cartoon_metal_thunk
+enemy_screech   <- cartoon/metallic_twang_high
+
+Still procedural-synth (no sample yet): giggle, roar, enemy_sizzle, music.
+Drop a matching <name>.mp3 here to override any of those too.
