@@ -290,7 +290,7 @@ function sndFart(size){ // 1=tiny 2=medium 3=mega — sputtery noise + brass-y p
 
 function sndJump(){
   acResume();
-  if(playSample("jump"))return;
+  if(playSample("jump",0.4))return;   // quieter — it fires on every jump + stomp bounce
   const osc=AC.createOscillator(), g=AC.createGain();
   osc.type='square';
   osc.frequency.setValueAtTime(280,AC.currentTime);
@@ -355,7 +355,7 @@ const _VOICE = {
 };
 function sndCreature(voice, dying){
   acResume();
-  if(playSample('enemy_'+voice)) return;
+  if(playSample('enemy_'+voice, 0.6)) return;   // the squishy/funny stomp sound, not blaring
   const t=AC.currentTime, dur=dying?0.38:0.15;
   const g=AC.createGain(); g.connect(_master);
   g.gain.setValueAtTime(dying?0.45:0.36, t); g.gain.exponentialRampToValueAtTime(0.001, t+dur);
@@ -391,7 +391,7 @@ function sndEat(food){
 }
 function sndCombo(n){    // chain-stomp ding, rises a step each hit in the chain
   acResume();
-  if(playSample("combo"))return;
+  if(playSample("combo",0.45))return;
   const t=AC.currentTime, o=AC.createOscillator(), g=AC.createGain();
   o.type='square'; o.frequency.value = 440 * Math.pow(1.18, Math.min(n,8));
   g.gain.setValueAtTime(0.16,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.14);
@@ -493,7 +493,7 @@ function startMusic(){
   _music.on=true;
   if(loadedSfx['music']){            // a real looping track in sounds/music.mp3 overrides the synth
     try{ _musicSrc=AC.createBufferSource(); _musicSrc.buffer=loadedSfx['music']; _musicSrc.loop=true;
-         const mg=AC.createGain(); mg.gain.value=0.42;   // background level for a real mix
+         const mg=AC.createGain(); mg.gain.value=0.3;   // background level — sits under the SFX
          _musicSrc.connect(mg); mg.connect(_master); _musicSrc.start(); }catch(e){}
     return;
   }
@@ -1035,7 +1035,7 @@ function updatePlayer(dt, s){
         state.score += base * mult;
         pushNum(state, pl.x, pl.y, '-25', '#ff8844');
         pl.vy = -8 - Math.min(mult,5)*0.4;  // bounce a touch higher each chain
-        sndJump(); sndCombo(mult);
+        sndJump(); if(mult>1) sndCombo(mult);   // only ring on a real chain (x2+), not every single stomp
         pushMsg(state, mult>1 ? ('👊 STOMP x'+mult+'!') : '👊 STOMP!', 700, '#ffee44', 'md');
         // Save nearby citizen
         state.level.citizens.forEach(c=>{
@@ -1192,7 +1192,7 @@ function doFart(s){
   sndFart(size);
   // The kaiju girls giggle on every fart (delayed so it rings out after the fart blast,
   // not buried under it).
-  sndGiggle(0.42);   // land the giggle just after the fart blast, not under it
+  sndGiggle(0.95);   // play the giggle cleanly AFTER the 0.9s fart finishes, not over it
 
   const radius = [0,80,160,260][size];
   s.fartCloud = { x:pl.x+22, y:pl.y+50, r:0, maxR:radius, size, timer:[0,600,1100,2600][size] };
