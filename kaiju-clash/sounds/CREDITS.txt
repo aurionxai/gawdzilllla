@@ -43,6 +43,8 @@ Otoya/Hattori show in the voice list but their data isn't downloaded, so they ou
 Pronunciation is identical/correct — only the pitch differs. For a true male voice, install Otoya
 via System Settings > Accessibility > Spoken Content > System Voices, then regenerate _m clips.
 All normalized to -15 LUFS mono.
+Plus 24 FOOD words (sounds/jp/<food>_f.mp3, female only — the hero is a girl) spoken on eat, same
+Kyoko TTS, -15 LUFS mono. Food rotates through all 24 so kids hear a new food word each pickup.
 NOTE: macOS system-voice output is fine for prototype/demo; for a commercial launch, regenerate
 these with a TTS that explicitly licenses commercial use of the audio (Google Cloud TTS, Amazon
 Polly, or ElevenLabs) to be airtight.

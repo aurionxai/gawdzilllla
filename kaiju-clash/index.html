@@ -235,9 +235,12 @@ function loadSfx(){
 }
 // Spoken Japanese vocab clips, male + female (sounds/jp/<key>_<g>.mp3) -> loadedSfx['jp_<key>_<g>']
 function loadJpVoices(){
-  const keys = Object.values(WORLD_VOCAB).flat().map(v=>v.key);
-  const files = keys.flatMap(k => ['f','m'].map(g => [k+'_'+g]));
-  return Promise.all(files.map(([nm]) =>
+  const vocab = Object.values(WORLD_VOCAB).flat().map(v=>v.key);
+  const files = [
+    ...vocab.flatMap(k => ['f','m'].map(g => k+'_'+g)),   // rescue words: both voices
+    ...FOOD_TYPES.map(f => f.key+'_f'),                    // food words: female (the girl hero)
+  ];
+  return Promise.all(files.map(nm =>
     fetch(_av('sounds/jp/'+nm+'.mp3')).then(r => r.ok ? r.arrayBuffer() : Promise.reject())
       .then(b => new Promise((res,rej)=>AC.decodeAudioData(b,res,rej)))
       .then(buf => { loadedSfx['jp_'+nm]=buf; }).catch(()=>{})
@@ -635,13 +638,34 @@ const WORLD_VOCAB = {
 function _vocab(){ const m = state && String(state.levelId||'').match(/w(\d)/); const w = m?+m[1]:1; return WORLD_VOCAB[w] || WORLD_VOCAB[1]; }
 let _npcSayIdx = 0;
 
+// Food rotates through this whole list (spawn i -> FOOD_TYPES[i % len]) and each one teaches a
+// Japanese food word when eaten. First 6 have real sprites (food/<key>.png); the rest fall back to
+// their emoji. _f voice clip lives at sounds/jp/<key>_f.mp3.
 const FOOD_TYPES = [
-  { key:'yakitori', emoji:'🍢', name:'YAKITORI',  gain:22, msg:'SPICY!',       clr:'#ff8800' },
-  { key:'pizza',    emoji:'🍕', name:'PIZZA',     gain:30, msg:'CHEESE BLAST!',clr:'#ffaa00' },
-  { key:'sushi',    emoji:'🍣', name:'SUSHI',     gain:12, msg:'WASABI POWER!',clr:'#22ccff' },
-  { key:'hotdog',   emoji:'🌭', name:'HOT DOG',   gain:20, msg:'STREET FOOD!', clr:'#ff6622' },
-  { key:'icecream', emoji:'🍦', name:'ICE CREAM', gain:15, msg:'BRAIN FREEZE?',clr:'#ffccee' },
-  { key:'banana',   emoji:'🍌', name:'BANANA',    gain:18, msg:'MONKE MODE!',  clr:'#ffee22' },
+  { key:'yakitori', emoji:'🍢', name:'YAKITORI',  jp:'やきとり',     ro:'Yakitori',   en:'grilled chicken', gain:22, clr:'#ff8800' },
+  { key:'pizza',    emoji:'🍕', name:'PIZZA',     jp:'ピザ',         ro:'Piza',       en:'pizza',           gain:30, clr:'#ffaa00' },
+  { key:'sushi',    emoji:'🍣', name:'SUSHI',     jp:'すし',         ro:'Sushi',      en:'sushi',           gain:12, clr:'#22ccff' },
+  { key:'hotdog',   emoji:'🌭', name:'HOT DOG',   jp:'ホットドッグ', ro:'Hottodoggu', en:'hot dog',         gain:20, clr:'#ff6622' },
+  { key:'icecream', emoji:'🍦', name:'ICE CREAM', jp:'アイス',       ro:'Aisu',       en:'ice cream',       gain:15, clr:'#ffccee' },
+  { key:'banana',   emoji:'🍌', name:'BANANA',    jp:'バナナ',       ro:'Banana',     en:'banana',          gain:18, clr:'#ffee22' },
+  { key:'ramen',    emoji:'🍜', name:'RAMEN',     jp:'ラーメン',     ro:'Rāmen',      en:'ramen',           gain:26, clr:'#ffb347' },
+  { key:'onigiri',  emoji:'🍙', name:'ONIGIRI',   jp:'おにぎり',     ro:'Onigiri',    en:'rice ball',       gain:16, clr:'#ece3d2' },
+  { key:'tempura',  emoji:'🍤', name:'TEMPURA',   jp:'てんぷら',     ro:'Tenpura',    en:'tempura',         gain:22, clr:'#ffcf6b' },
+  { key:'dango',    emoji:'🍡', name:'DANGO',     jp:'だんご',       ro:'Dango',      en:'sweet dumplings', gain:14, clr:'#ffb6c1' },
+  { key:'takoyaki', emoji:'🐙', name:'TAKOYAKI',  jp:'たこやき',     ro:'Takoyaki',   en:'octopus balls',   gain:24, clr:'#d2691e' },
+  { key:'gyoza',    emoji:'🥟', name:'GYOZA',     jp:'ぎょうざ',     ro:'Gyōza',      en:'dumplings',       gain:20, clr:'#f0d9a8' },
+  { key:'tamago',   emoji:'🥚', name:'TAMAGO',    jp:'たまご',       ro:'Tamago',     en:'egg',             gain:12, clr:'#fff4c0' },
+  { key:'ringo',    emoji:'🍎', name:'RINGO',     jp:'りんご',       ro:'Ringo',      en:'apple',           gain:14, clr:'#ff4d4d' },
+  { key:'ichigo',   emoji:'🍓', name:'ICHIGO',    jp:'いちご',       ro:'Ichigo',     en:'strawberry',      gain:13, clr:'#ff5e7e' },
+  { key:'mikan',    emoji:'🍊', name:'MIKAN',     jp:'みかん',       ro:'Mikan',      en:'orange',          gain:13, clr:'#ffa500' },
+  { key:'budou',    emoji:'🍇', name:'BUDOU',     jp:'ぶどう',       ro:'Budō',       en:'grapes',          gain:15, clr:'#9b59b6' },
+  { key:'suika',    emoji:'🍉', name:'SUIKA',     jp:'すいか',       ro:'Suika',      en:'watermelon',      gain:17, clr:'#ff6b81' },
+  { key:'keki',     emoji:'🍰', name:'KEKI',      jp:'ケーキ',       ro:'Kēki',       en:'cake',            gain:28, clr:'#ffd1dc' },
+  { key:'pan',      emoji:'🍞', name:'PAN',       jp:'パン',         ro:'Pan',        en:'bread',           gain:16, clr:'#e3b778' },
+  { key:'gohan',    emoji:'🍚', name:'GOHAN',     jp:'ごはん',       ro:'Gohan',      en:'rice',            gain:18, clr:'#f5f5f5' },
+  { key:'ocha',     emoji:'🍵', name:'OCHA',      jp:'おちゃ',       ro:'Ocha',       en:'green tea',       gain:10, clr:'#8cc63f' },
+  { key:'ramune',   emoji:'🥤', name:'RAMUNE',    jp:'ラムネ',       ro:'Ramune',     en:'soda',            gain:19, clr:'#5ad6ff' },
+  { key:'donut',    emoji:'🍩', name:'DONUT',     jp:'ドーナツ',     ro:'Dōnatsu',    en:'donut',           gain:21, clr:'#deb887' },
 ];
 function loadFood(){
   return Promise.all(FOOD_TYPES.map(f => new Promise(res => {
@@ -1232,7 +1256,8 @@ function updateFood(dt, s){
       const bonus = (s.charKey==='poppy' && f.type.name==='BANANA') ? 1.4 : 1;
       pl.fartMeter = Math.min(100, pl.fartMeter + f.type.gain * bonus);
       s.score += 50;
-      pushMsg(s, f.type.msg, 900, f.type.clr, 'md');
+      pushMsg(s, f.type.emoji+' '+f.type.jp+'  '+f.type.ro+' = '+f.type.en, 1100, f.type.clr, 'md');  // teach the food's Japanese name
+      playSample('jp_'+f.type.key+'_f', 0.9, 0.04);    // speak the food word (girl hero's voice)
     }
   });
 }
