@@ -36,6 +36,10 @@ const VW = 640, VH = 360;
 const canvas = document.getElementById('c');
 const ctx    = canvas.getContext('2d');
 let _baseTransform = null;   // declared here: resize() assigns it before the line below runs
+// Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
+// replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
+const ASSET_VER = '2';
+const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 
 function resize() {
   const vvp = window.visualViewport;
@@ -106,7 +110,7 @@ function loadSprites() {
     img.crossOrigin = 'anonymous';
     img.onload  = () => { loadedSprites[key] = img; _spriteDone++; res(); };
     img.onerror = () => { _spriteDone++; res(); };
-    img.src = url;
+    img.src = _av(url);
   })));
 }
 
@@ -152,7 +156,7 @@ function loadSkin(id){
     const img = new Image();
     img.onload  = () => { loadedSprites[key] = img; res(); };
     img.onerror = () => { res(); };
-    img.src = url;
+    img.src = _av(url);
   })));
 }
 
@@ -192,7 +196,7 @@ function loadEnemies(){
     const img = new Image();
     img.onload  = () => { loadedSprites['en_'+k] = img; res(); };
     img.onerror = () => { res(); };
-    img.src = def.file;
+    img.src = _av(def.file);
   })));
 }
 
@@ -203,7 +207,7 @@ function loadNpcs(){
     const img = new Image();
     img.onload  = () => { loadedSprites['npc_'+n] = img; res(); };
     img.onerror = () => { res(); };
-    img.src = 'npcs/'+n+'.png';
+    img.src = _av('npcs/'+n+'.png');
   })));
 }
 
@@ -220,7 +224,7 @@ const SFX_NAMES = ['jump','chomp','fart','fart1','fart2','fart3','giggle','hurt'
 const loadedSfx = {};
 function loadSfx(){
   return Promise.all(SFX_NAMES.flatMap(n => ['mp3','wav'].map(ext =>
-    fetch('sounds/'+n+'.'+ext).then(r => r.ok ? r.arrayBuffer() : Promise.reject())
+    fetch(_av('sounds/'+n+'.'+ext)).then(r => r.ok ? r.arrayBuffer() : Promise.reject())
       .then(b => new Promise((res,rej)=>AC.decodeAudioData(b,res,rej)))
       .then(buf => { if(!loadedSfx[n]) loadedSfx[n]=buf; }).catch(()=>{})
   )));
@@ -596,7 +600,7 @@ function loadFood(){
     const img = new Image();
     img.onload  = () => { loadedSprites['food_'+f.key] = img; res(); };
     img.onerror = () => { res(); };
-    img.src = 'food/'+f.key+'.png';
+    img.src = _av('food/'+f.key+'.png');
   })));
 }
 
