@@ -2395,6 +2395,8 @@ function drawOverworld(){
 //  GAME LOOP
 // ═══════════════════════════════════════════
 let lastT = 0, spritesReady = false;
+const FIXED = 1000/60;   // one simulation step = 1/60s, regardless of display refresh
+let _acc = 0;            // accumulated real time waiting to be simulated
 function loop(ts){
   if(!spritesReady){
     ctx.fillStyle='#000911'; ctx.fillRect(0,0,VW,VH);
@@ -2407,11 +2409,27 @@ function loop(ts){
     requestAnimationFrame(loop);
     return;
   }
-  const dt = Math.min(ts-lastT, 50);
+  // ── Fixed-timestep simulation ──────────────────────────────────────────────
+  // Physics uses fixed per-frame steps (pl.x += pl.vx, vy += GRAV), so the sim MUST advance
+  // at a constant 60 steps/sec no matter the display refresh — otherwise a 120Hz ProMotion
+  // screen runs the game 2x too fast (twitchy controls) and frame dips make it lurch.
+  // Accumulate real elapsed time, step the sim in fixed FIXED-ms chunks, render once per rAF.
+  let frameDt = ts - lastT;
   lastT = ts;
+  if(frameDt > 250) frameDt = 250;        // tab was backgrounded — clamp, don't spiral
+  _acc += frameDt;
   // A thrown error (e.g. a Safari Web Audio quirk in a sound call) must never freeze the
   // game or kill the music — isolate the frame.
-  try { update(dt); render(); drawAudioBtn(); }
+  try {
+    let steps = 0;
+    while(_acc >= FIXED && steps < 5){
+      update(FIXED);
+      if(scene==='playing') justDn.clear();   // one-shots (fart) fire once per press, not per catch-up step
+      _acc -= FIXED; steps++;
+    }
+    if(steps >= 5) _acc = 0;                   // fell badly behind — drop the debt, don't fast-forward
+    render(); drawAudioBtn();
+  }
   catch(err){ if(!loop._logged){ console.error('frame error:', err); loop._logged=true; } }
   if(scene==='playing') startMusic(); else stopMusic();
   justDn.clear();
