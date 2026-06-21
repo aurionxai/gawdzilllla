@@ -537,7 +537,7 @@ function startMusic(){
   _music.on=true; _musicTrack=want;
   if(loadedSfx[want]){                            // a real looping track overrides the synth
     try{ _musicSrc=AC.createBufferSource(); _musicSrc.buffer=loadedSfx[want]; _musicSrc.loop=true;
-         const mg=AC.createGain(); mg.gain.value = want==='boss_music' ? 0.34 : 0.3;  // background level — under the SFX
+         const mg=AC.createGain(); mg.gain.value = want==='boss_music' ? 0.58 : 0.55;  // music normalized to -20 LUFS (sits under the -16 SFX); this is the in-game balance knob
          _musicSrc.connect(mg); mg.connect(_musicBus); _musicSrc.start(); }catch(e){}
     return;
   }
