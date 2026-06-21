@@ -24,11 +24,11 @@ enemy_screech   <- cartoon/metallic_twang_high
 giggle.mp3 = "Baby giggle" from the Freesound Community (via Pixabay), Pixabay Content License
 (free to use, no attribution required). Trimmed to ~2.2s, mono, loudness-normalized.
 
-MUSIC
-music.mp3 = "Pixelland" by Kevin MacLeod (incompetech.com), trimmed to a ~52s loop.
-Licensed under Creative Commons: By Attribution 4.0 — http://creativecommons.org/licenses/by/4.0/
-REQUIRED in-game/credits attribution: "Music: 'Pixelland' by Kevin MacLeod (incompetech.com),
-licensed under CC BY 4.0."
+MUSIC  (both Pixabay Content License — free to use, NO attribution required)
+music.mp3      = "Kids Happy Background Music" by bombinsound (via Pixabay). 128kbps stereo,
+                 full ~2:15 track looped. Main gameplay theme.
+boss_music.mp3 = "Final Boss" by davidgallie (via Pixabay). 128kbps stereo, ~0:54. Plays only
+                 on boss levels (w1l4); the main theme plays everywhere else.
 
 Still procedural-synth (no sample yet): roar, enemy_sizzle.
 Drop a matching <name>.mp3 here to override any of those too.

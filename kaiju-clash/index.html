@@ -200,7 +200,7 @@ function acResume(){ if(AC.state!=='running'){ try{ AC.resume(); }catch(e){} } }
 // Drop Higgsfield-generated SFX into kaiju-clash/sounds/ and they auto-override the synth.
 const SFX_NAMES = ['jump','chomp','fart','fart1','fart2','fart3','giggle','hurt','fall','victory','gameover','cheer',
   'combo','roar','gem','eat_yakitori','eat_pizza','eat_sushi','eat_hotdog','eat_icecream',
-  'eat_banana','enemy_squish','enemy_clank','enemy_screech','enemy_sizzle','enemy_thud','music'];
+  'eat_banana','enemy_squish','enemy_clank','enemy_screech','enemy_sizzle','enemy_thud','music','boss_music'];
 const loadedSfx = {};
 function loadSfx(){
   return Promise.all(SFX_NAMES.flatMap(n => ['mp3','wav'].map(ext =>
@@ -493,21 +493,29 @@ function _musicTick(){
   } catch(e){}
   _music.timer = setTimeout(_musicTick, 110);
 }
-let _musicSrc=null;
+let _musicSrc=null, _musicTrack=null;
+// Boss levels get their own theme (sounds/boss_music.mp3); everything else uses the main theme.
+function _desiredTrack(){
+  if(state && state.level && state.level.boss && loadedSfx['boss_music']) return 'boss_music';
+  return 'music';
+}
 function startMusic(){
-  if(_music.on || !musicOn) return;
+  if(!musicOn) return;
+  const want = _desiredTrack();
+  if(_music.on && _musicTrack===want) return;   // already playing the right track
+  if(_music.on) stopMusic();                     // switching tracks (e.g. into the boss arena)
   acResume();
-  _music.on=true;
-  if(loadedSfx['music']){            // a real looping track in sounds/music.mp3 overrides the synth
-    try{ _musicSrc=AC.createBufferSource(); _musicSrc.buffer=loadedSfx['music']; _musicSrc.loop=true;
-         const mg=AC.createGain(); mg.gain.value=0.3;   // background level — sits under the SFX
+  _music.on=true; _musicTrack=want;
+  if(loadedSfx[want]){                            // a real looping track overrides the synth
+    try{ _musicSrc=AC.createBufferSource(); _musicSrc.buffer=loadedSfx[want]; _musicSrc.loop=true;
+         const mg=AC.createGain(); mg.gain.value = want==='boss_music' ? 0.34 : 0.3;  // background level — under the SFX
          _musicSrc.connect(mg); mg.connect(_master); _musicSrc.start(); }catch(e){}
     return;
   }
-  _music.t=AC.currentTime+0.1; _music.bar=0;
+  _music.t=AC.currentTime+0.1; _music.bar=0;     // synth fallback (main theme only)
   _musicTick();
 }
-function stopMusic(){ _music.on=false; if(_music.timer) clearTimeout(_music.timer); _music.timer=null;
+function stopMusic(){ _music.on=false; _musicTrack=null; if(_music.timer) clearTimeout(_music.timer); _music.timer=null;
   if(_musicSrc){ try{_musicSrc.stop();}catch(e){} _musicSrc=null; } }
 function toggleMusic(){ musicOn=!musicOn; if(musicOn){ if(scene==='playing') startMusic(); } else stopMusic(); }
 // Always-visible audio toggle (top-right). Tapping it is also a guaranteed gesture that
