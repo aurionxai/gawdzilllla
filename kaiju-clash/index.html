@@ -293,6 +293,64 @@ function sndRoar(){
   g.gain.setValueAtTime(0.32,AC.currentTime); g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+0.28);
   o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime+0.28);
 }
+function sndFall(){ // falling-into-the-void "wheeee" downward swoop
+  acResume();
+  const o=AC.createOscillator(), g=AC.createGain();
+  o.type='triangle';
+  o.frequency.setValueAtTime(700,AC.currentTime);
+  o.frequency.exponentialRampToValueAtTime(90,AC.currentTime+0.55);
+  g.gain.setValueAtTime(0.18,AC.currentTime); g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+0.6);
+  o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime+0.6);
+}
+
+// ═══════════════════════════════════════════
+//  THEME MUSIC — a looping chiptune (square lead + triangle bass)
+// ═══════════════════════════════════════════
+const _musicGain = AC.createGain(); _musicGain.gain.value = 0.10; _musicGain.connect(AC.destination);
+let musicOn = true;
+const _N = { R:0, A2:110, C3:130.81, D3:146.83, E3:164.81, F3:174.61, G3:196, A3:220,
+             C4:261.63, D4:293.66, E4:329.63, F4:349.23, G4:392, A4:440, B4:493.88,
+             C5:523.25, D5:587.33, E5:659.25, F5:698.46, G5:783.99 };
+// A cheerful kaiju-march loop. [note, beats]
+const _LEAD = [['E4',1],['G4',1],['C5',1],['B4',1],['A4',1],['G4',1],['E4',2],
+               ['F4',1],['A4',1],['C5',1],['A4',1],['G4',2],['R',2],
+               ['D4',1],['F4',1],['A4',1],['G4',1],['F4',1],['E4',1],['D4',2],
+               ['C4',1],['E4',1],['G4',1],['E4',1],['C4',2],['R',2]];
+const _BASS = [['C3',2],['G3',2],['A2',2],['E3',2],['F3',2],['C3',2],['G3',2],['G3',2],
+               ['F3',2],['C3',2],['D3',2],['G3',2],['C3',2],['A2',2],['F3',2],['G3',2]];
+const _BEAT = 0.30;            // seconds per beat (~200bpm feel, bouncy)
+let _music = { on:false, leadT:0, bassT:0, li:0, bi:0, timer:null };
+function _noteAt(note, t, dur, type, vol){
+  if(note==='R' || !_N[note]) return;
+  const o=AC.createOscillator(), g=AC.createGain();
+  o.type=type; o.frequency.value=_N[note];
+  const end=t+dur*0.92;
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(vol,t+0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001,end);
+  o.connect(g); g.connect(_musicGain); o.start(t); o.stop(end+0.02);
+}
+function _musicTick(){
+  if(!_music.on) return;
+  const ahead = AC.currentTime + 0.4;
+  while(_music.leadT < ahead){
+    const [n,b]=_LEAD[_music.li]; _noteAt(n,_music.leadT,b*_BEAT,'square',0.5);
+    _music.leadT += b*_BEAT; _music.li=(_music.li+1)%_LEAD.length;
+  }
+  while(_music.bassT < ahead){
+    const [n,b]=_BASS[_music.bi]; _noteAt(n,_music.bassT,b*_BEAT,'triangle',0.7);
+    _music.bassT += b*_BEAT; _music.bi=(_music.bi+1)%_BASS.length;
+  }
+  _music.timer = setTimeout(_musicTick, 100);
+}
+function startMusic(){
+  if(_music.on || !musicOn) return;
+  acResume();
+  _music.on=true; _music.leadT=_music.bassT=AC.currentTime+0.05; _music.li=_music.bi=0;
+  _musicTick();
+}
+function stopMusic(){ _music.on=false; if(_music.timer) clearTimeout(_music.timer); _music.timer=null; }
+function toggleMusic(){ musicOn=!musicOn; if(musicOn){ if(scene==='playing') startMusic(); } else stopMusic(); }
 
 // ═══════════════════════════════════════════
 //  CONSTANTS
@@ -341,7 +399,7 @@ window.addEventListener('keydown', e=>{
   if(AC.state==='suspended') AC.resume();
   const prev = keys.has(e.code);
   keys.add(e.code);
-  if(!prev) justDn.add(e.code);
+  if(!prev){ justDn.add(e.code); if(e.code==='KeyM') toggleMusic(); }
   if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyZ','KeyJ','KeyX','KeyB'].includes(e.code)) e.preventDefault();
 });
 window.addEventListener('keyup', e=>{ keys.delete(e.code); });
@@ -772,7 +830,10 @@ function updatePlayer(dt, s){
 
   // ── Bounds
   pl.x = Math.max(0, Math.min(LW*TS - PW, pl.x));
-  if(pl.y > LH*TS+60){ pl.hp=0; }
+  // Fall in a hole / off the edge -> you're done. Scream the moment you pass the floor
+  // line, then die a beat later so it reads as a fall, not a teleport.
+  if(pl.y > LH*TS && !pl.falling){ pl.falling = true; sndFall(); pushMsg(s, '😱 AAAH!', 700, '#ff5555', 'lg'); }
+  if(pl.y > LH*TS + 70){ pl.hp = 0; }
 
   // ── Camera
   const tx = pl.x + PW/2 - VW/2;
@@ -958,8 +1019,8 @@ function doFart(s){
   const saying = FART_SAYINGS[Math.floor(Math.random()*FART_SAYINGS.length)];
   pushMsg(s, saying, [0,1200,1800,3000][size], ['','#88ffaa','#44ff88','#00ff66'][size], 'lg');
   sndFart(size);
-  // The little kaiju giggles on a full-power fart; grown-up stages just let it rip.
-  if(size===3 && (((meta&&meta.growthStage)||0)===0)) sndGiggle();
+  // The little kaiju girls giggle whenever they fart; grown-up stages just let it rip.
+  if((((meta&&meta.growthStage)||0)===0)) sndGiggle();
 
   const radius = [0,80,160,260][size];
   s.fartCloud = { x:pl.x+22, y:pl.y+50, r:0, maxR:radius, size, timer:[0,600,1100,2600][size] };
@@ -2136,6 +2197,8 @@ function loop(ts){
   lastT = ts;
   update(dt);
   render();
+  // Theme music plays during levels, stops in menus / on death (victory jingle plays clean).
+  if(scene==='playing') startMusic(); else stopMusic();
   justDn.clear();
   requestAnimationFrame(loop);
 }
