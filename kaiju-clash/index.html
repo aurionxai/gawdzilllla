@@ -2449,7 +2449,7 @@ function drawBonus(){
     if(B.done){ state.score += B.score+200; finishLevel(); return; }
     for(let i=0;i<n;i++) if(!B.matched.includes('w'+i) && hit(x,y,leftX,startY+i*rowH)){ B.sel=(B.sel===i?null:i); B.wrong=null; }
     for(let j=0;j<n;j++) if(!B.matched.includes('m'+j) && hit(x,y,rightX,startY+j*rowH) && B.sel!=null){
-      if(B.meanings[j]===B.words[B.sel].en){ B.matched.push('w'+B.sel,'m'+j); B.score+=100; playSample(B.words[B.sel].aud,0.95,0); sndCheer(); B.sel=null; if(B.matched.length>=n*2) B.done=true; }
+      if(B.meanings[j]===B.words[B.sel].en){ B.matched.push('w'+B.sel,'m'+j); B.score+=100; playSample(B.words[B.sel].aud,1.0,0); B.sel=null; if(B.matched.length>=n*2) B.done=true; }   // ONLY the clear spoken word — no cheer/music interference
       else { B.wrong={m:j,t:Date.now()}; B.sel=null; sndHurt(); }
     }
   }
