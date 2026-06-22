@@ -128,6 +128,12 @@ screen (kana + romaji + meaning) AND speaks it aloud.
 
 **≈ 68 spoken Japanese words in World 1 alone** (target was 20-30/world — exceeded).
 
+**Reinforcement, also live:**
+- 🍣 Eating food shows the phrase BIG on screen (kana + romaji + meaning) while it's spoken.
+- 🎌 **End-of-world BONUS** — after the boss, a match-the-words mini-game (`scene='bonus'`): 5
+  Japanese words vs shuffled meanings, tap-to-match, correct = speak + cheer + points, then victory.
+  Pool = that world's rescue + food + enemy words (`startBonus()` / `drawBonus()`).
+
 ### Structure (scales to all worlds)
 - `WORLD_VOCAB[world]` — rescue words per world (add `[2]`,`[3]`,`[4]` to expand).
 - `FOOD_TYPES[].jp/ro/en` + `ENEMIES[].jp/ro/en` — food & enemy words.
