@@ -39,7 +39,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '3';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '10';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '11';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -440,13 +440,6 @@ function sndEnemyDie(e){
     playSample('jp_'+e.type+'_m', 0.82, 0.25);               // speak it (male voice), after the death sound
     _learn('e:'+e.type);                                     // add to the word book
   }
-}
-function sndCheer(){     // townsfolk rescued — quick happy arpeggio
-  acResume();
-  if(playSample("cheer"))return;
-  [660,880,1100].forEach((f,i)=>{ const o=AC.createOscillator(), g=AC.createGain(); const t=AC.currentTime+i*0.06;
-    o.type='triangle'; o.frequency.value=f; g.gain.setValueAtTime(0.13,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.16);
-    o.connect(g); g.connect(_master); o.start(t); o.stop(t+0.16); });
 }
 // Per-food "nom" — pitch + timbre vary by food, savory ones get a crunch layer.
 const _FOODSND = { yakitori:[520,'square',1], pizza:[440,'sawtooth',1], sushi:[680,'sine',0],
@@ -1267,9 +1260,8 @@ function saveCitizen(c, s){
   c.saying = v[_npcSayIdx++ % v.length];                // rotate: each rescue teaches a new word
   _learn('v:'+c.saying.key);                            // add to the word book
   s.savedCitizens++;
-  sndCheer();
   const _g = NPC_GENDER[c.npc] || 'f';                 // voice matches the NPC's gender
-  playSample('jp_'+c.saying.key+'_'+_g, 0.95, 0.22);   // SPEAK it (just after the cheer) so kids hear the word
+  playSample('jp_'+c.saying.key+'_'+_g, 1.0, 0.05);    // ONLY the clean spoken word — no cheer/"321" over it
   s.score += 200;
   for(let i=0;i<8;i++) c.particles.push({
     vx:(Math.random()-0.5)*3, vy:-(Math.random()*3+1),
