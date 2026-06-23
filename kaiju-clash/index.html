@@ -39,7 +39,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '3';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '12';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '13';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -472,6 +472,29 @@ function sndRoar(){
   g.gain.setValueAtTime(0.32,AC.currentTime); g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+0.28);
   o.connect(g); g.connect(_master); o.start(); o.stop(AC.currentTime+0.28);
 }
+function sndFlap(){ // soft cloud wingbeat — a gentle filtered whoosh
+  acResume();
+  const t0=AC.currentTime;
+  const src=AC.createBufferSource(); src.buffer=_noiseBuffer(); src.loop=true;
+  const bp=AC.createBiquadFilter(); bp.type='bandpass'; bp.Q.value=0.7;
+  bp.frequency.setValueAtTime(820,t0); bp.frequency.exponentialRampToValueAtTime(280,t0+0.18);
+  const g=AC.createGain();
+  g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(0.11,t0+0.04); g.gain.exponentialRampToValueAtTime(0.001,t0+0.22);
+  src.connect(bp); bp.connect(g); g.connect(_master);
+  src.start(t0); src.stop(t0+0.24);
+}
+function sndLandPuff(){ // soft thud + dust on the drop-back landing
+  acResume();
+  const t0=AC.currentTime;
+  const o=AC.createOscillator(), og=AC.createGain();      // low thump
+  o.type='sine'; o.frequency.setValueAtTime(150,t0); o.frequency.exponentialRampToValueAtTime(54,t0+0.18);
+  og.gain.setValueAtTime(0.22,t0); og.gain.exponentialRampToValueAtTime(0.001,t0+0.2);
+  o.connect(og); og.connect(_master); o.start(t0); o.stop(t0+0.2);
+  const src=AC.createBufferSource(); src.buffer=_noiseBuffer(); src.loop=true;   // dust
+  const lp=AC.createBiquadFilter(); lp.type='lowpass'; lp.frequency.setValueAtTime(1200,t0); lp.frequency.exponentialRampToValueAtTime(240,t0+0.25);
+  const ng=AC.createGain(); ng.gain.setValueAtTime(0.0001,t0); ng.gain.exponentialRampToValueAtTime(0.13,t0+0.02); ng.gain.exponentialRampToValueAtTime(0.001,t0+0.28);
+  src.connect(lp); lp.connect(ng); ng.connect(_master); src.start(t0); src.stop(t0+0.3);
+}
 function sndFall(){ // falling-into-the-void "wheeee" downward swoop
   acResume();
   if(playSample("fall"))return;
@@ -827,8 +850,8 @@ const W1L2_ROWS = [
   "                                                                                                ",
   "                                                                                                ",
   "                                                                                                ",
-  "                                         g                                              g       ",
-  "                                                                                                ",
+  "                                         g         D                                    g       ",
+  "                                                 =====                                          ",
   " P  o     o s       o s      o C       o w      o s       o C      o s       o w      o E       ",
   "#######  ########  #######  ########  #######  ########  #######  ########  #######  ########   ",
   "#######  ########  #######  ########  #######  ########  #######  ########  #######  ########   ",
@@ -858,8 +881,8 @@ const W1L3_ROWS = [
   "                    ",
   "          w g       ",
   "       ===========  ",
-  "                    ",
-  "       C  o         ",
+  "  D                 ",
+  " ===   C  o         ",
   "    ===========     ",
   "                    ",
   "          o t       ",
@@ -1166,7 +1189,8 @@ function enterSecret(){
   if(scene!=='playing' || !state) return;
   meta.foundSecret = true; saveMeta();
   _savedLevel = state;
-  _savedLevel._dropX = state.level.door.c*TS;         // drop back near the door
+  _savedLevel._dropX = state.player.x;                 // drop back exactly where we left (works vertical + horizontal)
+  _savedLevel._dropY = state.player.y;
   startCarry('in', ()=>{                              // winged monster carries you up & in
     const ch = _savedLevel.charKey;
     state = mkState(ch, 'w1secret'); state.startTick = tick; scene='playing';
@@ -1179,7 +1203,7 @@ function exitSecret(){    // reached the secret room's exit -> carried back into
     state = lvl;
     LW = lvl.level.LW; LH = lvl.level.LH;              // restore the level's global dims
     state.player.x = (lvl._dropX!=null ? lvl._dropX : state.player.x);
-    state.player.y = (lvl.level.LH-5)*TS;              // dropped from a few tiles up -> falls to the ground
+    state.player.y = (lvl._dropY!=null ? lvl._dropY - TS : (lvl.level.LH-5)*TS);   // a tile above where we left -> floats down
     state.player.vy = 0; state.player.invincMs = 1500; state.player.falling = false;
     scene = 'playing';
     pushMsg(state, '🪂 Dropped back in — keep going!', 2000, '#7CFF8A', 'md');
@@ -2535,24 +2559,28 @@ window.addEventListener('pointerdown', e=>{
 
 // ── Winged-monster carry cinematic (secret-door intro/exit) ──
 let _carry = null;
-function startCarry(dir, onDone){ _carry = { dir, t:0, dur:2200, onDone }; scene='carry'; sndRoar(); }
+function startCarry(dir, onDone){ _carry = { dir, t:0, dur:2200, onDone, _fc:-1, _puffed:false }; scene='carry'; sndFlap(); }
+// A friendly fluffy CLOUD creature that scoops the kaiju up in its soft arms and flies it off.
 function drawWingedMonster(cx, cy, t){
   const flap = Math.sin(t*0.013);
-  ctx.save(); ctx.translate(cx, cy);
-  for(const side of [-1,1]){ ctx.save(); ctx.scale(side,1);     // flapping wings
-    ctx.fillStyle='#7a3fae'; ctx.beginPath(); ctx.moveTo(6,-2);
-    ctx.quadraticCurveTo(34,-30-flap*24, 50,-4); ctx.quadraticCurveTo(30,4,8,8); ctx.closePath(); ctx.fill();
-    ctx.strokeStyle='#b388e0'; ctx.lineWidth=1.5; ctx.stroke(); ctx.restore(); }
-  ctx.fillStyle='#5a2d86'; ctx.beginPath(); ctx.ellipse(0,0,17,13,0,0,7); ctx.fill();   // body
-  ctx.strokeStyle='#8a5fc6'; ctx.lineWidth=2; ctx.stroke();
-  ctx.fillStyle='#ffe14d'; ctx.beginPath(); ctx.arc(-6,-3,3,0,7); ctx.arc(6,-3,3,0,7); ctx.fill();   // eyes
-  ctx.fillStyle='#221'; ctx.beginPath(); ctx.arc(-6,-3,1.3,0,7); ctx.arc(6,-3,1.3,0,7); ctx.fill();
-  ctx.strokeStyle='#5a2d86'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(-9,11); ctx.lineTo(-11,26); ctx.moveTo(9,11); ctx.lineTo(11,26); ctx.stroke();   // claws
+  ctx.save(); ctx.translate(cx, cy + flap*2);                 // gentle bob as it flaps
+  ctx.fillStyle='rgba(255,255,255,0.22)'; ctx.beginPath(); ctx.ellipse(0,3,32,23,0,0,7); ctx.fill();   // soft halo
+  for(const side of [-1,1]){ ctx.save(); ctx.scale(side,1);   // side fluff "wings" puff out on the beat
+    ctx.fillStyle='#ffffff'; const w=13+flap*5;
+    ctx.beginPath(); ctx.arc(17,-2,w*0.75,0,7); ctx.arc(27,3,w*0.55,0,7); ctx.fill(); ctx.restore(); }
+  ctx.fillStyle='#ffd6ea'; for(const[ox,oy,r]of[[-10,-12,8],[10,-12,8],[0,-15,7]]){ ctx.beginPath(); ctx.arc(ox,oy,r,0,7); ctx.fill(); }  // pink top puffs
+  ctx.fillStyle='#ffffff'; for(const[ox,oy,r]of[[-12,-2,12],[12,-2,12],[0,-4,15],[0,4,14]]){ ctx.beginPath(); ctx.arc(ox,oy,r,0,7); ctx.fill(); }  // body
+  ctx.fillStyle='#ff8fbf'; ctx.beginPath(); ctx.arc(-8,1,3,0,7); ctx.arc(8,1,3,0,7); ctx.fill();   // blush cheeks
+  ctx.fillStyle='#333'; ctx.beginPath(); ctx.arc(-6,-4,2.4,0,7); ctx.arc(6,-4,2.4,0,7); ctx.fill();  // eyes
+  ctx.strokeStyle='#333'; ctx.lineWidth=1.6; ctx.beginPath(); ctx.arc(0,0,4,0.1*Math.PI,0.9*Math.PI); ctx.stroke();  // smile
+  ctx.fillStyle='#ffffff'; ctx.beginPath(); ctx.arc(-13,17,8,0,7); ctx.arc(13,17,8,0,7); ctx.fill();  // soft arms reaching down to the kaiju
   ctx.restore();
 }
 function drawCarry(){
   if(!_carry){ scene='playing'; return; }            // safety: never run with no cinematic in flight
   _carry.t += 16; const pr = Math.min(1, _carry.t/_carry.dur);
+  const fc = Math.floor(_carry.t/483);               // one wingbeat per sine cycle
+  if(fc !== _carry._fc){ _carry._fc = fc; if(_carry.t>40) sndFlap(); }
   drawBg((_savedLevel&&_savedLevel.cam)||{x:0,y:0});
   ctx.fillStyle='rgba(24,12,44,0.3)'; ctx.fillRect(0,0,VW,VH);
   const ch = (_savedLevel&&_savedLevel.charKey) || 'lulah';
@@ -2560,10 +2588,16 @@ function drawCarry(){
   if(_carry.dir==='in'){ x = VW*0.12 + pr*VW*0.82; y = VH*0.80 - pr*VH*0.64 - Math.sin(pr*Math.PI)*26; }  // swoop up & away
   else                 { x = VW*0.86 - pr*VW*0.72; y = VH*0.16 + pr*VH*0.6; }                              // dive down & drop
   drawWingedMonster(x, y, _carry.t);
+  const wig = Math.sin(_carry.t*0.02)*3;                                            // kaiju wiggles happily in the arms
   const stub={dir:1,eatAnim:0,fartAnim:0,vx:0,onGround:true,invincMs:0};
-  (ch==='lulah'?drawLulah:drawPoppy)(~~x, ~~(y+34), stub, tick);   // the kaiju dangling in its claws
+  (ch==='lulah'?drawLulah:drawPoppy)(~~(x+wig), ~~(y+16), stub, tick);              // tucked up so the cloud's arms grip it
+  if(_carry.dir==='out' && pr>0.84){                                               // landing dust-puff + thud
+    if(!_carry._puffed){ _carry._puffed=true; sndLandPuff(); addShake(4,220); }
+    const pp=(pr-0.84)/0.16; ctx.fillStyle='rgba(255,255,255,'+(0.5*(1-pp))+')';
+    for(const s of[-1,1]){ ctx.beginPath(); ctx.arc(x+s*(8+pp*22), y+80, 5+pp*9, 0,7); ctx.fill(); }
+  }
   ctx.textAlign='center'; ctx.fillStyle='#ffe14d'; ctx.font='bold 15px sans-serif';
-  ctx.fillText(_carry.dir==='in' ? '🦇  Carried to the secret room!' : '🦇  Dropping you back in!', VW/2, 38); ctx.textAlign='left';
+  ctx.fillText(_carry.dir==='in' ? '☁️  Whisked away to the secret room!' : '☁️  Floating you back down!', VW/2, 38); ctx.textAlign='left';
   if(pr>=1){ const cb=_carry.onDone; _carry=null; if(cb) cb(); }
 }
 
