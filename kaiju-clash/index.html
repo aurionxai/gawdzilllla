@@ -2314,6 +2314,11 @@ function updateBoss(dt, s){
   }
 }
 
+// ⚠ TEMP PLACEHOLDER — procedural Riot-Mecha render. Does NOT meet the art bar
+// (CLAUDE.md → "Art quality bar"). Approved Higgsfield art exists as a SCENE frame at
+// mockups/boss1-riot-mecha.png; it needs a clean transparent-bg sprite cutout (+ action frames:
+// idle / wind-up / slam / defeat) via Higgsfield nano_banana_pro, then wired in here and this
+// procedural draw deleted. Hit-flash / shockwaves / defeat-collapse can stay as code FX over the sprite.
 function drawBoss(s){
   const b=s.level.boss; if(!b) return;
   const cam=s.cam;
