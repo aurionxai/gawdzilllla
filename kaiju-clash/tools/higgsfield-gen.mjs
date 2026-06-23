@@ -9,12 +9,17 @@
 //   auth header: Authorization: Key <key>:<secret>  ; async job -> poll status_url -> images[].url
 import fs from 'fs'; import os from 'os'; import path from 'path';
 
+// Creds source order: (1) process env — injected by `railway run` so they never touch disk or the
+// transcript; (2) ~/.higgsfield/credentials (chmod 600) as a local fallback. Accept a few common names.
+let KEY = process.env.API_KEY_ID || process.env.HIGGSFIELD_API_KEY || process.env.HIGGSFIELD_KEY || process.env.HF_API_KEY;
+let SECRET = process.env.API_KEY_SECRET || process.env.HIGGSFIELD_SECRET || process.env.HF_SECRET;
 const CRED = path.join(os.homedir(), '.higgsfield', 'credentials');
-if (!fs.existsSync(CRED)) { console.error('✗ no credentials at ~/.higgsfield/credentials — create it (chmod 600) first.'); process.exit(2); }
-const env = Object.fromEntries(fs.readFileSync(CRED, 'utf8').split('\n').filter(Boolean)
-  .map(l => { const i = l.indexOf('='); return [l.slice(0, i).trim(), l.slice(i + 1).trim()]; }));
-const KEY = env.HIGGSFIELD_API_KEY, SECRET = env.HIGGSFIELD_SECRET;
-if (!KEY || !SECRET) { console.error('✗ creds file missing HIGGSFIELD_API_KEY / HIGGSFIELD_SECRET'); process.exit(2); }
+if ((!KEY || !SECRET) && fs.existsSync(CRED)) {
+  const env = Object.fromEntries(fs.readFileSync(CRED, 'utf8').split('\n').filter(Boolean)
+    .map(l => { const i = l.indexOf('='); return [l.slice(0, i).trim(), l.slice(i + 1).trim()]; }));
+  KEY = KEY || env.HIGGSFIELD_API_KEY; SECRET = SECRET || env.HIGGSFIELD_SECRET;
+}
+if (!KEY || !SECRET) { console.error('✗ no Higgsfield key/secret in env or ~/.higgsfield/credentials. Run via `railway run` or create the creds file.'); process.exit(2); }
 const AUTH = `Key ${KEY}:${SECRET}`;
 const BASE = 'https://platform.higgsfield.ai';
 const MODEL = process.env.HF_MODEL || 'higgsfield-ai/soul/standard';   // override once nano-banana path is confirmed
@@ -41,7 +46,7 @@ async function main() {
   console.log(`→ submitting "${preset}" to ${MODEL} …`);
   const res = await fetch(`${BASE}/${MODEL}`, { method: 'POST', headers, body: JSON.stringify(body) });
   const txt = await res.text();
-  if (res.status === 401 || res.status === 403) { console.error('✗ auth rejected (' + res.status + ') — check the key/secret in the creds file.'); process.exit(1); }
+  if (!res.ok) { console.error('✗ submit failed HTTP ' + res.status + '\n  body: ' + txt.slice(0, 600)); process.exit(1); }
   let job; try { job = JSON.parse(txt); } catch { console.error('✗ non-JSON submit response (' + res.status + '):', txt.slice(0, 500)); process.exit(1); }
   const id = job.id || job.request_id || job.job_id || (job.status_url && (job.status_url.match(/requests\/([^/]+)/) || [])[1]);
   const statusUrl = job.status_url || (id && `${BASE}/requests/${id}/status`);
