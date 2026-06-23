@@ -39,7 +39,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '3';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '9';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '10';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -792,7 +792,7 @@ function buildFromRows(rows){
   // the floor — otherwise resolveX reads the buried floor tile as a wall and marches
   // the player a tile/frame to the exit (the level "plays itself").
   return { tiles:p.tiles, food, enemies, citizens, gems,
-           playerSpawn:{ x:ps.c*TS, y: surfaceTop(ps.c, ps.r) - 66 }, exit:p.spawns.exit, LW:p.LW, LH:p.LH };
+           playerSpawn:{ x:ps.c*TS, y: surfaceTop(ps.c, ps.r) - 66 }, exit:p.spawns.exit, door:p.spawns.door, LW:p.LW, LH:p.LH };
 }
 
 // World 1, Level 1 — a deep street -> rooftops -> sky climb (taller than the screen).
@@ -802,22 +802,22 @@ function buildFromRows(rows){
 // spaced >=6 tiles apart on each level so the crowd stays calm; rooftop citizens sit
 // above the street out of reach. Authored via a generator (kept here as the source of truth).
 const W1L1_ROWS = [
-  "                                                                        ",
-  "                                                                        ",
-  "                                                                        ",
-  "                                                                        ",
-  "                                            g                           ",
-  "                                            Co                          ",
-  "                                          =====                         ",
-  "                                     Co                                 ",
-  "                                    ====          so   g                ",
-  "                               Co                ====                   ",
-  "                              ====                                      ",
-  "         g               Co                                             ",
-  "                        ====                                    ##      ",
-  " P  o  C o   s  s  s o           w                   Co  ^^ os  ##w   E ",
-  "########################################################################",
-  "########################################################################",
+  "                                                                                            ",
+  "                                                                                            ",
+  "                                                                                            ",
+  "                                                                                            ",
+  "                                                                                            ",
+  "                                                D o                                         ",
+  "                                              ======                                        ",
+  "                                               o                                            ",
+  "                                              ====                                          ",
+  "                                               o                                            ",
+  "            C o                 C             ====          C                 C             ",
+  "          ======              ======           o          ======            ======          ",
+  "                                              =====                                         ",
+  " P   o   g   s    g   w   C     o   g           g   t   C     o         g   s     C   w   E ",
+  "##########################################  ######################  ########################",
+  "##########################################  ######################  ########################",
 ];
 // World 1-2 "Rooftop Run": a skyline of buildings with bottomless gaps between them.
 // Jump rooftop to rooftop (steps <=2 tiles, gaps 2 tiles); fall in a gap and it's lethal.
@@ -915,10 +915,26 @@ function mkRiotMecha(){
     state:'intro', stateMs:800, vulnerable:false, flashMs:0, yOff:0, vy:0, slamDone:false,
   };
 }
+// SECRET vocab treasure room — reached via the hidden D door in w1l1; collect the words to leave.
+const W1SECRET_ROWS = [
+  "                              ",
+  "                              ",
+  "                              ",
+  "                              ",
+  "                              ",
+  "                              ",
+  "        o           o         ",
+  "      ======      ======      ",
+  "                              ",
+  " P  g   g  C g  o g  C g    E ",
+  "##############################",
+  "##############################",
+];
 const LEVEL_BUILDERS = {
   w1l1: () => buildFromRows(W1L1_ROWS),
   w1l2: () => buildFromRows(W1L2_ROWS),
   w1l3: () => buildFromRows(W1L3_ROWS),
+  w1secret: () => buildFromRows(W1SECRET_ROWS),
   w1l4: () => { const b = buildFromRows(W1L4_ROWS); b.boss = mkRiotMecha(); b.shocks = []; return b; },
 };
 
@@ -1145,7 +1161,19 @@ function updatePlayer(dt, s){
       else { s._gateMs = (s._gateMs||0) - dt; if(s._gateMs<=0){ s._gateMs=1400;   // throttled "locked" prompt
         pushMsg(s, '🔒 Collect '+(need-got)+' more 💎 word'+((need-got)>1?'s':'')+'!', 1300, '#ff9955', 'md'); } }
     }
+    // ── Secret door — touch it to warp to the hidden vocab room ──
+    const d = s.level.door;
+    if(d){ const dc=d.c*TS, dr=d.r*TS;
+      if(pl.x+PW>dc-4 && pl.x<dc+TS+4 && pl.y+PH>dr-4 && pl.y<dr+TS+40) enterSecret(); }
   }
+}
+function enterSecret(){
+  if(scene!=='playing' || !state) return;
+  meta.foundSecret = true; saveMeta();
+  const ch = state.charKey;
+  state = mkState(ch, 'w1secret'); state.startTick = tick;
+  pushMsg(state, '🌟 SECRET ROOM!  Collect the words!', 2400, '#ffe14d', 'lg');
+  sndVictory();
 }
 
 function resolveX(pl, tiles, PW, PH){
@@ -2600,6 +2628,14 @@ function render(){
     ctx.shadowBlur=0;
     ctx.textAlign='center'; ctx.font='bold 8px monospace'; ctx.fillStyle=ec;
     ctx.fillText(locked ? ('🔒 '+got+'/'+need) : 'EXIT ▶', ex, eyTop-4); ctx.textAlign='left';
+    }
+    // Secret door — a glowing purple-gold portal (tucked away; touch to warp)
+    if(s.level.door){
+      const d=s.level.door, dx=~~(d.c*TS - s.cam.x + TS/2), dyT=~~(d.r*TS - s.cam.y) - 6, t3=Date.now()*0.005;
+      ctx.save(); ctx.shadowColor='#c66bff'; ctx.shadowBlur=14+Math.sin(t3)*6;
+      ctx.strokeStyle='#c66bff'; ctx.lineWidth=3; rrect(dx-13, dyT, 26, TS+10, 9); ctx.stroke();
+      ctx.fillStyle='rgba(170,80,255,0.18)'; rrect(dx-13, dyT, 26, TS+10, 9); ctx.fill(); ctx.restore();
+      ctx.textAlign='center'; ctx.font='14px serif'; ctx.fillText('🌟', dx, dyT+22); ctx.textAlign='left';
     }
 
     drawHUD(s);
