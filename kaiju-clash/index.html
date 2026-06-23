@@ -26,6 +26,14 @@
 </head>
 <body>
 <canvas id="c"></canvas>
+<div id="lbov" style="display:none;position:fixed;inset:0;background:rgba(6,4,16,.72);z-index:50;align-items:center;justify-content:center;font-family:system-ui,sans-serif;">
+  <div style="background:#1d1640;border:2px solid #6b4fb0;padding:22px 26px;border-radius:14px;text-align:center;max-width:300px;">
+    <div id="lblabel" style="color:#fff;margin-bottom:12px;font-weight:700;font-size:15px;"></div>
+    <input id="lbinput" autocomplete="off" style="font-size:20px;padding:9px 12px;border-radius:8px;border:2px solid #6b4fb0;text-align:center;width:170px;outline:none;">
+    <div style="margin-top:14px;"><button id="lbok" style="font-size:15px;padding:8px 22px;border:0;border-radius:8px;background:#22cc77;color:#04210f;font-weight:700;cursor:pointer;">OK</button>
+      <button id="lbcancel" style="font-size:15px;padding:8px 16px;border:0;border-radius:8px;background:#553f7a;color:#fff;cursor:pointer;margin-left:6px;">Cancel</button></div>
+  </div>
+</div>
 <script src="progression.js"></script>
 <script src="levelparse.js"></script>
 <script>
@@ -39,7 +47,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '4';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '17';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '18';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -1059,6 +1067,7 @@ function finishLevel(){
   saveMeta();
   lastResult = { rank, orbsEarned: meta.orbs - before, stars: earnedStars, timeSec, saved: s.savedCitizens, total, objectives };
   scene='victory'; sndVictory();
+  _lbSubmit(s.levelId, Math.round((tick - s.startTick)/60*1000)); _lbSyncWords();   // leaderboard: best time + words
 }
 
 // ═══════════════════════════════════════════
@@ -2610,7 +2619,9 @@ function drawWordBook(){
 window.addEventListener('pointerdown', e=>{
   if(!canvas) return; const rect=canvas.getBoundingClientRect(); if(!rect.width) return;
   const x=(e.clientX-rect.left)*(VW/rect.width), y=(e.clientY-rect.top)*(VH/rect.height);
+  if(scene==='leaderboard'){ _lbClick(x,y); return; }
   if(scene==='bonus' || scene==='wordbook') _bonusClick={x,y};
+  else if(scene==='overworld' && x>=VW-104 && x<=VW-8 && y>=8 && y<=32){ _lbOpen(); }       // 🏆 Ranks button
   else if(scene==='overworld' && x>=8 && x<=112 && y>=8 && y<=32){ scene='wordbook'; _bookPage=0; }
 }, {passive:true});
 
@@ -2653,6 +2664,104 @@ function drawCarry(){
   if(pr>=1){ const cb=_carry.onDone; _carry=null; if(cb) cb(); }
 }
 
+// ═══════════════════════════════════════════
+//  LEADERBOARD (Railway API) — speedrun + scholar boards, friend codes
+// ═══════════════════════════════════════════
+const LB_API = 'https://kaiju-api-production.up.railway.app';
+let _lb = null;                                   // {id,secret,code,name}
+try { _lb = JSON.parse(localStorage.getItem('kaiju_lb')||'null'); } catch(e){}
+function _lbSave(){ try{ localStorage.setItem('kaiju_lb', JSON.stringify(_lb)); }catch(e){} }
+async function _lbPost(path, body){ try{ const r=await fetch(LB_API+path,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}); return await r.json(); }catch(e){ return null; } }
+async function _lbGet(path){ try{ const r=await fetch(LB_API+path); return await r.json(); }catch(e){ return null; } }
+async function _lbRegister(name){ const r=await _lbPost('/register',{username:name}); if(r&&r.id){ _lb={id:r.id,secret:r.secret,code:r.friend_code,name}; _lbSave(); } return _lb; }
+function _lbSubmit(level, ms){ if(_lb) _lbPost('/submit',{id:_lb.id,secret:_lb.secret,level,ms}); }    // fire-and-forget
+function _lbWordCount(){ try{ const L=meta.learned; if(!L)return 0; return Array.isArray(L)?L.length:Object.keys(L).length; }catch(e){ return 0; } }
+function _lbSyncWords(){ if(_lb) _lbPost('/words',{id:_lb.id,secret:_lb.secret,words:_lbWordCount()}); }
+
+// HTML overlay text prompt -> Promise<string|null> (works on canvas; testable in headless)
+function _lbPromptText(label, upper){
+  const ov=document.getElementById('lbov'), inp=document.getElementById('lbinput'), lab=document.getElementById('lblabel');
+  return new Promise(res=>{
+    lab.textContent=label; inp.value=''; inp.maxLength=upper?6:16; inp.style.textTransform=upper?'uppercase':'none'; ov.style.display='flex'; setTimeout(()=>inp.focus(),30);
+    const done=(v)=>{ ov.style.display='none'; document.getElementById('lbok').onclick=null; document.getElementById('lbcancel').onclick=null; inp.onkeydown=null; res(v); };
+    document.getElementById('lbok').onclick=()=>done(inp.value.trim()||null);
+    document.getElementById('lbcancel').onclick=()=>done(null);
+    inp.onkeydown=(e)=>{ e.stopPropagation(); if(e.key==='Enter')done(inp.value.trim()||null); else if(e.key==='Escape')done(null); };
+  });
+}
+
+let _lbScene={tab:'speedrun',scope:'global',lvl:'w1l1',rows:null,loading:false,msg:''};
+const _lbLevels=['w1l1','w1l2','w1l3','w1l4'];
+async function _lbOpen(){
+  if(!_lb){ const n=await _lbPromptText('Pick a name for the leaderboard:',false); if(!n) return; await _lbRegister(n); _lbSyncWords(); }
+  scene='leaderboard'; _lbScene.msg=''; _lbLoad();
+}
+async function _lbLoad(){
+  _lbScene.loading=true; _lbScene.rows=null; let rows;
+  if(_lbScene.tab==='scholar') rows=await _lbGet('/board?type=scholar');
+  else if(_lbScene.scope==='friends'&&_lb) rows=await _lbGet('/board?type=friends&level='+_lbScene.lvl+'&id='+_lb.id);
+  else rows=await _lbGet('/board?type=speedrun&level='+_lbScene.lvl);
+  _lbScene.rows=Array.isArray(rows)?rows:[]; _lbScene.loading=false;
+}
+async function _lbAddFriendFlow(){
+  if(!_lb) return; const c=await _lbPromptText("Enter a friend's 6-letter code:",true); if(!c) return;
+  const r=await _lbPost('/friend',{id:_lb.id,secret:_lb.secret,code:c});
+  _lbScene.msg=(r&&r.name)?('Added '+r.name+'! 🎉'):'Code not found.';
+  if(r&&r.name&&_lbScene.tab==='speedrun'){ _lbScene.scope='friends'; _lbLoad(); }
+}
+function _lbTime(ms){ const s=ms/1000, m=Math.floor(s/60), sec=(s-m*60); return m+':'+(sec<10?'0':'')+sec.toFixed(1); }
+
+let _lbBtns=[];
+function _lbBtn(x,y,w,h,label,act,on){ ctx.fillStyle=on?'#6b4fb0':'#2a2150'; rrect(x,y,w,h,7); ctx.fill();
+  ctx.strokeStyle=on?'#b79cff':'#473a73'; ctx.lineWidth=1.5; rrect(x,y,w,h,7); ctx.stroke();
+  ctx.fillStyle='#fff'; ctx.font='bold 11px sans-serif'; ctx.textAlign='center'; ctx.fillText(label,x+w/2,y+h/2+4); ctx.textAlign='left';
+  _lbBtns.push({x,y,w,h,act}); }
+function drawLeaderboard(){
+  _lbBtns=[];
+  ctx.fillStyle='#140f2e'; ctx.fillRect(0,0,VW,VH);
+  ctx.fillStyle='#ffe14d'; ctx.font='bold 20px sans-serif'; ctx.textAlign='center'; ctx.fillText('🏆 LEADERBOARD',VW/2,30); ctx.textAlign='left';
+  _lbBtn(VW/2-150,44,140,26,'🏁 Speedrun','tab_speed',_lbScene.tab==='speedrun');
+  _lbBtn(VW/2+10,44,140,26,'🎓 Scholar','tab_scholar',_lbScene.tab==='scholar');
+  let y=84;
+  if(_lbScene.tab==='speedrun'){
+    _lbBtn(VW/2-150,y,68,24,'Global','scope_global',_lbScene.scope==='global');
+    _lbBtn(VW/2-78,y,68,24,'Friends','scope_friends',_lbScene.scope==='friends');
+    _lbBtn(VW/2+12,y,26,24,'◀','lvl_prev',false);
+    ctx.fillStyle='#bfe9ff'; ctx.font='bold 13px monospace'; ctx.textAlign='center'; ctx.fillText(_lbScene.lvl.toUpperCase(),VW/2+78,y+16);
+    _lbBtn(VW/2+118,y,26,24,'▶','lvl_next',false); ctx.textAlign='left'; y+=34;
+  } else y+=10;
+  const rows=_lbScene.rows;
+  if(_lbScene.loading||rows===null){ ctx.fillStyle='#888'; ctx.font='13px sans-serif'; ctx.textAlign='center'; ctx.fillText('Loading…',VW/2,y+40); ctx.textAlign='left'; }
+  else if(!rows.length){ ctx.fillStyle='#888'; ctx.font='13px sans-serif'; ctx.textAlign='center'; ctx.fillText('No scores yet — be the first! 🦖',VW/2,y+40); ctx.textAlign='left'; }
+  else rows.slice(0,8).forEach((r,i)=>{ const ry=y+i*24;
+      ctx.fillStyle=i%2?'#1b1540':'#221a4d'; ctx.fillRect(VW/2-160,ry,320,22);
+      ctx.fillStyle=['#ffd24d','#cfd8e6','#d8a06a'][i]||'#8a7fb5'; ctx.font='bold 12px monospace'; ctx.textAlign='left'; ctx.fillText('#'+(i+1),VW/2-154,ry+15);
+      ctx.fillStyle='#fff'; ctx.font='13px sans-serif'; ctx.fillText((r.username||'?').slice(0,14),VW/2-128,ry+15);
+      ctx.fillStyle='#7CFF8A'; ctx.font='bold 13px monospace'; ctx.textAlign='right';
+      ctx.fillText(_lbScene.tab==='scholar'?((r.words_learned||0)+' words'):_lbTime(r.best_ms),VW/2+156,ry+15); ctx.textAlign='left'; });
+  const fy=VH-34;
+  if(_lb){ ctx.fillStyle='#bfa8ff'; ctx.font='11px monospace'; ctx.textAlign='left'; ctx.fillText('You: '+_lb.name+'   code '+_lb.code,12,fy+16); }
+  if(_lb) _lbBtn(VW-250,fy,110,26,'+ Add Friend','addfriend',false);
+  _lbBtn(VW-130,fy,118,26,'◀ Back','back',false);
+  if(_lbScene.msg){ ctx.fillStyle='#ffe14d'; ctx.font='bold 12px sans-serif'; ctx.textAlign='center'; ctx.fillText(_lbScene.msg,VW/2,fy-6); ctx.textAlign='left'; }
+}
+function _lbDo(act){ _lbScene.msg='';
+  if(act==='tab_speed'){ _lbScene.tab='speedrun'; _lbLoad(); }
+  else if(act==='tab_scholar'){ _lbScene.tab='scholar'; _lbLoad(); }
+  else if(act==='scope_global'){ _lbScene.scope='global'; _lbLoad(); }
+  else if(act==='scope_friends'){ _lbScene.scope='friends'; _lbLoad(); }
+  else if(act==='lvl_prev'){ const i=_lbLevels.indexOf(_lbScene.lvl); _lbScene.lvl=_lbLevels[(i-1+_lbLevels.length)%_lbLevels.length]; _lbLoad(); }
+  else if(act==='lvl_next'){ const i=_lbLevels.indexOf(_lbScene.lvl); _lbScene.lvl=_lbLevels[(i+1)%_lbLevels.length]; _lbLoad(); }
+  else if(act==='addfriend'){ _lbAddFriendFlow(); }
+  else if(act==='back'){ scene='overworld'; }
+}
+function _lbClick(x,y){ for(const b of _lbBtns){ if(x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h){ _lbDo(b.act); return true; } } return false; }
+// 🏆 button on the overworld
+function drawLbBtn(){ const x=VW-104,y=8,w=96,h=24;
+  ctx.fillStyle='rgba(40,20,70,0.82)'; rrect(x,y,w,h,7); ctx.fill();
+  ctx.strokeStyle='#b79cff'; ctx.lineWidth=1.5; rrect(x,y,w,h,7); ctx.stroke();
+  ctx.fillStyle='#ffe14d'; ctx.font='bold 12px sans-serif'; ctx.textAlign='center'; ctx.fillText('🏆 Ranks',x+w/2,y+16); ctx.textAlign='left'; }
+
 // Dead-simple "how to play" card shown once before level 1.
 function drawHowTo(){
   ctx.fillStyle='rgba(8,6,20,0.74)'; ctx.fillRect(0,0,VW,VH);     // dim the world behind
@@ -2691,6 +2800,9 @@ function render(){
   if(scene==='bonus'){ drawBonus(); drawAudioBtn(); return; }
   if(scene==='wordbook'){ drawWordBook(); drawAudioBtn();
     if((menuBack() || pressedBook())) scene=_bookReturn;   // keyboard exit -> back to map or the game
+    return; }
+  if(scene==='leaderboard'){ drawLeaderboard(); drawAudioBtn();
+    if(menuBack()){ scene='overworld'; justDn.clear(); }
     return; }
 
   if(scene==='howto'){
@@ -2789,7 +2901,7 @@ function render(){
     if(state) drawBg(state.cam); drawVictory();
   }
   if(scene==='gameover') { if(state) drawBg(state.cam); drawGameover(); }
-  if(scene==='overworld'){ drawOverworld(); drawTouchControls(); drawBookBtn(); }  // touch buttons + word-book access
+  if(scene==='overworld'){ drawOverworld(); drawTouchControls(); drawBookBtn(); drawLbBtn(); }  // touch buttons + word-book + leaderboard access
 }
 
 // ═══════════════════════════════════════════
