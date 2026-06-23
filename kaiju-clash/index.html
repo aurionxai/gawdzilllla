@@ -38,13 +38,14 @@ const ctx    = canvas.getContext('2d');
 let _baseTransform = null;   // declared here: resize() assigns it before the line below runs
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
-const ASSET_VER = '3';
+const ASSET_VER = '3';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
+const BUILD = '4';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
-// version tag (uncached) and, if this page is older, reload to a fresh cache-key URL — no manual
-// hard-refresh needed. (One fresh load is still needed the first time, to get this checker.)
+// build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
+// refresh needed. (One fresh load is still needed the FIRST time, to get this checker.)
 fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(r=>r.ok?r.text():null).then(v=>{
-  v=v&&v.trim(); if(v && v!==ASSET_VER && location.search.indexOf('v='+v)<0) location.replace(location.pathname+'?v='+v);
+  v=v&&v.trim(); if(v && v!==BUILD && location.search.indexOf('b='+v)<0) location.replace(location.pathname+'?b='+v);
 }).catch(()=>{});
 
 function resize() {
@@ -1980,17 +1981,18 @@ function drawHUD(s){
   }
 
   // ── Floating messages ──
-  s.msgs.forEach(m=>{
-    const prog = m.timer/m.maxTimer;
-    const alpha = Math.min(prog*3, 1);
-    ctx.globalAlpha=alpha;
+  s.msgs.forEach((m,i)=>{
+    ctx.globalAlpha = Math.min((m.timer/m.maxTimer)*3, 1);
     ctx.textAlign='center';
-    const fs = m.size==='lg'?16:m.size==='md'?11:8;
-    ctx.font=`bold ${fs}px monospace`;
+    const fs = m.size==='lg'?17:m.size==='md'?12:9;
+    ctx.font=`bold ${fs}px sans-serif`;                 // sans-serif renders kana + is crisper than monospace
+    const y = (m.size==='lg'?VH*0.36:VH*0.27) - i*(fs+16);
+    const w = ctx.measureText(m.text).width + 24, h = fs+13;
+    ctx.fillStyle='rgba(8,6,18,0.78)'; rrect(VW/2-w/2, y-h+5, w, h, 8); ctx.fill();    // contrast panel = readable on ANY backdrop
+    ctx.strokeStyle='rgba(255,255,255,0.28)'; ctx.lineWidth=1; rrect(VW/2-w/2, y-h+5, w, h, 8); ctx.stroke();
     ctx.fillStyle=m.clr||'#ffffff';
-    ctx.shadowColor=m.clr||'#ffffff'; ctx.shadowBlur=m.size==='lg'?12:4;
-    ctx.fillText(m.text, VW/2, m.size==='lg'?VH*0.38:VH*0.28);
-    ctx.shadowBlur=0; ctx.globalAlpha=1; ctx.textAlign='left';
+    ctx.fillText(m.text, VW/2, y);
+    ctx.globalAlpha=1; ctx.textAlign='left';
   });
 
   // ── Floating damage numbers ──
