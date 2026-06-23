@@ -58,13 +58,14 @@ credits ≠ Cloud/API credits — the MCP uses the credited web account; the pla
 API + the Railway `tools/higgsfield-gen.mjs` route is a separate empty pool, ignore it. The carrier
 crane (`skins/crane/crane_{up,mid,down}.png`) was built this way.
 
-**NEVER ship procedural / vector / flat single-tone canvas (`ctx`) drawings as FINAL art.** Still a
-flagged placeholder: the **Riot-Mecha boss** (`drawBoss`) — approved scene art exists at
-`../mockups/boss1-riot-mecha.png`; cut it to a transparent sprite set (idle/windup/slam/defeat) via the
-MCP and the turnkey loader (`loadBoss` / `BOSS_FRAMES` → `bosses/riot_*.png`) picks it up, keeping the
-code FX over it. New art lands under the right folder (`skins/`, `enemies/`, `npcs/`, `backdrops/`,
-`bosses/`), drawn `imageSmoothingEnabled=false` (hi-res sprites downscaled at runtime use `true`), and
-**bump `ASSET_VER`**. Replacing a placeholder → DELETE it (memory `delete-old-art-on-replace`).
+**NEVER ship procedural / vector / flat single-tone canvas (`ctx`) drawings as FINAL art.** As of
+BUILD 20 there are **no art placeholders left** — heroes, enemies, NPCs, food, backdrops, the carrier
+crane, and the **Riot-Mecha boss** (`bosses/riot_{idle,windup,slam,defeat}.png`, loaded by `loadBoss`/
+`BOSS_FRAMES`, drawn per boss state with the code FX — hit-flash/shockwaves/defeat-collapse — layered
+over the sprite) are all real Higgsfield pixel art. Keep it that way: new art lands under the right
+folder (`skins/`, `enemies/`, `npcs/`, `backdrops/`, `bosses/`), drawn `imageSmoothingEnabled=false`
+(hi-res sprites downscaled at runtime use `true`), and **bump `ASSET_VER`**. Replacing any future
+stand-in → DELETE the placeholder code/asset (memory `delete-old-art-on-replace`).
 
 ## Deploy & cache (see memory `kaiju-clash-deploy`)
 - Push to `main` = auto-deploy (GitHub Pages + **kaijukids.co**), ~1 min.

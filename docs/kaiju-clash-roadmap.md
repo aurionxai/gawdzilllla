@@ -14,9 +14,9 @@
 
 **Art** — locked **16-bit SNES pixel-art** bar (`mockups/*-growth-FINAL.png`); produced via the
 **Higgsfield MCP** (`nano_banana_pro` → `remove_background`). Heroes Lulah/Poppy + 5-stage growth,
-World-1 backdrop, enemies/NPCs/food sprites, the carrier crane (`skins/crane/`). **Boss is still a
-flagged procedural placeholder** — approved scene art exists (`mockups/boss1-riot-mecha.png`),
-turnkey sprite loader is wired (`bosses/`), just needs the cutout frames. See `CLAUDE.md → Art bar`.
+World-1 backdrop, enemies/NPCs/food sprites, the carrier crane (`skins/crane/`), and the **Riot-Mecha
+boss** (`bosses/riot_{idle,windup,slam,defeat}.png`). **No art placeholders remain** — every in-world
+asset is real pixel art (BUILD 20). See `CLAUDE.md → Art bar`.
 
 **Audio + Japanese learning** — every event is a real sample; lofi Tokyo music; iOS ring-switch
 handling. Passive Japanese: rescue/food/enemy words spoken (92 TTS clips), **Word Book** (tap to
@@ -35,8 +35,8 @@ walk-into-rescue hints; forgiving rescue reach.
 `playtest.js`, `qa-audit.js`. HTTPS enforced.
 
 ## 🔜 NEXT UP
-- **Boss art**: cut `mockups/boss1-riot-mecha.png` to sprite frames via the Higgsfield MCP → wire in.
-- World 2 (Neon Shibuya): new biome + shock-tile hazard + new vocab set + Giant-Mecha boss.
+- World 2 (Neon Shibuya): new biome + shock-tile hazard + new vocab set + Giant-Mecha boss (mockup
+  `boss2-giant-mecha.png` ready — same MCP cutout flow as the Riot Mecha).
 - Leaderboard polish: streaks, your-rank highlight, daily word challenge; harder quiz types (type the
   rōmaji, kanji reading). Optional: cloud save-game sync (reuse the Railway DB).
 
