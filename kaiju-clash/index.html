@@ -47,7 +47,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '4';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '18';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '19';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -2593,6 +2593,7 @@ function drawWordBook(){
   const cols=3, cw=196, ch=50, gx=14, gy=66, gapx=8, gapy=6, start=_bookPage*PER;
   if(_bonusClick){ const {x,y}=_bonusClick; _bonusClick=null;
     if(x>=8&&x<=70&&y>=8&&y<=30){ scene=_bookReturn; return; }
+    if(learned.length>=4 && x>=VW-84&&x<=VW-8&&y>=8&&y<=30){ _quizStart('wordbook'); return; }   // 🎓 Quiz
     if(pages>1){ if(x>=VW-118&&x<=VW-68&&y>=VH-30&&y<=VH-6) _bookPage=Math.max(0,_bookPage-1);
                  if(x>=VW-58&&x<=VW-8&&y>=VH-30&&y<=VH-6) _bookPage=Math.min(pages-1,_bookPage+1); }
     for(let i=0;i<PER;i++){ const w=learned[start+i]; if(!w) break;
@@ -2601,7 +2602,8 @@ function drawWordBook(){
   }
   ctx.fillStyle='#120c26'; ctx.fillRect(0,0,VW,VH);
   ctx.fillStyle='#34509c'; rrect(8,8,62,22,6); ctx.fill(); ctx.fillStyle='#fff'; ctx.font='bold 11px sans-serif'; ctx.textAlign='center'; ctx.fillText('◀ BACK',39,23);
-  ctx.fillStyle='#ffe14d'; ctx.font='bold 18px sans-serif'; ctx.fillText('📖 WORD BOOK', VW/2, 24);
+  if(learned.length>=4){ ctx.fillStyle='#6b4fb0'; rrect(VW-84,8,76,22,6); ctx.fill(); ctx.fillStyle='#fff'; ctx.font='bold 11px sans-serif'; ctx.textAlign='center'; ctx.fillText('🎓 Quiz',VW-46,23); }   // take the proficiency test
+  ctx.fillStyle='#ffe14d'; ctx.font='bold 18px sans-serif'; ctx.textAlign='center'; ctx.fillText('📖 WORD BOOK', VW/2, 24);
   ctx.fillStyle='#bfe9ff'; ctx.font='11px sans-serif'; ctx.fillText(learned.length+' words learned — tap a card to hear it', VW/2, 44);
   ctx.textAlign='left';
   if(!learned.length){ ctx.textAlign='center'; ctx.fillStyle='#fff'; ctx.font='14px sans-serif'; ctx.fillText('Play to learn words! Save people 🤝, eat food 🍣, beat monsters 👾.', VW/2, VH/2); ctx.textAlign='left'; return; }
@@ -2620,6 +2622,7 @@ window.addEventListener('pointerdown', e=>{
   if(!canvas) return; const rect=canvas.getBoundingClientRect(); if(!rect.width) return;
   const x=(e.clientX-rect.left)*(VW/rect.width), y=(e.clientY-rect.top)*(VH/rect.height);
   if(scene==='leaderboard'){ _lbClick(x,y); return; }
+  if(scene==='quiz'){ _quizClick(x,y); return; }
   if(scene==='bonus' || scene==='wordbook') _bonusClick={x,y};
   else if(scene==='overworld' && x>=VW-104 && x<=VW-8 && y>=8 && y<=32){ _lbOpen(); }       // 🏆 Ranks button
   else if(scene==='overworld' && x>=8 && x<=112 && y>=8 && y<=32){ scene='wordbook'; _bookPage=0; }
@@ -2676,7 +2679,7 @@ async function _lbGet(path){ try{ const r=await fetch(LB_API+path); return await
 async function _lbRegister(name){ const r=await _lbPost('/register',{username:name}); if(r&&r.id){ _lb={id:r.id,secret:r.secret,code:r.friend_code,name}; _lbSave(); } return _lb; }
 function _lbSubmit(level, ms){ if(_lb) _lbPost('/submit',{id:_lb.id,secret:_lb.secret,level,ms}); }    // fire-and-forget
 function _lbWordCount(){ try{ const L=meta.learned; if(!L)return 0; return Array.isArray(L)?L.length:Object.keys(L).length; }catch(e){ return 0; } }
-function _lbSyncWords(){ if(_lb) _lbPost('/words',{id:_lb.id,secret:_lb.secret,words:_lbWordCount()}); }
+function _lbSyncWords(){ if(_lb) _lbPost('/words',{id:_lb.id,secret:_lb.secret,words:_profScore()}); }   // syncs PROFICIENCY (quiz mastery points)
 
 // HTML overlay text prompt -> Promise<string|null> (works on canvas; testable in headless)
 function _lbPromptText(label, upper){
@@ -2721,7 +2724,7 @@ function drawLeaderboard(){
   ctx.fillStyle='#140f2e'; ctx.fillRect(0,0,VW,VH);
   ctx.fillStyle='#ffe14d'; ctx.font='bold 20px sans-serif'; ctx.textAlign='center'; ctx.fillText('🏆 LEADERBOARD',VW/2,30); ctx.textAlign='left';
   _lbBtn(VW/2-150,44,140,26,'🏁 Speedrun','tab_speed',_lbScene.tab==='speedrun');
-  _lbBtn(VW/2+10,44,140,26,'🎓 Scholar','tab_scholar',_lbScene.tab==='scholar');
+  _lbBtn(VW/2+10,44,140,26,'🎓 Proficiency','tab_scholar',_lbScene.tab==='scholar');
   let y=84;
   if(_lbScene.tab==='speedrun'){
     _lbBtn(VW/2-150,y,68,24,'Global','scope_global',_lbScene.scope==='global');
@@ -2729,7 +2732,7 @@ function drawLeaderboard(){
     _lbBtn(VW/2+12,y,26,24,'◀','lvl_prev',false);
     ctx.fillStyle='#bfe9ff'; ctx.font='bold 13px monospace'; ctx.textAlign='center'; ctx.fillText(_lbScene.lvl.toUpperCase(),VW/2+78,y+16);
     _lbBtn(VW/2+118,y,26,24,'▶','lvl_next',false); ctx.textAlign='left'; y+=34;
-  } else y+=10;
+  } else { _lbBtn(VW/2-85,y,170,26,'🎓 Take the Test','takequiz',false); y+=36; }
   const rows=_lbScene.rows;
   if(_lbScene.loading||rows===null){ ctx.fillStyle='#888'; ctx.font='13px sans-serif'; ctx.textAlign='center'; ctx.fillText('Loading…',VW/2,y+40); ctx.textAlign='left'; }
   else if(!rows.length){ ctx.fillStyle='#888'; ctx.font='13px sans-serif'; ctx.textAlign='center'; ctx.fillText('No scores yet — be the first! 🦖',VW/2,y+40); ctx.textAlign='left'; }
@@ -2738,7 +2741,7 @@ function drawLeaderboard(){
       ctx.fillStyle=['#ffd24d','#cfd8e6','#d8a06a'][i]||'#8a7fb5'; ctx.font='bold 12px monospace'; ctx.textAlign='left'; ctx.fillText('#'+(i+1),VW/2-154,ry+15);
       ctx.fillStyle='#fff'; ctx.font='13px sans-serif'; ctx.fillText((r.username||'?').slice(0,14),VW/2-128,ry+15);
       ctx.fillStyle='#7CFF8A'; ctx.font='bold 13px monospace'; ctx.textAlign='right';
-      ctx.fillText(_lbScene.tab==='scholar'?((r.words_learned||0)+' words'):_lbTime(r.best_ms),VW/2+156,ry+15); ctx.textAlign='left'; });
+      ctx.fillText(_lbScene.tab==='scholar'?((r.words_learned||0)+' pts'):_lbTime(r.best_ms),VW/2+156,ry+15); ctx.textAlign='left'; });
   const fy=VH-34;
   if(_lb){ ctx.fillStyle='#bfa8ff'; ctx.font='11px monospace'; ctx.textAlign='left'; ctx.fillText('You: '+_lb.name+'   code '+_lb.code,12,fy+16); }
   if(_lb) _lbBtn(VW-250,fy,110,26,'+ Add Friend','addfriend',false);
@@ -2753,6 +2756,7 @@ function _lbDo(act){ _lbScene.msg='';
   else if(act==='lvl_prev'){ const i=_lbLevels.indexOf(_lbScene.lvl); _lbScene.lvl=_lbLevels[(i-1+_lbLevels.length)%_lbLevels.length]; _lbLoad(); }
   else if(act==='lvl_next'){ const i=_lbLevels.indexOf(_lbScene.lvl); _lbScene.lvl=_lbLevels[(i+1)%_lbLevels.length]; _lbLoad(); }
   else if(act==='addfriend'){ _lbAddFriendFlow(); }
+  else if(act==='takequiz'){ if(!_quizStart('leaderboard')) _lbScene.msg=_quizMsg; }
   else if(act==='back'){ scene='overworld'; }
 }
 function _lbClick(x,y){ for(const b of _lbBtns){ if(x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h){ _lbDo(b.act); return true; } } return false; }
@@ -2761,6 +2765,79 @@ function drawLbBtn(){ const x=VW-104,y=8,w=96,h=24;
   ctx.fillStyle='rgba(40,20,70,0.82)'; rrect(x,y,w,h,7); ctx.fill();
   ctx.strokeStyle='#b79cff'; ctx.lineWidth=1.5; rrect(x,y,w,h,7); ctx.stroke();
   ctx.fillStyle='#ffe14d'; ctx.font='bold 12px sans-serif'; ctx.textAlign='center'; ctx.fillText('🏆 Ranks',x+w/2,y+16); ctx.textAlign='left'; }
+
+// ═══════════════════════════════════════════
+//  LANGUAGE QUIZ — proficiency testing (ranks the 🎓 board by tested skill)
+// ═══════════════════════════════════════════
+function _mastery(){ return meta.mastery || (meta.mastery = {}); }
+function _profScore(){ const m=_mastery(); let s=0; for(const k in m) s+=Math.min(m[k]||0,3); return s; }   // total mastery points (cap 3/word)
+function _profTier(s){ return s>=60?'先生 Sensei': s>=36?'Fluent': s>=18?'Apprentice': s>=6?'Student':'Novice'; }
+function _qShuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=a[i];a[i]=a[j];a[j]=t; } return a; }
+let _quiz=null, _quizReturn='overworld', _quizMsg='';
+function _quizPool(){ const idx=_wordIndex(); return Object.keys(meta.learned||{}).filter(k=>idx[k]).map(k=>({id:k,...idx[k]})); }
+function _quizStart(ret){
+  const pool=_quizPool();
+  if(pool.length<4){ _quizMsg='Learn at least 4 words first — play levels & grab 💎 word-gems!'; return false; }
+  _quizReturn=ret||'overworld'; _quizMsg='';
+  const N=Math.min(8,pool.length), targets=_qShuffle(pool.slice()).slice(0,N), types=['listen','read','recall'];
+  const qs=targets.map((t,qi)=>{ const type=types[qi%3];
+    const distract=_qShuffle(pool.filter(w=>w.id!==t.id)).slice(0,3);
+    const opts=_qShuffle([t].concat(distract));
+    return {t,type,opts,ans:opts.indexOf(t)}; });
+  _quiz={qs,i:0,correct:0,sel:-1,answered:false,gained:0,done:false}; scene='quiz';
+  if(qs[0].type==='listen') _quizPlay();
+  return true;
+}
+function _quizPlay(){ const q=_quiz&&_quiz.qs[_quiz.i]; if(q) try{ playSample(q.t.aud,1.0,0,true); }catch(e){} }
+function _quizAnswer(i){ if(!_quiz||_quiz.answered||_quiz.done) return; const q=_quiz.qs[_quiz.i];
+  _quiz.sel=i; _quiz.answered=true;
+  if(i===q.ans){ _quiz.correct++; const m=_mastery(); m[q.t.id]=Math.min(3,(m[q.t.id]||0)+1); _quiz.gained++; saveMeta(); _quizPlay(); }
+  else { try{sndHurt();}catch(e){} }
+}
+function _quizNext(){ if(!_quiz) return;
+  if(_quiz.i<_quiz.qs.length-1){ _quiz.i++; _quiz.sel=-1; _quiz.answered=false; if(_quiz.qs[_quiz.i].type==='listen') _quizPlay(); }
+  else { _quiz.done=true; _lbSyncWords(); try{sndVictory();}catch(e){} }
+}
+let _quizBtns=[];
+function _qBtn(x,y,w,h,label,act,bg){ ctx.fillStyle=bg||'#2a2150'; rrect(x,y,w,h,9); ctx.fill();
+  ctx.strokeStyle='#5a4a8a'; ctx.lineWidth=1.5; rrect(x,y,w,h,9); ctx.stroke();
+  ctx.fillStyle='#fff'; ctx.font='bold 15px sans-serif'; ctx.textAlign='center'; ctx.fillText(label,x+w/2,y+h/2+5); ctx.textAlign='left';
+  _quizBtns.push({x,y,w,h,act}); }
+function drawQuiz(){
+  _quizBtns=[]; ctx.fillStyle='#120e29'; ctx.fillRect(0,0,VW,VH);
+  if(!_quiz){ scene=_quizReturn; return; }
+  if(_quiz.done){ const p=_profScore(); ctx.textAlign='center';
+    ctx.fillStyle='#ffe14d'; ctx.font='bold 24px sans-serif'; ctx.fillText('🎓 '+_quiz.correct+' / '+_quiz.qs.length+' correct!', VW/2, 92);
+    ctx.fillStyle='#7CFF8A'; ctx.font='bold 16px sans-serif'; ctx.fillText('+'+_quiz.gained+' proficiency', VW/2, 124);
+    ctx.fillStyle='#bfe9ff'; ctx.font='15px sans-serif'; ctx.fillText('Total: '+p+' pts   •   '+_profTier(p), VW/2, 156); ctx.textAlign='left';
+    _qBtn(VW/2-150,196,140,40,'↻ Again','again','#2a5a32'); _qBtn(VW/2+10,196,140,40,'◀ Back','back','#3a2d5a'); return;
+  }
+  const q=_quiz.qs[_quiz.i];
+  ctx.textAlign='center'; ctx.fillStyle='#8a7fb5'; ctx.font='bold 12px monospace';
+  ctx.fillText('QUESTION '+(_quiz.i+1)+' / '+_quiz.qs.length+'      ✓ '+_quiz.correct, VW/2, 26);
+  if(q.type==='listen'){ ctx.fillStyle='#fff'; ctx.font='bold 17px sans-serif'; ctx.fillText('🔊 Which word did you hear?', VW/2, 66); ctx.textAlign='left';
+    _qBtn(VW/2-72,82,144,32,'🔊 Hear again','replay','#1e3a44'); }
+  else if(q.type==='read'){ ctx.fillStyle='#fff'; ctx.font='bold 15px sans-serif'; ctx.fillText('What does this mean?', VW/2, 54);
+    ctx.fillStyle='#ffe14d'; ctx.font='bold 40px sans-serif'; ctx.fillText(q.t.jp, VW/2, 100);
+    ctx.fillStyle='#9fb4d6'; ctx.font='15px monospace'; ctx.fillText('('+q.t.ro+')', VW/2, 124); ctx.textAlign='left'; }
+  else { ctx.fillStyle='#fff'; ctx.font='bold 15px sans-serif'; ctx.fillText('How do you say…', VW/2, 54);
+    ctx.fillStyle='#ffd24d'; ctx.font='bold 30px sans-serif'; ctx.fillText('“'+q.t.en+'”', VW/2, 100); ctx.textAlign='left'; }
+  const ow=246, oh=44, gx=12, gyy=12, ox=VW/2-ow-gx/2, oy=146;
+  q.opts.forEach((o,i)=>{ const col=i%2, row=Math.floor(i/2), x=ox+col*(ow+gx), y=oy+row*(oh+gyy);
+    let bg='#2a2150'; if(_quiz.answered){ if(i===q.ans) bg='#1f7a3a'; else if(i===_quiz.sel) bg='#7a2424'; else bg='#221a40'; }
+    _qBtn(x,y,ow,oh,(q.type==='recall')?(o.jp+'   '+o.ro):o.en, _quiz.answered?'':('opt'+i), bg); });
+  if(_quiz.answered){ ctx.textAlign='center'; ctx.fillStyle=_quiz.sel===q.ans?'#7CFF8A':'#ff8888'; ctx.font='bold 15px sans-serif';
+    ctx.fillText(_quiz.sel===q.ans?'✓ Correct!':('✗  '+q.t.jp+' = '+q.t.en), VW/2, oy+2*oh+gyy+30); ctx.textAlign='left';
+    _qBtn(VW/2-70, oy+2*oh+gyy+40, 140, 36, (_quiz.i<_quiz.qs.length-1?'Next ▶':'Finish ▶'),'next','#3a2d5a'); }
+}
+function _quizClick(x,y){ for(const b of _quizBtns){ if(x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h){ _quizDo(b.act); return; } } }
+function _quizDo(act){
+  if(act==='replay') _quizPlay();
+  else if(act==='next') _quizNext();
+  else if(act==='again') _quizStart(_quizReturn);
+  else if(act==='back') scene=_quizReturn;
+  else if(act&&act.indexOf('opt')===0) _quizAnswer(+act.slice(3));
+}
 
 // Dead-simple "how to play" card shown once before level 1.
 function drawHowTo(){
@@ -2803,6 +2880,9 @@ function render(){
     return; }
   if(scene==='leaderboard'){ drawLeaderboard(); drawAudioBtn();
     if(menuBack()){ scene='overworld'; justDn.clear(); }
+    return; }
+  if(scene==='quiz'){ drawQuiz(); drawAudioBtn();
+    if(menuBack()){ scene=_quizReturn; justDn.clear(); }
     return; }
 
   if(scene==='howto'){
