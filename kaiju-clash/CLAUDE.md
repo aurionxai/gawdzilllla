@@ -32,21 +32,33 @@ tilemaps (`W1L*_ROWS`) → `buildFromRows` → `LevelParse`.
   `dispatchEvent` does not.
 
 ## Art quality bar — NON-NEGOTIABLE (see memory `kaiju-clash-art-rework`)
-- The **standard is the approved sheets in `../mockups/`** — the reference bar is
-  `../mockups/poppy-growth-FINAL.png` + `lulah-growth-FINAL.png`: **16-bit SNES pixel art**, crisp
-  pixels, full multi-tone shading ramp (highlight → mid → shadow → dark outline), rim light, real
-  anatomy/volume, vibrant kid-friendly palette. ALL new in-world art (heroes, creatures, NPCs,
-  bosses, carriers, props that share the screen with the heroes) must match this.
-- **Produced ONLY via the Higgsfield `nano_banana_pro` pipeline**, importing the existing hero
-  sprites as on-model reference (see `../mockups/README.md`, ~2 credits/1K image). This is a
-  **user-driven** step — Claude prepares the on-model prompt + reference; the user runs Higgsfield.
-- **NEVER ship procedural / vector / flat single-tone canvas drawings as FINAL art.** Hand-coded
-  `ctx` shapes (the placeholder Riot-Mecha boss, the carry-crane) are temporary stand-ins ONLY —
-  flag them as placeholders and replace with pipeline art before any art is called "done".
-- New art lands as a PNG under the right folder (`skins/`, `enemies/`, `npcs/`, `backdrops/`),
-  loaded via the sprite loader, drawn with `imageSmoothingEnabled=false`, and **bump `ASSET_VER`**.
-  When real art replaces a placeholder, DELETE the placeholder code/asset (memory
-  `delete-old-art-on-replace`).
+Every new in-world asset (heroes, creatures, NPCs, bosses, carriers, food, props that share the
+screen with the heroes) must clear all three standards below. The single reference bar is
+`../mockups/poppy-growth-FINAL.png` + `lulah-growth-FINAL.png` — when in doubt, hold the new art
+next to those and it must look like it belongs in the same set.
+
+- **QUALITY** — full multi-tone shading: ≥3–4 tones per material (highlight → mid → shadow) plus a
+  bold dark outline, consistent top-left light source, soft rim light, real volume/anatomy, clean
+  readable silhouette. **No flat single-tone fills, no smooth/anti-aliased soft edges, no gradients.**
+- **STYLE** — **16-bit SNES pixel art**: crisp hard pixels, vibrant kid-friendly palette, cute
+  friendly faces, side / ¾ view to match the heroes. On-model with the cast (Lulah = green body +
+  pink/magenta glowing frills + red bow; Poppy = golden ape/Kong, pink flower, rosy cheeks).
+- **RESOLUTION** — transparent-background PNG exported at native pixel-art res (never an
+  upscaled/blurred big image). Size to the cast: **heroes/carriers ≈128 px tall** (fit a 128×128
+  box), **enemies ≈96–110 px tall**, **NPCs ≈96 px tall**, width proportional. Multi-frame actions
+  (idle/walk/jump, or a flap) ship as separate same-size frames.
+
+**Pipeline:** produced ONLY via **Higgsfield `nano_banana_pro`**, importing the existing hero
+sprites as on-model reference (see `../mockups/README.md`, ~2 credits/1K image). **User-driven** —
+Claude writes the on-model prompt + supplies the reference sheet; the USER runs Higgsfield and drops
+the PNG back.
+
+**NEVER ship procedural / vector / flat single-tone canvas (`ctx`) drawings as FINAL art** — the
+Riot-Mecha boss and the carry-crane are flagged temporary placeholders only; replace before any art
+is called "done". New art lands under the right folder (`skins/`, `enemies/`, `npcs/`, `backdrops/`),
+loaded via the sprite loader, drawn with `imageSmoothingEnabled=false`, and **bump `ASSET_VER`**.
+When real art replaces a placeholder, DELETE the placeholder code/asset (memory
+`delete-old-art-on-replace`).
 
 ## Deploy & cache (see memory `kaiju-clash-deploy`)
 - Push to `main` = auto-deploy (GitHub Pages + **kaijukids.co**), ~1 min.
