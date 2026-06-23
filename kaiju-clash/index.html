@@ -38,8 +38,8 @@ const ctx    = canvas.getContext('2d');
 let _baseTransform = null;   // declared here: resize() assigns it before the line below runs
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
-const ASSET_VER = '3';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '14';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const ASSET_VER = '4';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
+const BUILD = '15';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -222,6 +222,17 @@ function loadNpcs(){
 const BOSS_FRAMES = { boss_idle:'bosses/riot_idle.png', boss_windup:'bosses/riot_windup.png', boss_slam:'bosses/riot_slam.png', boss_defeat:'bosses/riot_defeat.png' };
 function loadBoss(){
   return Promise.all(Object.entries(BOSS_FRAMES).map(([key,url]) => new Promise(res => {
+    const img = new Image();
+    img.onload  = () => { loadedSprites[key] = img; res(); };
+    img.onerror = () => { res(); };
+    img.src = _av(url);
+  })));
+}
+
+// Carrier crane frames (Higgsfield nano_banana_pro pixel art, bg-removed) — the secret-door cinematic.
+const CRANE_FRAMES = { crane_up:'skins/crane/crane_up.png', crane_mid:'skins/crane/crane_mid.png', crane_down:'skins/crane/crane_down.png' };
+function loadCrane(){
+  return Promise.all(Object.entries(CRANE_FRAMES).map(([key,url]) => new Promise(res => {
     const img = new Image();
     img.onload  = () => { loadedSprites[key] = img; res(); };
     img.onerror = () => { res(); };
@@ -2597,32 +2608,16 @@ window.addEventListener('pointerdown', e=>{
 // ── Winged-monster carry cinematic (secret-door intro/exit) ──
 let _carry = null;
 function startCarry(dir, onDone){ _carry = { dir, t:0, dur:2200, onDone, _fc:-1, _puffed:false }; scene='carry'; sndFlap(); }
-// ⚠ TEMP PLACEHOLDER — vector crane, does NOT meet the art bar (CLAUDE.md → "Art quality bar").
-// Replace with a real Higgsfield nano_banana_pro pixel sprite (3-frame flap, on-model vs the hero
-// sheets) and delete this procedural draw. Tracking: secret-door carry cinematic.
-// A graceful Japanese CRANE (tsuru) — white body, red crown, black wingtips — that grips
-// the kaiju in its talons and flies it off. Wings flap; long neck + head ride above.
+// Real Higgsfield pixel-art crane (tsuru) — 3-frame flap, bg-removed sprites in skins/crane/.
+// Cycles up→mid→down→mid on the wingbeat; drawn centered on (cx,cy), talons hang below for the kaiju.
+const CRANE_SEQ = ['crane_up','crane_mid','crane_down','crane_mid'];
+const CRANE_SZ = 184;
 function drawWingedMonster(cx, cy, t){
-  const flap = Math.sin(t*0.013);
-  ctx.save(); ctx.translate(cx, cy + flap*2);                 // gentle bob as it flaps
-  for(const side of [-1,1]){ ctx.save(); ctx.scale(side,1);   // broad feathered wing — the tip rises/falls on the beat
-    ctx.fillStyle='#ffffff'; ctx.beginPath(); ctx.moveTo(7,-2);
-    ctx.quadraticCurveTo(46,-18-flap*24, 80,-6); ctx.quadraticCurveTo(58,4,7,8); ctx.closePath(); ctx.fill();
-    ctx.strokeStyle='#d6dde6'; ctx.lineWidth=1; ctx.stroke();
-    ctx.fillStyle='#2b2b33'; ctx.beginPath(); ctx.moveTo(58,-2-flap*9);                              // black wingtip
-    ctx.quadraticCurveTo(74,-4-flap*11,80,-6); ctx.quadraticCurveTo(72,4,60,4); ctx.closePath(); ctx.fill();
-    ctx.restore(); }
-  ctx.fillStyle='#ffffff'; ctx.beginPath(); ctx.ellipse(0,2,15,13,0,0,7); ctx.fill();   // body
-  ctx.strokeStyle='#d6dde6'; ctx.lineWidth=1; ctx.stroke();
-  ctx.strokeStyle='#ffffff'; ctx.lineWidth=7; ctx.lineCap='round';                       // long graceful neck
-  ctx.beginPath(); ctx.moveTo(0,-6); ctx.quadraticCurveTo(3,-22,0,-30); ctx.stroke();
-  ctx.fillStyle='#ffffff'; ctx.beginPath(); ctx.arc(0,-32,6.5,0,7); ctx.fill();          // head
-  ctx.fillStyle='#e23b3b'; ctx.beginPath(); ctx.arc(0,-37,3.5,Math.PI,0); ctx.fill();    // red crown
-  ctx.fillStyle='#111'; ctx.beginPath(); ctx.arc(-2,-32,1.5,0,7); ctx.arc(2,-32,1.5,0,7); ctx.fill();   // eyes
-  ctx.fillStyle='#ffb02e'; ctx.beginPath(); ctx.moveTo(5,-32); ctx.lineTo(15,-31); ctx.lineTo(5,-29); ctx.fill();  // beak
-  ctx.strokeStyle='#9aa3ad'; ctx.lineWidth=3.5; ctx.lineCap='round';                     // talons gripping the kaiju below
-  ctx.beginPath(); ctx.moveTo(-9,12); ctx.lineTo(-12,26); ctx.moveTo(9,12); ctx.lineTo(12,26); ctx.stroke();
-  ctx.restore();
+  const fr = loadedSprites[CRANE_SEQ[Math.floor(t/130)%4]] || loadedSprites['crane_mid'];
+  if(!fr) return;
+  const sm = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = true;   // smooth the hi-res sprite downscale
+  ctx.drawImage(fr, ~~(cx-CRANE_SZ/2), ~~(cy-CRANE_SZ/2), CRANE_SZ, CRANE_SZ);
+  ctx.imageSmoothingEnabled = sm;
 }
 function drawCarry(){
   if(!_carry){ scene='playing'; return; }            // safety: never run with no cinematic in flight
@@ -2638,11 +2633,11 @@ function drawCarry(){
   drawWingedMonster(x, y, _carry.t);
   const wig = Math.sin(_carry.t*0.02)*3;                                            // kaiju wiggles happily in the arms
   const stub={dir:1,eatAnim:0,fartAnim:0,vx:0,onGround:true,invincMs:0};
-  (ch==='lulah'?drawLulah:drawPoppy)(~~(x+wig), ~~(y+4), stub, tick);                // tucked up so the crane's talons grip it
+  (ch==='lulah'?drawLulah:drawPoppy)(~~(x+wig), ~~(y+22), stub, tick);               // hangs under the crane's talons
   if(_carry.dir==='out' && pr>0.84){                                               // landing dust-puff + thud
     if(!_carry._puffed){ _carry._puffed=true; sndLandPuff(); addShake(4,220); }
     const pp=(pr-0.84)/0.16; ctx.fillStyle='rgba(255,255,255,'+(0.5*(1-pp))+')';
-    for(const s of[-1,1]){ ctx.beginPath(); ctx.arc(x+s*(8+pp*22), y+80, 5+pp*9, 0,7); ctx.fill(); }
+    for(const s of[-1,1]){ ctx.beginPath(); ctx.arc(x+s*(8+pp*22), y+118, 5+pp*9, 0,7); ctx.fill(); }
   }
   ctx.textAlign='center'; ctx.fillStyle='#ffe14d'; ctx.font='bold 15px sans-serif';
   ctx.fillText(_carry.dir==='in' ? '🕊️  The crane lifts you to the secret room!' : '🕊️  The crane glides you back down!', VW/2, 38); ctx.textAlign='left';
@@ -2907,7 +2902,7 @@ function loop(ts){
 }
 loadSfx();   // try real samples (sounds/*.{mp3,wav}); silently no-ops until they exist
 loadJpVoices();   // spoken Japanese vocab clips (sounds/jp/*.mp3)
-Promise.all([loadSprites(), loadSkin(activeSkin), loadEnemies(), loadNpcs(), loadFood(), loadBoss()]).then(()=>{ spritesReady=true; lastT=performance.now(); });
+Promise.all([loadSprites(), loadSkin(activeSkin), loadEnemies(), loadNpcs(), loadFood(), loadBoss(), loadCrane()]).then(()=>{ spritesReady=true; lastT=performance.now(); });
 requestAnimationFrame(loop);
 </script>
 </body>
