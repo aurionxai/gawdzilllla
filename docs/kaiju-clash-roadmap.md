@@ -1,5 +1,47 @@
 # Kaiju Clash — Development Roadmap
 
+> Live at **kaijukids.co** (GitHub Pages, repo `aurionxai/gawdzilllla`, game in `kaiju-clash/`).
+> Single-file vanilla-JS canvas, no build step. Rules: `kaiju-clash/CLAUDE.md`.
+
+## ✅ SHIPPED & LIVE (as of BUILD 19 · 2026-06-23)
+
+**World 1 (Tokyo)** — 4 levels + boss + a secret level:
+- w1l1 (ground run), w1l2 Rooftop Run, w1l3 Tower Climb (vertical), w1l4 Riot-Mecha **boss arena**.
+- **Secret doors** in w1l1/l2/l3: a hidden tile, **fart to reveal**, enter the shared `w1secret`
+  treasure room; reaching its exit gets you **carried back into the level** by a pixel-art **crane**
+  (tsuru) cinematic — flap frames + flap/landing SFX. Real difficulty curve (chasing enemies scaled
+  per level), chain-stomp combo, position-based exits.
+
+**Art** — locked **16-bit SNES pixel-art** bar (`mockups/*-growth-FINAL.png`); produced via the
+**Higgsfield MCP** (`nano_banana_pro` → `remove_background`). Heroes Lulah/Poppy + 5-stage growth,
+World-1 backdrop, enemies/NPCs/food sprites, the carrier crane (`skins/crane/`). **Boss is still a
+flagged procedural placeholder** — approved scene art exists (`mockups/boss1-riot-mecha.png`),
+turnkey sprite loader is wired (`bosses/`), just needs the cutout frames. See `CLAUDE.md → Art bar`.
+
+**Audio + Japanese learning** — every event is a real sample; lofi Tokyo music; iOS ring-switch
+handling. Passive Japanese: rescue/food/enemy words spoken (92 TTS clips), **Word Book** (tap to
+replay), per-world vocab. Engineer brief: `sounds/AUDIO-SPEC-FOR-ENGINEER.md`.
+
+**Leaderboard + proficiency testing** — backend in the user's **Railway** account (Postgres + Node
+API). **🏁 Speedrun** boards (per-level best time, Global/Friends) + **🎓 Proficiency** boards (ranks
+by tested skill). **🎓 Quiz**: 4-option multiple-choice (listen/read/recall) → per-word mastery →
+proficiency score + tiers (Novice→先生 Sensei). Username + **friend codes**, **COPPA-safe** (no PII).
+
+**HUD/UX** — live ⏱ timer (vs par), HP, fart meter, citizen/word counters; drop-through-platform +
+walk-into-rescue hints; forgiving rescue reach.
+
+**Infra** — push to `main` auto-deploys (~1 min); `BUILD`+`version.txt` drive stale-page auto-reload;
+`ASSET_VER` busts changed assets. Verify loop: `loadtest.js`, `node --test test/{progression,controls}`,
+`playtest.js`, `qa-audit.js`. HTTPS enforced.
+
+## 🔜 NEXT UP
+- **Boss art**: cut `mockups/boss1-riot-mecha.png` to sprite frames via the Higgsfield MCP → wire in.
+- World 2 (Neon Shibuya): new biome + shock-tile hazard + new vocab set + Giant-Mecha boss.
+- Leaderboard polish: streaks, your-rank highlight, daily word challenge; harder quiz types (type the
+  rōmaji, kanji reading). Optional: cloud save-game sync (reuse the Railway DB).
+
+---
+
 ## Phase 1 — NPC + Backdrop Polish ✅ DONE
 - [x] 8 distinct NPC character types (salaryman, schoolgirl, sumo, chef, otaku, tourist, idol, obāchan)
 - [x] Each NPC: unique body proportions, outfit colors, accessories, hair — now 45px tall, 1.4x scale

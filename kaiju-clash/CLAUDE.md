@@ -48,17 +48,23 @@ next to those and it must look like it belongs in the same set.
   box), **enemies ≈96–110 px tall**, **NPCs ≈96 px tall**, width proportional. Multi-frame actions
   (idle/walk/jump, or a flap) ship as separate same-size frames.
 
-**Pipeline:** produced ONLY via **Higgsfield `nano_banana_pro`**, importing the existing hero
-sprites as on-model reference (see `../mockups/README.md`, ~2 credits/1K image). **User-driven** —
-Claude writes the on-model prompt + supplies the reference sheet; the USER runs Higgsfield and drops
-the PNG back.
+**Pipeline = the Higgsfield MCP** (auth once per session: `/mcp → higgsfield`; tools are
+`mcp__higgsfield__*`). Claude DRIVES it — don't hand-roll `ctx` art and don't use the REST/Cloud API.
+Flow that works: `generate_image` model `nano_banana_pro` (count ≤4, plain flat bg for a clean cut) →
+pick best → re-`generate_image` passing the chosen `job_id` in `medias:[{role:'image',value:JOBID}]`
+for consistent extra frames → `remove_background` (media_type image) → `job_status(sync:true)` for the
+transparent PNG URL → curl + `sips -z N N` into the game folder. **Credit gotcha:** Higgsfield web/MCP
+credits ≠ Cloud/API credits — the MCP uses the credited web account; the platform.higgsfield.ai REST
+API + the Railway `tools/higgsfield-gen.mjs` route is a separate empty pool, ignore it. The carrier
+crane (`skins/crane/crane_{up,mid,down}.png`) was built this way.
 
-**NEVER ship procedural / vector / flat single-tone canvas (`ctx`) drawings as FINAL art** — the
-Riot-Mecha boss and the carry-crane are flagged temporary placeholders only; replace before any art
-is called "done". New art lands under the right folder (`skins/`, `enemies/`, `npcs/`, `backdrops/`),
-loaded via the sprite loader, drawn with `imageSmoothingEnabled=false`, and **bump `ASSET_VER`**.
-When real art replaces a placeholder, DELETE the placeholder code/asset (memory
-`delete-old-art-on-replace`).
+**NEVER ship procedural / vector / flat single-tone canvas (`ctx`) drawings as FINAL art.** Still a
+flagged placeholder: the **Riot-Mecha boss** (`drawBoss`) — approved scene art exists at
+`../mockups/boss1-riot-mecha.png`; cut it to a transparent sprite set (idle/windup/slam/defeat) via the
+MCP and the turnkey loader (`loadBoss` / `BOSS_FRAMES` → `bosses/riot_*.png`) picks it up, keeping the
+code FX over it. New art lands under the right folder (`skins/`, `enemies/`, `npcs/`, `backdrops/`,
+`bosses/`), drawn `imageSmoothingEnabled=false` (hi-res sprites downscaled at runtime use `true`), and
+**bump `ASSET_VER`**. Replacing a placeholder → DELETE it (memory `delete-old-art-on-replace`).
 
 ## Deploy & cache (see memory `kaiju-clash-deploy`)
 - Push to `main` = auto-deploy (GitHub Pages + **kaijukids.co**), ~1 min.
@@ -74,3 +80,27 @@ When real art replaces a placeholder, DELETE the placeholder code/asset (memory
 - iOS Safari silences Web Audio under the ring switch — a silent looping `<audio>` (`sounds/silent.mp3`)
   on first gesture keeps the session alive. `unlockAudio` runs its dance ONCE; don't move `stopMusic()`
   outside that guard (it restarted music on every keypress = the "321 re-loop").
+- Audio-engineer brief (the bar for any new SFX/music): `sounds/AUDIO-SPEC-FOR-ENGINEER.md`.
+
+## Leaderboard + language quiz (see memory `kaiju-clash-leaderboard`)
+- Backend is in the user's **Railway** account (project `kaiju-leaderboard`): Postgres + a Node API at
+  `https://kaiju-api-production.up.railway.app` (source `leaderboard-api/`). Deploy with the Railway
+  **CLI** (`railway up --service kaiju-api`) — the Railway **MCP** returns Unauthorized here; use the CLI.
+  Writes gated by a per-player **secret**; tables read-only to the public; **CORS = exact-match** allowlist
+  (kaijukids.co + aurionxai.github.io — no `startsWith`).
+- Two boards: **🏁 Speedrun** (per-level best ms, Global/Friends) + **🎓 Proficiency** (quiz mastery
+  points, NOT words-seen). Identity = username + 6-char friend code in `localStorage['kaiju_lb']`;
+  **COPPA-safe** (no email/PII). Client `_lb*` fns + `drawLeaderboard`; **🏆 Ranks** button on the
+  overworld; HTML overlay `#lbov` for text entry. All calls no-op gracefully offline.
+- **Quiz** (`scene='quiz'`, `_quiz*` fns): 4-option multiple-choice, mixed listen/read/recall, pool =
+  `meta.learned` (needs ≥4). Correct → `meta.mastery[id]` (cap 3); `_profScore()` = total → `_profTier`
+  (Novice→…→先生 Sensei). Finishing syncs proficiency to the board. Entry: Word Book + Proficiency board.
+- **CORS test gotcha:** the API only allows the live origins, so headless **`file://` CANNOT call it**.
+  Test the live chain by loading **https://kaijukids.co/kaiju-clash/** in chromium (an allowed origin).
+- Scenes now: `select·overworld·playing·howto·victory·gameover·bonus·wordbook·carry·leaderboard·quiz`.
+
+## Secret doors (see memory `kaiju-clash-art-rework` for the cinematic art)
+- Hidden `D` tile per level (`s.level.door`, `hidden:true`); **fart near it to reveal**, touch to enter
+  the shared `w1secret` room; reaching its exit = carried BACK (not "finish") to where you left. The
+  carry cinematic is the pixel crane (`drawCarry` / `drawWingedMonster` cycle `crane_{up,mid,down}`).
+  Live in w1l1/w1l2/w1l3. `enterSecret`/`exitSecret` save+restore state AND globals `LW/LH`.
