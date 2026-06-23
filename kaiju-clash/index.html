@@ -46,8 +46,8 @@ const ctx    = canvas.getContext('2d');
 let _baseTransform = null;   // declared here: resize() assigns it before the line below runs
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
-const ASSET_VER = '5';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '20';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const ASSET_VER = '6';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
+const BUILD = '21';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -2382,8 +2382,8 @@ function drawBoss(s){
     ctx.save();
     if(b.state==='telegraph') ctx.translate(Math.sin(Tn*0.03)*2.5,0);           // wind-up wobble
     if(b.state==='defeated'){ const k=1700-b.stateMs; ctx.translate(0,Math.min(18,k*0.014)); ctx.rotate(b.dir*Math.min(0.12,k*0.0001)); }
-    const dh=bh, dw=dh*(bimg.naturalWidth/bimg.naturalHeight);                  // scale to the hitbox height
-    const dx=bx+bw/2-dw/2, dy=by+bh-dh;
+    const dh=bh*1.35, dw=dh*(bimg.naturalWidth/bimg.naturalHeight);             // a bit taller than the hitbox (frames are trimmed → feet at image bottom)
+    const dx=bx+bw/2-dw/2, dy=by+bh-dh;                                         // feet planted on the ground (image bottom = hitbox bottom = footY)
     if(b.dir>0){ ctx.translate(bx+bw/2,0); ctx.scale(-1,1); ctx.translate(-(bx+bw/2),0); }  // face travel dir
     ctx.drawImage(bimg, ~~dx, ~~dy, ~~dw, ~~dh);
     if(b.flashMs>0){ ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=0.6; ctx.drawImage(bimg,~~dx,~~dy,~~dw,~~dh); }  // white-ish hit flash
