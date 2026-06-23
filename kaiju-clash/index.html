@@ -39,7 +39,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '4';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '15';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '16';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -1590,8 +1590,9 @@ function drawTiles(s){
   const ec = Math.min(LW, sc + Math.floor(VW/TS)+3);
 
   for(let r=0;r<LH;r++){
+    const row = tiles[r]; if(!row) continue;          // guard: never index past the row count during a level/scene swap
     for(let c=Math.max(0,sc);c<ec;c++){
-      const t = tiles[r][c];
+      const t = row[c];
       if(t===T_AIR) continue;
       const px=~~(c*TS-cam.x), py=~~(r*TS-cam.y);
 
