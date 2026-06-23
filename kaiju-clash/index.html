@@ -217,6 +217,18 @@ function loadNpcs(){
   })));
 }
 
+// Boss frames (Higgsfield pixel art — see bosses/HIGGSFIELD-RIOT-MECHA.md). Optional: until the
+// PNGs exist, onerror just leaves them unloaded and drawBoss falls back to the procedural placeholder.
+const BOSS_FRAMES = { boss_idle:'bosses/riot_idle.png', boss_windup:'bosses/riot_windup.png', boss_slam:'bosses/riot_slam.png', boss_defeat:'bosses/riot_defeat.png' };
+function loadBoss(){
+  return Promise.all(Object.entries(BOSS_FRAMES).map(([key,url]) => new Promise(res => {
+    const img = new Image();
+    img.onload  = () => { loadedSprites[key] = img; res(); };
+    img.onerror = () => { res(); };
+    img.src = _av(url);
+  })));
+}
+
 function acResume(){ if(AC.state!=='running'){ try{ AC.resume(); }catch(e){} } }   // 'suspended' AND iOS 'interrupted'
 
 // ── Sound-sample swap layer ──────────────────────────────────────────────────
@@ -2333,6 +2345,26 @@ function drawBoss(s){
     ctx.beginPath(); ctx.arc(~~(w.x-cam.x), wy, 8+w.dist*0.14, Math.PI, 2*Math.PI); ctx.stroke();
   });
 
+  // ── Real pixel-art sprite path (once Higgsfield frames land) — keeps the shockwaves above and the
+  // hit-flash / defeat-collapse FX, then returns BEFORE the procedural placeholder body below. ──
+  const frameKey = b.state==='defeated' ? 'boss_defeat'
+                 : (b.state==='telegraph' ? 'boss_windup'
+                 : (b.state==='slam' ? 'boss_slam' : 'boss_idle'));
+  const bimg = loadedSprites[frameKey] || loadedSprites['boss_idle'];
+  if(bimg){
+    const Tn=Date.now();
+    ctx.save();
+    if(b.state==='telegraph') ctx.translate(Math.sin(Tn*0.03)*2.5,0);           // wind-up wobble
+    if(b.state==='defeated'){ const k=1700-b.stateMs; ctx.translate(0,Math.min(18,k*0.014)); ctx.rotate(b.dir*Math.min(0.12,k*0.0001)); }
+    const dh=bh, dw=dh*(bimg.naturalWidth/bimg.naturalHeight);                  // scale to the hitbox height
+    const dx=bx+bw/2-dw/2, dy=by+bh-dh;
+    if(b.dir>0){ ctx.translate(bx+bw/2,0); ctx.scale(-1,1); ctx.translate(-(bx+bw/2),0); }  // face travel dir
+    ctx.drawImage(bimg, ~~dx, ~~dy, ~~dw, ~~dh);
+    if(b.flashMs>0){ ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=0.6; ctx.drawImage(bimg,~~dx,~~dy,~~dw,~~dh); }  // white-ish hit flash
+    ctx.restore();
+    return;
+  }
+
   const T = Date.now();
   ctx.save();
   if(tele) ctx.translate(Math.sin(T*0.03)*2.5, 0);           // wind-up wobble
@@ -2875,7 +2907,7 @@ function loop(ts){
 }
 loadSfx();   // try real samples (sounds/*.{mp3,wav}); silently no-ops until they exist
 loadJpVoices();   // spoken Japanese vocab clips (sounds/jp/*.mp3)
-Promise.all([loadSprites(), loadSkin(activeSkin), loadEnemies(), loadNpcs(), loadFood()]).then(()=>{ spritesReady=true; lastT=performance.now(); });
+Promise.all([loadSprites(), loadSkin(activeSkin), loadEnemies(), loadNpcs(), loadFood(), loadBoss()]).then(()=>{ spritesReady=true; lastT=performance.now(); });
 requestAnimationFrame(loop);
 </script>
 </body>
