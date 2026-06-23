@@ -142,7 +142,8 @@ screen (kana + romaji + meaning) AND speaks it aloud.
 ### TODO
 - [ ] World 2/3/4 vocab sets (20-30 each): colors/numbers (W2), sea animals/nature (W3), weather/verbs (W4)
 - [ ] **Real male voice** — install Otoya (System Settings → Spoken Content → JP voices) + regenerate `_m` clips (currently pitch-shifted Kyoko: correct pronunciation, synthesized pitch)
-- [ ] "Word book" screen: list learned words, tap to replay
+- [x] **Word book** screen ✅ — every learned word (rescue/food/enemy) tracked in `meta.learned` (persists), grouped by category, **tap any card to replay** its audio. Open from the overworld (📖 button / **B** key). Bonus round bumped to 6 pairs.
+- [ ] Bonus: add a speed/timer mode + recall mode (hide romaji) on later worlds
 - [ ] Localize to other languages (same structure, swap vocab + TTS voice)
 
 ## Phase 7 — Audio Engineering ✅ DONE
