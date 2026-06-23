@@ -1,0 +1,10 @@
+{
+  "name": "kaiju-leaderboard-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Kaiju Clash leaderboard API (Railway + Postgres)",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "dependencies": { "pg": "^8.11.5" },
+  "engines": { "node": ">=18" }
+}
