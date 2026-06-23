@@ -46,8 +46,8 @@ const ctx    = canvas.getContext('2d');
 let _baseTransform = null;   // declared here: resize() assigns it before the line below runs
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
-const ASSET_VER = '4';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '19';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const ASSET_VER = '5';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
+const BUILD = '20';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -2355,11 +2355,8 @@ function updateBoss(dt, s){
   }
 }
 
-// ⚠ TEMP PLACEHOLDER — procedural Riot-Mecha render. Does NOT meet the art bar
-// (CLAUDE.md → "Art quality bar"). Approved Higgsfield art exists as a SCENE frame at
-// mockups/boss1-riot-mecha.png; it needs a clean transparent-bg sprite cutout (+ action frames:
-// idle / wind-up / slam / defeat) via Higgsfield nano_banana_pro, then wired in here and this
-// procedural draw deleted. Hit-flash / shockwaves / defeat-collapse can stay as code FX over the sprite.
+// Riot-Mecha boss — real Higgsfield pixel-art sprites (bosses/riot_{idle,windup,slam,defeat}.png),
+// state -> frame; hit-flash / ground-shockwaves / defeat-collapse are code FX layered over the sprite.
 function drawBoss(s){
   const b=s.level.boss; if(!b) return;
   const cam=s.cam;
@@ -2391,97 +2388,8 @@ function drawBoss(s){
     ctx.drawImage(bimg, ~~dx, ~~dy, ~~dw, ~~dh);
     if(b.flashMs>0){ ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=0.6; ctx.drawImage(bimg,~~dx,~~dy,~~dw,~~dh); }  // white-ish hit flash
     ctx.restore();
-    return;
   }
 
-  const T = Date.now();
-  ctx.save();
-  if(tele) ctx.translate(Math.sin(T*0.03)*2.5, 0);           // wind-up wobble
-  const cx = bx+bw/2, dir=b.dir;
-  const dmg = b.maxHp - b.hp, defeated = b.state==='defeated';
-  const OUT='#10141b';
-  const STEEL=flash?'#fff':'#6b7a93', STEEL_D=flash?'#fff':'#3c4557', STEEL_DD=flash?'#ddd':'#262d39';
-  const STEEL_L=flash?'#fff':'#97a6c0', STEEL_LL=flash?'#fff':'#c6d2e4';
-  const AMBER=flash?'#fff':'#e8b53a', AMBER_D=flash?'#fff':'#9c7414';
-  const eyeC=flash?'#fff':(vuln?'#ffe27a':'#ff3b30'), eyeG=vuln?'#ffd24d':'#ff3b30';
-  const fillR=(x,y,w,h,r)=>{ rrect(x,y,w,h,r); ctx.fill(); };
-  const panel=(x,y,w,h,r,c)=>{ ctx.fillStyle=c; rrect(x,y,w,h,r); ctx.fill(); ctx.strokeStyle=OUT; ctx.lineWidth=2; rrect(x,y,w,h,r); ctx.stroke(); };
-  const bolt=(x,y)=>{ ctx.fillStyle=STEEL_DD; ctx.beginPath(); ctx.arc(x,y,1.7,0,7); ctx.fill(); ctx.fillStyle=STEEL_LL; ctx.beginPath(); ctx.arc(x-0.5,y-0.5,0.7,0,7); ctx.fill(); };
-  // collapse when defeated
-  if(defeated){ const k=1700-b.stateMs; ctx.translate(0, Math.min(18,k*0.014)); ctx.rotate(dir*Math.min(0.12,k*0.0001)); }
-
-  // ── tank-tread base (rolling links + spinning hubs) ──
-  panel(bx+6, by+bh-30, bw-12, 30, 9, STEEL_D);
-  ctx.fillStyle=STEEL_DD; fillR(bx+10, by+bh-26, bw-20, 22, 7);
-  const roll = defeated?0:T*0.03;
-  ctx.fillStyle=OUT;
-  for(let i=0;i<10;i++){ const lx=bx+12+((i*8+roll)%(bw-24)); ctx.fillRect(~~lx, by+bh-25, 3, 20); }
-  for(const wx of [bx+20, cx, bx+bw-20]){
-    ctx.fillStyle=STEEL; ctx.beginPath(); ctx.arc(wx, by+bh-15, 7,0,7); ctx.fill();
-    ctx.strokeStyle=OUT; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(wx, by+bh-15,7,0,7); ctx.stroke();
-    ctx.save(); ctx.translate(wx, by+bh-15); ctx.rotate(roll*0.05);
-    ctx.strokeStyle=STEEL_DD; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(-5,0); ctx.lineTo(5,0); ctx.moveTo(0,-5); ctx.lineTo(0,5); ctx.stroke(); ctx.restore();
-  }
-  ctx.strokeStyle=STEEL_DD; ctx.lineWidth=4; ctx.beginPath();        // hip pistons
-  ctx.moveTo(bx+24,by+82); ctx.lineTo(bx+24,by+bh-26); ctx.moveTo(bx+bw-24,by+82); ctx.lineTo(bx+bw-24,by+bh-26); ctx.stroke();
-
-  // ── torso ──
-  panel(bx+14, by+28, bw-28, 58, 10, STEEL);
-  ctx.fillStyle=STEEL_L;  fillR(bx+17, by+31, bw-34, 7, 5);          // top highlight
-  ctx.fillStyle=STEEL_D;  fillR(bx+17, by+74, bw-34, 9, 5);          // bottom shadow
-  ctx.save(); ctx.shadowColor=vuln?'#ffd24d':'#34d1c4'; ctx.shadowBlur=8;   // core reactor
-  ctx.fillStyle=flash?'#fff':(vuln?'#ffe27a':'#34d1c4'); ctx.beginPath(); ctx.arc(cx, by+54, 6+Math.sin(T*0.008)*1.2, 0,7); ctx.fill(); ctx.restore();
-  ctx.strokeStyle=OUT; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(cx,by+54,7,0,7); ctx.stroke();
-  ctx.fillStyle=STEEL_DD; for(let i=0;i<3;i++){ fillR(cx-15, by+40+i*5, 9, 3, 1); fillR(cx+6, by+40+i*5, 9, 3, 1); }  // vents
-  ctx.fillStyle=AMBER; for(let i=0;i<4;i++){ const hx=bx+18+i*13; ctx.beginPath(); ctx.moveTo(hx,by+80); ctx.lineTo(hx+6,by+80); ctx.lineTo(hx+3,by+85); ctx.closePath(); ctx.fill(); }  // hazard chevrons
-  bolt(bx+19,by+33); bolt(bx+bw-19,by+33); bolt(bx+19,by+82); bolt(bx+bw-19,by+82);
-
-  // ── shoulders + warning lights ──
-  panel(bx+2, by+24, 24, 24, 8, STEEL_L); panel(bx+bw-26, by+24, 24, 24, 8, STEEL_L);
-  bolt(bx+14,by+36); bolt(bx+bw-14,by+36);
-  ctx.fillStyle = (tele && Math.floor(T/120)%2===0)?'#ff3b30':'#5a2420';
-  ctx.beginPath(); ctx.arc(bx+14, by+28, 2.5,0,7); ctx.fill(); ctx.beginPath(); ctx.arc(bx+bw-14, by+28, 2.5,0,7); ctx.fill();
-
-  // ── arms: RIOT shield (leading) + hammer fist ──
-  const shieldX = dir<0 ? bx-4 : bx+bw-16;
-  const fistX   = dir<0 ? bx+bw-14 : bx-6;
-  panel(fistX, by+40, 14, 24, 5, STEEL_D);
-  panel(fistX-3, by+60, 20, 15, 5, STEEL); bolt(fistX+7,by+67);
-  panel(shieldX, by+30, 20, 46, 4, AMBER);
-  ctx.strokeStyle=AMBER_D; ctx.lineWidth=2; for(let i=0;i<3;i++){ ctx.beginPath(); ctx.moveTo(shieldX+3, by+40+i*10); ctx.lineTo(shieldX+17, by+40+i*10); ctx.stroke(); }  // slits
-  ctx.strokeStyle=flash?'#fff':'#ffd24d'; ctx.lineWidth=2; rrect(shieldX+1, by+31, 18, 44, 4); ctx.stroke();   // glowing edge
-  ctx.save(); ctx.translate(shieldX+10, by+53); ctx.rotate(-Math.PI/2);
-  ctx.fillStyle=flash?'#888':'#3a2c08'; ctx.font='bold 8px monospace'; ctx.textAlign='center'; ctx.fillText('RIOT',0,3); ctx.restore(); ctx.textAlign='left';
-
-  // ── head / helmet ──
-  panel(cx-19, by, 38, 28, 9, STEEL);
-  ctx.fillStyle=STEEL_L;  fillR(cx-16, by+2, 32, 5, 4);              // top highlight
-  ctx.fillStyle=STEEL_DD; fillR(cx-17, by+7, 34, 4, 2);             // brow
-  ctx.fillStyle=STEEL_D;  fillR(cx-19, by+20, 38, 8, 4);            // jaw shadow
-  ctx.save();                                                       // cyclops eye = weak point
-  ctx.shadowColor=eyeG; ctx.shadowBlur = vuln?18 : (tele? 10+Math.sin(T*0.05)*6 : 7+Math.sin(T*0.012)*3);
-  ctx.fillStyle=eyeC; fillR(cx-14, by+11, 28, vuln?12:9, 3);
-  ctx.shadowBlur=0; ctx.fillStyle=flash?'#fff':(vuln?'#fff7d6':'#ffd0cc');
-  const px=cx+Math.sin(T*0.004)*8; ctx.beginPath(); ctx.arc(px, by+11+(vuln?6:4.5), 2.4,0,7); ctx.fill();   // scanning pupil
-  ctx.restore();
-  ctx.strokeStyle=STEEL_DD; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(cx+12,by+1); ctx.lineTo(cx+19,by-10); ctx.stroke();   // antenna
-  ctx.fillStyle=(Math.floor(T/350)%2?'#ff3b30':'#5a2420'); ctx.beginPath(); ctx.arc(cx+19,by-11,2.5,0,7); ctx.fill();
-  ctx.strokeStyle=OUT; ctx.lineWidth=2; rrect(cx-19,by,38,28,9); ctx.stroke();
-
-  // ── battle damage (grows as HP drops) ──
-  if(dmg>=1){ ctx.strokeStyle=OUT; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(bx+22,by+38); ctx.lineTo(bx+30,by+50); ctx.lineTo(bx+26,by+58); ctx.stroke(); }
-  if(dmg>=2){ ctx.fillStyle='rgba(20,16,12,0.65)'; ctx.beginPath(); ctx.arc(bx+bw-26,by+62,9,0,7); ctx.fill();
-              ctx.strokeStyle=OUT; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(cx+8,by+34); ctx.lineTo(cx+2,by+46); ctx.lineTo(cx+9,by+54); ctx.stroke(); }
-  if(dmg>=3 || defeated){ ctx.fillStyle='#1a1a1a'; fillR(bx+30, by+60, 16, 12, 2);            // exposed sparking wiring
-    if(Math.floor(T/80)%2===0){ ctx.strokeStyle='#ffd24d'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(bx+34,by+66); ctx.lineTo(bx+38,by+62); ctx.lineTo(bx+42,by+68); ctx.stroke();
-      ctx.fillStyle='#fff7c0'; ctx.beginPath(); ctx.arc(bx+38,by+63,1.8,0,7); ctx.fill(); } }
-  if(dmg>=2 || defeated){ const puffs=defeated?5:(dmg>=3?3:2);                                 // smoke
-    for(let i=0;i<puffs;i++){ const ph=((T*0.04)+(i*60))%70, a=(1-ph/70)*(defeated?0.5:0.35);
-      ctx.fillStyle='rgba(70,70,80,'+a.toFixed(2)+')'; ctx.beginPath(); ctx.arc(cx-12+i*9+Math.sin((T*0.003)+i)*4, by+6-ph, 5+ph*0.12, 0,7); ctx.fill(); } }
-  if(tele){ for(const sx of [bx+10,bx+bw-10]){ const ph=(T*0.05)%24; ctx.fillStyle='rgba(220,230,245,'+(0.4*(1-ph/24)).toFixed(2)+')'; ctx.beginPath(); ctx.arc(sx, by+30-ph*0.5, 3+ph*0.1,0,7); ctx.fill(); } }  // steam vents
-
-  if(vuln){ ctx.fillStyle='#ffee44'; ctx.font='9px monospace'; ctx.textAlign='center'; ctx.fillText('▼ STOMP', cx, by-18); ctx.textAlign='left'; }
-  ctx.restore();
 
   // HP pips (screen-fixed) — sits BELOW the center fart meter so they don't overlap
   const pips=b.maxHp, pw=18, gap=4, tot=pips*pw+(pips-1)*gap, x0=VW/2-tot/2;
