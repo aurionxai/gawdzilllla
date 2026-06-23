@@ -39,7 +39,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '4';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '16';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '17';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -1479,7 +1479,7 @@ function updateCitizens(dt, s){
     // Walk into a townsfolk to rescue them (intuitive + always reachable, unlike the
     // old "defeat an enemy next to them" which was impossible once they were spaced apart).
     const pl = s.player;
-    if(pl.x < c.x+16 && pl.x+44 > c.x-16 && pl.y < c.y+22 && pl.y+66 > c.y-22){ saveCitizen(c, s); return; }
+    if(pl.x < c.x+30 && pl.x+44 > c.x-30 && pl.y < c.y+30 && pl.y+66 > c.y-30){ saveCitizen(c, s); return; }   // forgiving reach for kids
 
     // Run away from the nearest active enemy that's on roughly the same level — an enemy
     // far above/below (a rooftop vs the street) isn't a threat, so it shouldn't cause panic.
@@ -1967,6 +1967,14 @@ function drawHUD(s){
   ctx.fillStyle=hpClr; ctx.font='bold 7px monospace';
   ctx.fillText('HP', 8, 5);
 
+  // ── Level timer (under HP) — green while under par (the ⏱ speed-star target), amber once over ──
+  const tSec = Math.max(0, Math.round((tick - (s.startTick||tick))/60));
+  const par  = LEVEL_PAR[s.levelId] || 60;
+  const mm = Math.floor(tSec/60), ss = tSec%60;
+  ctx.font='bold 10px monospace'; ctx.textAlign='left';
+  ctx.fillStyle = tSec<=par ? '#7CFF8A' : '#ff8855';
+  ctx.fillText('⏱ '+mm+':'+(ss<10?'0':'')+ss+'  /'+par+'s', 6, 32);
+
   // ── FART METER (center top, big and prominent) ──
   const fm = pl.fartMeter/100;
   const mW=180, mX=VW/2-mW/2, mY=5;
@@ -2050,7 +2058,7 @@ function drawHUD(s){
   // ── Controls hint (bottom, subtle) ──
   ctx.fillStyle='rgba(0,0,0,0.45)'; ctx.fillRect(0,VH-11,VW,11);
   ctx.fillStyle='#2a3a4a'; ctx.font='5px monospace';
-  ctx.fillText('[← →] MOVE   [↑/SPACE] JUMP & STOMP   [Z/X] CHOMP / FART   👥 REACH TOWNSFOLK TO RESCUE (bonus)', 4, VH-3);
+  ctx.fillText('[← →] MOVE   [↑] JUMP & STOMP   [↓] DROP DOWN THRU PLATFORMS   [Z] CHOMP / FART   👥 WALK INTO TOWNSFOLK TO RESCUE', 4, VH-3);
 
   // ── Growth stage + orb readout (bottom right) ──
   ctx.save();
