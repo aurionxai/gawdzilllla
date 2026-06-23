@@ -96,7 +96,7 @@ if (/function drawBoss[\s\S]*?fillR\(|rrect\(/.test(HTML) && !/en_riot|boss.*\.p
 // ── 5. AUDIO hygiene: unlock + resilience (Safari) ────────────────────────────
 head('AUDIO — robustness');
 has(/function unlockAudio/) ? ok('audio unlock-on-gesture present') : bad('no audio unlock', 'Safari/iOS will be silent without a gesture unlock');
-has(/try\s*\{\s*update\(dt\)/) ? ok('frame is crash-isolated (a sound error can\'t freeze the game)') : wn('frame not wrapped', 'wrap update/render so an audio throw cannot freeze the loop');
+has(/try\s*\{[\s\S]{0,400}?update\([\s\S]{0,400}?render\(\)[\s\S]{0,200}?catch/) ? ok('frame is crash-isolated (a sound error can\'t freeze the game)') : wn('frame not wrapped', 'wrap update/render so an audio throw cannot freeze the loop');
 has(/drawAudioBtn|toggleMusic/) ? ok('player-facing mute/unmute control') : wn('no mute control', 'add a visible mute toggle');
 
 // ── summary ───────────────────────────────────────────────────────────────────
