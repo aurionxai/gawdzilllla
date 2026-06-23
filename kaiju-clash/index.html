@@ -39,7 +39,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '3';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '11';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '12';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -784,8 +784,9 @@ function buildFromRows(rows){
   // Rest the player's 66px box ON the surface below its spawn char, not embedded in
   // the floor — otherwise resolveX reads the buried floor tile as a wall and marches
   // the player a tile/frame to the exit (the level "plays itself").
+  const door = p.spawns.door ? { r:p.spawns.door.r, c:p.spawns.door.c, hidden:true, used:false } : null;  // hidden until fart-revealed
   return { tiles:p.tiles, food, enemies, citizens, gems,
-           playerSpawn:{ x:ps.c*TS, y: surfaceTop(ps.c, ps.r) - 66 }, exit:p.spawns.exit, door:p.spawns.door, LW:p.LW, LH:p.LH };
+           playerSpawn:{ x:ps.c*TS, y: surfaceTop(ps.c, ps.r) - 66 }, exit:p.spawns.exit, door, LW:p.LW, LH:p.LH };
 }
 
 // World 1, Level 1 — a deep street -> rooftops -> sky climb (taller than the screen).
@@ -1150,23 +1151,39 @@ function updatePlayer(dt, s){
     const atExit = exT ? (pl.x+PW > exT.c*TS-8 && pl.x < exT.c*TS+TS+8 && pl.y+PH > exT.r*TS-8 && pl.y < exT.r*TS+TS+44)
                        : (pl.x > (LW-3)*TS);
     if(atExit){
-      if(got >= need) finishLevel();
+      if(got >= need){ if(s.levelId==='w1secret') exitSecret(); else finishLevel(); }   // secret = carried back, not 'finish'
       else { s._gateMs = (s._gateMs||0) - dt; if(s._gateMs<=0){ s._gateMs=1400;   // throttled "locked" prompt
         pushMsg(s, '🔒 Collect '+(need-got)+' more 💎 word'+((need-got)>1?'s':'')+'!', 1300, '#ff9955', 'md'); } }
     }
-    // ── Secret door — touch it to warp to the hidden vocab room ──
+    // ── Secret door — once FART-revealed, touch it to be carried into the hidden vocab room ──
     const d = s.level.door;
-    if(d){ const dc=d.c*TS, dr=d.r*TS;
-      if(pl.x+PW>dc-4 && pl.x<dc+TS+4 && pl.y+PH>dr-4 && pl.y<dr+TS+40) enterSecret(); }
+    if(d && !d.hidden && !d.used){ const dc=d.c*TS, dr=d.r*TS;
+      if(pl.x+PW>dc-4 && pl.x<dc+TS+4 && pl.y+PH>dr-4 && pl.y<dr+TS+40){ d.used=true; enterSecret(); } }
   }
 }
+let _savedLevel = null;   // the level (w1l1) we'll be carried BACK to after the secret
 function enterSecret(){
   if(scene!=='playing' || !state) return;
   meta.foundSecret = true; saveMeta();
-  const ch = state.charKey;
-  state = mkState(ch, 'w1secret'); state.startTick = tick;
-  pushMsg(state, '🌟 SECRET ROOM!  Collect the words!', 2400, '#ffe14d', 'lg');
-  sndVictory();
+  _savedLevel = state;
+  _savedLevel._dropX = state.level.door.c*TS;         // drop back near the door
+  startCarry('in', ()=>{                              // winged monster carries you up & in
+    const ch = _savedLevel.charKey;
+    state = mkState(ch, 'w1secret'); state.startTick = tick; scene='playing';
+    pushMsg(state, '🌟 SECRET ROOM!  Collect the words!', 2400, '#ffe14d', 'lg');
+  });
+}
+function exitSecret(){    // reached the secret room's exit -> carried back into the level (NOT 'finish')
+  startCarry('out', ()=>{
+    const lvl = _savedLevel; _savedLevel = null;
+    state = lvl;
+    LW = lvl.level.LW; LH = lvl.level.LH;              // restore the level's global dims
+    state.player.x = (lvl._dropX!=null ? lvl._dropX : state.player.x);
+    state.player.y = (lvl.level.LH-5)*TS;              // dropped from a few tiles up -> falls to the ground
+    state.player.vy = 0; state.player.invincMs = 1500; state.player.falling = false;
+    scene = 'playing';
+    pushMsg(state, '🪂 Dropped back in — keep going!', 2000, '#7CFF8A', 'md');
+  });
 }
 
 function resolveX(pl, tiles, PW, PH){
@@ -1322,6 +1339,10 @@ function doFart(s){
     const dx=g.x-fcx, dy=g.y-fcy;
     if(Math.sqrt(dx*dx+dy*dy) < radius+24){ g.hidden=false; g.revealMs=600; pushNum(s, g.x, g.y-14, '✨', '#ffe14d'); }
   });
+  // Fart also reveals the hidden SECRET DOOR (so it's a real find, not a freebie)
+  const dr=s.level.door;
+  if(dr && dr.hidden){ const ddx=dr.c*TS+TS/2-fcx, ddy=dr.r*TS+TS/2-fcy;
+    if(Math.sqrt(ddx*ddx+ddy*ddy) < radius+30){ dr.hidden=false; addShake(4,200); pushMsg(s, '🌟 A SECRET DOOR appeared!', 2000, '#c66bff', 'lg'); } }
 
   // Stun / kill enemies in radius — and rescue nearby citizens
   s.level.enemies.forEach(e=>{
@@ -2512,6 +2533,40 @@ window.addEventListener('pointerdown', e=>{
   else if(scene==='overworld' && x>=8 && x<=112 && y>=8 && y<=32){ scene='wordbook'; _bookPage=0; }
 }, {passive:true});
 
+// ── Winged-monster carry cinematic (secret-door intro/exit) ──
+let _carry = null;
+function startCarry(dir, onDone){ _carry = { dir, t:0, dur:2200, onDone }; scene='carry'; sndRoar(); }
+function drawWingedMonster(cx, cy, t){
+  const flap = Math.sin(t*0.013);
+  ctx.save(); ctx.translate(cx, cy);
+  for(const side of [-1,1]){ ctx.save(); ctx.scale(side,1);     // flapping wings
+    ctx.fillStyle='#7a3fae'; ctx.beginPath(); ctx.moveTo(6,-2);
+    ctx.quadraticCurveTo(34,-30-flap*24, 50,-4); ctx.quadraticCurveTo(30,4,8,8); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='#b388e0'; ctx.lineWidth=1.5; ctx.stroke(); ctx.restore(); }
+  ctx.fillStyle='#5a2d86'; ctx.beginPath(); ctx.ellipse(0,0,17,13,0,0,7); ctx.fill();   // body
+  ctx.strokeStyle='#8a5fc6'; ctx.lineWidth=2; ctx.stroke();
+  ctx.fillStyle='#ffe14d'; ctx.beginPath(); ctx.arc(-6,-3,3,0,7); ctx.arc(6,-3,3,0,7); ctx.fill();   // eyes
+  ctx.fillStyle='#221'; ctx.beginPath(); ctx.arc(-6,-3,1.3,0,7); ctx.arc(6,-3,1.3,0,7); ctx.fill();
+  ctx.strokeStyle='#5a2d86'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(-9,11); ctx.lineTo(-11,26); ctx.moveTo(9,11); ctx.lineTo(11,26); ctx.stroke();   // claws
+  ctx.restore();
+}
+function drawCarry(){
+  if(!_carry){ scene='playing'; return; }            // safety: never run with no cinematic in flight
+  _carry.t += 16; const pr = Math.min(1, _carry.t/_carry.dur);
+  drawBg((_savedLevel&&_savedLevel.cam)||{x:0,y:0});
+  ctx.fillStyle='rgba(24,12,44,0.3)'; ctx.fillRect(0,0,VW,VH);
+  const ch = (_savedLevel&&_savedLevel.charKey) || 'lulah';
+  let x,y;
+  if(_carry.dir==='in'){ x = VW*0.12 + pr*VW*0.82; y = VH*0.80 - pr*VH*0.64 - Math.sin(pr*Math.PI)*26; }  // swoop up & away
+  else                 { x = VW*0.86 - pr*VW*0.72; y = VH*0.16 + pr*VH*0.6; }                              // dive down & drop
+  drawWingedMonster(x, y, _carry.t);
+  const stub={dir:1,eatAnim:0,fartAnim:0,vx:0,onGround:true,invincMs:0};
+  (ch==='lulah'?drawLulah:drawPoppy)(~~x, ~~(y+34), stub, tick);   // the kaiju dangling in its claws
+  ctx.textAlign='center'; ctx.fillStyle='#ffe14d'; ctx.font='bold 15px sans-serif';
+  ctx.fillText(_carry.dir==='in' ? '🦇  Carried to the secret room!' : '🦇  Dropping you back in!', VW/2, 38); ctx.textAlign='left';
+  if(pr>=1){ const cb=_carry.onDone; _carry=null; if(cb) cb(); }
+}
+
 // Dead-simple "how to play" card shown once before level 1.
 function drawHowTo(){
   ctx.fillStyle='rgba(8,6,20,0.74)'; ctx.fillRect(0,0,VW,VH);     // dim the world behind
@@ -2546,6 +2601,7 @@ function render(){
 
   if(scene==='overworld'){ updateOverworld(); }
 
+  if(scene==='carry'){ drawCarry(); drawAudioBtn(); return; }
   if(scene==='bonus'){ drawBonus(); drawAudioBtn(); return; }
   if(scene==='wordbook'){ drawWordBook(); drawAudioBtn();
     if((menuBack() || pressedBook())) scene=_bookReturn;   // keyboard exit -> back to map or the game
@@ -2621,13 +2677,18 @@ function render(){
     ctx.textAlign='center'; ctx.font='bold 8px monospace'; ctx.fillStyle=ec;
     ctx.fillText(locked ? ('🔒 '+got+'/'+need) : 'EXIT ▶', ex, eyTop-4); ctx.textAlign='left';
     }
-    // Secret door — a glowing purple-gold portal (tucked away; touch to warp)
-    if(s.level.door){
+    // Secret door — HIDDEN by default (faint shimmer hint); FART near it to reveal the glowing portal.
+    if(s.level.door && !s.level.door.used){
       const d=s.level.door, dx=~~(d.c*TS - s.cam.x + TS/2), dyT=~~(d.r*TS - s.cam.y) - 6, t3=Date.now()*0.005;
-      ctx.save(); ctx.shadowColor='#c66bff'; ctx.shadowBlur=14+Math.sin(t3)*6;
-      ctx.strokeStyle='#c66bff'; ctx.lineWidth=3; rrect(dx-13, dyT, 26, TS+10, 9); ctx.stroke();
-      ctx.fillStyle='rgba(170,80,255,0.18)'; rrect(dx-13, dyT, 26, TS+10, 9); ctx.fill(); ctx.restore();
-      ctx.textAlign='center'; ctx.font='14px serif'; ctx.fillText('🌟', dx, dyT+22); ctx.textAlign='left';
+      if(d.hidden){
+        const a=0.07+0.06*Math.abs(Math.sin(t3*0.8));   // barely-there shimmer
+        ctx.globalAlpha=a; ctx.textAlign='center'; ctx.font='12px serif'; ctx.fillText('✨', dx, dyT+18); ctx.globalAlpha=1; ctx.textAlign='left';
+      } else {
+        ctx.save(); ctx.shadowColor='#c66bff'; ctx.shadowBlur=14+Math.sin(t3)*6;
+        ctx.strokeStyle='#c66bff'; ctx.lineWidth=3; rrect(dx-13, dyT, 26, TS+10, 9); ctx.stroke();
+        ctx.fillStyle='rgba(170,80,255,0.18)'; rrect(dx-13, dyT, 26, TS+10, 9); ctx.fill(); ctx.restore();
+        ctx.textAlign='center'; ctx.font='14px serif'; ctx.fillText('🌟', dx, dyT+22); ctx.textAlign='left';
+      }
     }
 
     drawHUD(s);
