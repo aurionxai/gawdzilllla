@@ -25,7 +25,7 @@ const audioEvents = [
   ['giggle on fart',  /sndGiggle\(/,             'giggle'],
   ['take damage',     /sndHurt\(/,               'player hurt'],
   ['fall to death',   /sndFall\(/,               'fall in a pit'],
-  ['rescue citizen',  /saveCitizen[\s\S]*?sndCheer\(|sndCheer\(/, 'townsfolk rescued'],
+  ['rescue citizen',  /saveCitizen[\s\S]*?playSample/, 'townsfolk rescued (speaks the word)'],
   ['jump',            /sndJump\(/,               'jump'],
   ['combo chain',     /sndCombo\(/,              'chain stomp'],
   ['level win',       /sndVictory\(/,            'level complete'],
