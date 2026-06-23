@@ -34,9 +34,15 @@ walk-into-rescue hints; forgiving rescue reach.
 `ASSET_VER` busts changed assets. Verify loop: `loadtest.js`, `node --test test/{progression,controls}`,
 `playtest.js`, `qa-audit.js`. HTTPS enforced.
 
+**World 2 (Neon Shibuya)** ✅ — 3 levels (w2l1 Neon Streets · w2l2 Shibuya Rooftops · w2l3 Neon Tower)
++ w2l4 **Giant Mecha** boss + w2secret. Signature **shock-tile** hazard (`~`: neon floor pulsing
+on/off, standable but zaps while live). Neon enemy set, `WORLD_VOCAB[2]` (12 words + TTS), world2
+backdrop. Boss system generalized (`BOSS_CFG`/`mkBoss`). Cross-world unlock gate (W2 needs W1 beaten).
+
 ## 🔜 NEXT UP
-- World 2 (Neon Shibuya): new biome + shock-tile hazard + new vocab set + Giant-Mecha boss (mockup
-  `boss2-giant-mecha.png` ready — same MCP cutout flow as the Riot Mecha).
+- World 3 (Sunken City, underwater): backdrop `bg/world3.jpg` + boss mockup `boss3-mecha-kraken.png`
+  ready; reuse the shock/level/boss pipeline. New hazard idea: currents / air-meter.
+- Polish: leaderboard streaks + your-rank highlight; quiz hard modes (type rōmaji, kanji).
 - Leaderboard polish: streaks, your-rank highlight, daily word challenge; harder quiz types (type the
   rōmaji, kanji reading). Optional: cloud save-game sync (reuse the Railway DB).
 

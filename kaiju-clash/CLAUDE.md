@@ -2,7 +2,12 @@
 
 Single-file vanilla-JS HTML5 Canvas game (`index.html`, **no build step**). Logic in
 `levelparse.js` + `progression.js` (CommonJS + browser global, unit-tested). Levels are ASCII
-tilemaps (`W1L*_ROWS`) → `buildFromRows` → `LevelParse`.
+tilemaps (`W1L*_ROWS`/`W2L*_ROWS`) → `buildFromRows` → `LevelParse`. Tile chars: `#`solid `=`one-way
+`x`destructible `^`spikes `~`**shock floor** (W2 — standable, zaps while live; `_shockState()`); spawn
+chars `P E D C o g` + enemies `s w t`(W1) `n h d k p z`(W2 neon). Worlds gate via `Progression`
+(world N order-1 unlocks once world N-1's last level is beaten). Bosses: `BOSS_CFG`/`mkBoss(type)` →
+`<frames>_<state>` sprites in `bosses/` (riot, giant). Add a level: rows → `LEVEL_BUILDERS` +
+`LEVEL_PAR` + `Progression.LEVELS` + (vocab) `WORLD_VOCAB[world]`. `playtest.js` LEVELS array.
 
 ## Controls — single source of truth (do not bypass)
 - ALL key bindings live in the **`CONTROLS`** map in `index.html`. NEVER write a raw
