@@ -39,7 +39,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '3';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '6';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '7';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -737,7 +737,7 @@ function touchInBtn(name){
 function isMoveL(){ return isDown('ArrowLeft','KeyA') || touchInBtn('left'); }
 function isMoveR(){ return isDown('ArrowRight','KeyD') || touchInBtn('right'); }
 function isJump(){  return isDown('ArrowUp','KeyW','Space') || touchInBtn('jump'); }
-function isFart(){  return wasDown('KeyZ','KeyJ','KeyX','KeyB') || touchInBtn('fart'); }
+function isFart(){  return wasDown('KeyZ','KeyJ','KeyX') || touchInBtn('fart'); }   // B is the Word Book, not fart
 
 // ═══════════════════════════════════════════
 //  LEVEL DATA
@@ -2417,6 +2417,7 @@ function drawBoss(s){
 
 function update(dt){
   if(scene!=='playing' || !state) return;
+  if(wasDown('KeyB')){ _bookReturn='playing'; scene='wordbook'; _bookPage=0; justDn.clear(); return; }   // pause to the Word Book from in-game
   const s = state;
   tick++;
 
@@ -2493,7 +2494,7 @@ function drawBonus(){
     ctx.globalAlpha=0.6+0.4*Math.sin(Date.now()*0.005); ctx.fillStyle='#fff'; ctx.font='14px sans-serif'; ctx.fillText('TAP / SPACE TO CONTINUE ▶', VW/2, VH/2+20); ctx.globalAlpha=1; ctx.textAlign='left'; }
 }
 // ── WORD BOOK: every word the player has learned, tap to replay ──
-let _bookPage = 0;
+let _bookPage = 0, _bookReturn = 'overworld';   // where to go back to when the book closes
 function _wordIndex(){   // namespaced id -> {jp,ro,en,aud,cat,icon}
   const idx={};
   Object.values(WORLD_VOCAB).flat().forEach(w=> idx['v:'+w.key]={jp:w.jp,ro:w.ro,en:w.en,aud:'jp_'+w.key+'_f',cat:'Words',icon:'💬'});
@@ -2515,7 +2516,7 @@ function drawWordBook(){
   _bookPage=Math.max(0,Math.min(_bookPage,pages-1));
   const cols=3, cw=196, ch=50, gx=14, gy=66, gapx=8, gapy=6, start=_bookPage*PER;
   if(_bonusClick){ const {x,y}=_bonusClick; _bonusClick=null;
-    if(x>=8&&x<=70&&y>=8&&y<=30){ scene='overworld'; return; }
+    if(x>=8&&x<=70&&y>=8&&y<=30){ scene=_bookReturn; return; }
     if(pages>1){ if(x>=VW-118&&x<=VW-68&&y>=VH-30&&y<=VH-6) _bookPage=Math.max(0,_bookPage-1);
                  if(x>=VW-58&&x<=VW-8&&y>=VH-30&&y<=VH-6) _bookPage=Math.min(pages-1,_bookPage+1); }
     for(let i=0;i<PER;i++){ const w=learned[start+i]; if(!w) break;
@@ -2523,7 +2524,7 @@ function drawWordBook(){
       if(x>=cx&&x<=cx+cw&&y>=cy&&y<=cy+ch) playSample(w.aud,1.0,0,true); }   // force: always replay on tap
   }
   ctx.fillStyle='#120c26'; ctx.fillRect(0,0,VW,VH);
-  ctx.fillStyle='#34509c'; rrect(8,8,62,22,6); ctx.fill(); ctx.fillStyle='#fff'; ctx.font='bold 11px sans-serif'; ctx.textAlign='center'; ctx.fillText('◀ MAP',39,23);
+  ctx.fillStyle='#34509c'; rrect(8,8,62,22,6); ctx.fill(); ctx.fillStyle='#fff'; ctx.font='bold 11px sans-serif'; ctx.textAlign='center'; ctx.fillText('◀ BACK',39,23);
   ctx.fillStyle='#ffe14d'; ctx.font='bold 18px sans-serif'; ctx.fillText('📖 WORD BOOK', VW/2, 24);
   ctx.fillStyle='#bfe9ff'; ctx.font='11px sans-serif'; ctx.fillText(learned.length+' words learned — tap a card to hear it', VW/2, 44);
   ctx.textAlign='left';
@@ -2582,7 +2583,7 @@ function render(){
 
   if(scene==='bonus'){ drawBonus(); drawAudioBtn(); return; }
   if(scene==='wordbook'){ drawWordBook(); drawAudioBtn();
-    if(wasDown('Escape','KeyB','Backspace','Enter')) scene='overworld';   // keyboard exit (don't trap desktop players)
+    if(wasDown('Escape','KeyB','Backspace','Enter')) scene=_bookReturn;   // keyboard exit -> back to map or the game
     return; }
 
   if(scene==='howto'){
@@ -2680,7 +2681,7 @@ function updateOverworld(){
   // Touch nav moves ONE node per fresh tap (held would skip straight to the end).
   if(wasDown('ArrowRight','KeyD') || (freshTap && touchInBtn('right'))) owIdx = Math.min(nodes.length-1, owIdx+1);
   if(wasDown('ArrowLeft','KeyA')  || (freshTap && touchInBtn('left')))  owIdx = Math.max(0, owIdx-1);
-  if(wasDown('KeyB')){ scene='wordbook'; _bookPage=0; return; }   // open the word book
+  if(wasDown('KeyB')){ _bookReturn='overworld'; scene='wordbook'; _bookPage=0; justDn.clear(); return; }   // open the word book (clear B so it doesn't instantly close)
   const sel = nodes[owIdx];
   const unlocked = Progression.isLevelUnlocked(meta, sel.id);
   if((wasDown('Space','ArrowUp','KeyW','Enter','KeyZ') || (freshTap && (touchInBtn('jump')||touchInBtn('fart')))) && unlocked && sel.playable){
