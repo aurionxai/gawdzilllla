@@ -39,7 +39,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '3';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '5';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '6';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -278,14 +278,18 @@ function playSample(name, vol, when, force){
 }
 // iOS/desktop Safari won't make a sound until a buffer is played inside a user gesture —
 // resume() alone isn't enough. Play one silent buffer on the first interaction to unlock.
-let _audioUnlocked = false;
+let _audioUnlocked = false, _silentEl;
 function unlockAudio(){
-  acResume();                       // safe every time — resumes the context if it got suspended
+  acResume();                       // safe every time — resumes the context if it got suspended/interrupted
   if(_audioUnlocked) return;        // everything below runs ONCE, not on every keydown/click
   try{
     const b=AC.createBuffer(1,1,22050), s=AC.createBufferSource();
     s.buffer=b; s.connect(_master); s.start(0);
   }catch(e){}
+  // iOS Safari silences ALL Web Audio when the ring/silent switch is on — UNLESS a media element is
+  // playing. A silent looping <audio> keeps the audio session active so the game is audible even on a
+  // muted iPhone. (Playwright/desktop don't surface this; real iPhones do.)
+  try{ _silentEl=new Audio(_av('sounds/silent.mp3')); _silentEl.loop=true; _silentEl.setAttribute('playsinline',''); _silentEl.volume=0.01; _silentEl.play().catch(()=>{}); }catch(e){}
   _audioUnlocked=true;
   // Safari freezes AC.currentTime while suspended, so music scheduled before the unlock is lost —
   // force ONE clean restart now that the context is actually running. (Previously this ran on every
