@@ -9,8 +9,9 @@ const { Pool } = require('pg');
 // so the link is private and SSL is not used. Never disable TLS verification on a public endpoint.
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
-const ALLOW = (process.env.ALLOW_ORIGINS || 'https://kaijukids.co,https://www.kaijukids.co,https://aurionxai.github.io,http://localhost,file://')
-  .split(',').map(s => s.trim());
+// Exact-match allowlist only (no substring/startsWith — "https://kaijukids.co.evil.com" must NOT pass).
+const ALLOWED = new Set((process.env.ALLOW_ORIGINS || 'https://kaijukids.co,https://www.kaijukids.co,https://aurionxai.github.io')
+  .split(',').map(s => s.trim()).filter(Boolean));
 
 async function migrate() {
   await pool.query(`
@@ -91,9 +92,9 @@ async function board(q) {
 }
 
 const server = http.createServer(async (req, res) => {
-  const origin = req.headers.origin || '';
-  const cors = ALLOW.includes(origin) || ALLOW.some(a => origin.startsWith(a)) ? origin : ALLOW[0];
-  res.setHeader('Access-Control-Allow-Origin', cors);
+  const origin = req.headers.origin;
+  if (origin && ALLOWED.has(origin)) res.setHeader('Access-Control-Allow-Origin', origin);   // exact match, else no ACAO header
+  res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Headers', 'content-type');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }
