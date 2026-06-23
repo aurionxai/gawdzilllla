@@ -2560,6 +2560,9 @@ window.addEventListener('pointerdown', e=>{
 // ── Winged-monster carry cinematic (secret-door intro/exit) ──
 let _carry = null;
 function startCarry(dir, onDone){ _carry = { dir, t:0, dur:2200, onDone, _fc:-1, _puffed:false }; scene='carry'; sndFlap(); }
+// ⚠ TEMP PLACEHOLDER — vector crane, does NOT meet the art bar (CLAUDE.md → "Art quality bar").
+// Replace with a real Higgsfield nano_banana_pro pixel sprite (3-frame flap, on-model vs the hero
+// sheets) and delete this procedural draw. Tracking: secret-door carry cinematic.
 // A graceful Japanese CRANE (tsuru) — white body, red crown, black wingtips — that grips
 // the kaiju in its talons and flies it off. Wings flap; long neck + head ride above.
 function drawWingedMonster(cx, cy, t){
