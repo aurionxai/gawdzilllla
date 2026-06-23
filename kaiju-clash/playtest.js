@@ -33,7 +33,9 @@ function botSource() {
       const boss = s.level.boss;
       // target point
       let tx, ty;
+      const gems = (s.level.gems||[]).filter(g=>!g.collected && !g.hidden);   // exit is gated on these
       if (boss) { tx = boss.x; ty = boss.y; }
+      else if (gems.length) { let ng=gems[0],nd=1e9; gems.forEach(g=>{const d=Math.hypot(g.x-pl.x,g.y-pl.y); if(d<nd){nd=d;ng=g;}}); tx=ng.x; ty=ng.y; }
       else if (exit) { tx = exit.c*T; ty = exit.r*T; }
       else { tx = (LW-3)*T; ty = pl.y; }
       const goRight = tx > pl.x + 4;

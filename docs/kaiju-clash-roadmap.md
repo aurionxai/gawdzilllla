@@ -129,6 +129,10 @@ screen (kana + romaji + meaning) AND speaks it aloud.
 **≈ 68 spoken Japanese words in World 1 alone** (target was 20-30/world — exceeded).
 
 **Reinforcement, also live:**
+- 💎 **Word-gems + exit gate** — each level's gems are visible word-tokens; collecting one teaches +
+  speaks a word (adds to the book), and the **exit is locked (🔒 x/y) until all are collected**. Ties
+  level completion to learning + adds exploration. (Bot collects gems before the exit.)
+- 📖 **Readable text** — all center messages now on dark contrast panels (kana-capable), like the NPC bubbles.
 - 🍣 Eating food shows the phrase BIG on screen (kana + romaji + meaning) while it's spoken.
 - 🎌 **End-of-world BONUS** — after the boss, a match-the-words mini-game (`scene='bonus'`): 5
   Japanese words vs shuffled meanings, tap-to-match, correct = speak + cheer + points, then victory.

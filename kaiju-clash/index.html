@@ -39,7 +39,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '3';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '4';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '5';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -842,8 +842,8 @@ function buildFromRows(rows){
     x: s.c*TS, y: surfaceTop(s.c, s.r) - 22, dir: i%2?1:-1, clr:'#ffd8a8', npc: NPC_TYPES[i % NPC_TYPES.length],
     saved:false, eaten:false, eatenTimer:0, savedTimer:0, particles:[],
   }));
-  const gems = (p.spawns.gems||[]).map((s,i)=>({
-    x: s.c*TS + TS/2, y: s.r*TS + TS/2, hidden:true, collected:false, revealMs:0, bob:i*0.7,
+  const gems = (p.spawns.gems||[]).map((s,i)=>({   // word-gems: visible so the exit gate is fair to find
+    x: s.c*TS + TS/2, y: s.r*TS + TS/2, hidden:false, collected:false, revealMs:0, bob:i*0.7,
   }));
   const ps = p.spawns.player || { r:7, c:2 };
   // Rest the player's 66px box ON the surface below its spawn char, not embedded in
@@ -1190,12 +1190,14 @@ function updatePlayer(dt, s){
   // ── Win — reach the exit portal (the 'E' tile). Position-based so it works for a
   // horizontal run (E at the right edge) AND a vertical climb (E at the top).
   if(scene==='playing' && !s.level.boss){          // boss levels are won by defeating the boss
+    const need = (s.level.gems||[]).length, got = s.gemsCollected||0;   // exit is gated on collecting the word-gems
     const exT = s.level.exit;
-    if(exT){
-      const ex = exT.c*TS, ey = exT.r*TS;
-      if(pl.x+PW > ex-8 && pl.x < ex+TS+8 && pl.y+PH > ey-8 && pl.y < ey+TS+44) finishLevel();
-    } else if(pl.x > (LW-3)*TS){
-      finishLevel();
+    const atExit = exT ? (pl.x+PW > exT.c*TS-8 && pl.x < exT.c*TS+TS+8 && pl.y+PH > exT.r*TS-8 && pl.y < exT.r*TS+TS+44)
+                       : (pl.x > (LW-3)*TS);
+    if(atExit){
+      if(got >= need) finishLevel();
+      else { s._gateMs = (s._gateMs||0) - dt; if(s._gateMs<=0){ s._gateMs=1400;   // throttled "locked" prompt
+        pushMsg(s, '🔒 Collect '+(need-got)+' more 💎 word'+((need-got)>1?'s':'')+'!', 1300, '#ff9955', 'md'); } }
     }
   }
 }
@@ -1252,11 +1254,13 @@ function updateGems(dt, s){
     if(g.collected || g.hidden) return;
     if(pl.x < g.x+18 && pl.x+PW > g.x-18 && pl.y < g.y+18 && pl.y+PH > g.y-18){
       g.collected = true; s.gemsCollected++;
-      s.score += 250; if(!playSample('gem')) sndGiggle();
-      pushNum(s, g.x, g.y-12, '💎 +250', '#5ad6ff');
-      const total = gems.length;
-      if(s.gemsCollected >= total) pushMsg(s, '💎 ALL GEMS FOUND!', 1800, '#5ad6ff', 'lg');
-      else pushMsg(s, '💎 HIDDEN GEM! '+s.gemsCollected+'/'+total, 1100, '#5ad6ff', 'md');
+      s.score += 250;
+      const pool = _vocab(); const w = pool[(s.gemsCollected-1) % pool.length]; g.word = w;
+      if(!playSample('jp_'+w.key+'_f', 1.0, 0)) sndGiggle();   // SPEAK the word this gem teaches
+      _learn('v:'+w.key);
+      pushNum(s, g.x, g.y-12, '+250', '#5ad6ff');
+      pushMsg(s, '💎 '+w.jp+'  '+w.ro+' = '+w.en, 1700, '#5ad6ff', 'lg');   // teach + show the word
+      if(s.gemsCollected >= gems.length) pushMsg(s, '🔓 GATE OPEN — reach the flag!', 1900, '#22ffaa', 'lg');
     }
   });
 }
@@ -1968,8 +1972,9 @@ function drawHUD(s){
   }
   const gemTotal = (s.level.gems||[]).length;
   if(gemTotal>0){
-    ctx.fillStyle='#5ad6ff';
-    ctx.fillText('💎 GEMS: '+s.gemsCollected+'/'+gemTotal+' (fart to find!)', VW-6, yrow); yrow+=12;
+    const done = s.gemsCollected>=gemTotal;
+    ctx.fillStyle = done?'#22ffaa':'#5ad6ff';
+    ctx.fillText((done?'🔓 WORDS: ':'💎 WORDS: ')+s.gemsCollected+'/'+gemTotal, VW-6, yrow); yrow+=12;
   }
   // Score
   ctx.fillStyle='#ffdd44'; ctx.fillText('★ '+s.score, VW-6, yrow);
@@ -2636,13 +2641,15 @@ function render(){
     const exT = s.level.exit;
     const ex = ~~((exT ? exT.c*TS : (LW-3)*TS) - s.cam.x + TS/2);
     const eyTop = ~~((exT ? exT.r*TS : 8*TS) - s.cam.y) - TS;
+    const need=(s.level.gems||[]).length, got=s.gemsCollected||0, locked = need>0 && got<need;
+    const ec = locked ? '#ff7744' : '#22ffaa';                 // gate is orange+locked until the words are collected
     const t2 = Date.now()*0.003;
-    ctx.shadowColor='#22ffaa'; ctx.shadowBlur=16+Math.sin(t2)*6;
-    ctx.strokeStyle='#22ffaa'; ctx.lineWidth=3;
+    ctx.shadowColor=ec; ctx.shadowBlur=16+Math.sin(t2)*6;
+    ctx.strokeStyle=ec; ctx.lineWidth=3;
     ctx.strokeRect(ex-20, eyTop, 40, 2.5*TS);
     ctx.shadowBlur=0;
-    ctx.textAlign='center'; ctx.font='bold 8px monospace'; ctx.fillStyle='#22ffaa';
-    ctx.fillText('EXIT', ex, eyTop-4); ctx.textAlign='left';
+    ctx.textAlign='center'; ctx.font='bold 8px monospace'; ctx.fillStyle=ec;
+    ctx.fillText(locked ? ('🔒 '+got+'/'+need) : 'EXIT ▶', ex, eyTop-4); ctx.textAlign='left';
     }
 
     drawHUD(s);
