@@ -157,6 +157,12 @@ test('isLevelUnlocked: the boss unlocks once w1l3 is cleared', () => {
 test('nextLevelId returns next playable or null', () => {
   assert.strictEqual(Progression.nextLevelId('w1l1'), 'w1l2');
   assert.strictEqual(Progression.nextLevelId('w1l3'), 'w1l4');
-  // the boss is the last level in world 1 -> nothing after it (until world 2 ships)
-  assert.strictEqual(Progression.nextLevelId('w1l4'), null);
+  // world 1 boss flows into world 2; world 2 boss is the last level -> null
+  assert.strictEqual(Progression.nextLevelId('w1l4'), 'w2l1');
+  assert.strictEqual(Progression.nextLevelId('w2l4'), null);
+});
+
+test('world 2 is gated behind finishing world 1', () => {
+  assert.strictEqual(Progression.isLevelUnlocked({ levels: {} }, 'w2l1'), false);
+  assert.strictEqual(Progression.isLevelUnlocked({ levels: { w1l4: { stars: 1 } } }, 'w2l1'), true);
 });

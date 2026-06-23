@@ -8,7 +8,7 @@ const PW_DIR = '/Users/tc/.npm/_npx/9833c18b2d85bc59/node_modules/playwright';
 const EXE = '/Users/tc/Library/Caches/ms-playwright/chromium_headless_shell-1228/chrome-headless-shell-mac-arm64/chrome-headless-shell';
 const { chromium } = require(PW_DIR);
 const URL = process.env.URL || 'http://localhost:8080/';
-const LEVELS = ['w1l1', 'w1l2', 'w1l3', 'w1l4'];
+const LEVELS = ['w1l1', 'w1l2', 'w1l3', 'w1l4', 'w2l1', 'w2l2', 'w2l3', 'w2l4'];
 const CHAR = 'lulah';
 const PER_LEVEL_MS = 35000;
 

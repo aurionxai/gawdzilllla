@@ -79,6 +79,10 @@ Progression.LEVELS = [
   { id: 'w1l2', world: 1, name: 'Rooftop Run',   order: 2, playable: true },
   { id: 'w1l3', world: 1, name: 'Tower Climb',    order: 3, playable: true },
   { id: 'w1l4', world: 1, name: 'Riot Mecha',     order: 4, playable: true },
+  { id: 'w2l1', world: 2, name: 'Neon Streets',     order: 1, playable: true },
+  { id: 'w2l2', world: 2, name: 'Shibuya Rooftops', order: 2, playable: true },
+  { id: 'w2l3', world: 2, name: 'Neon Tower',       order: 3, playable: true },
+  { id: 'w2l4', world: 2, name: 'Giant Mecha',      order: 4, playable: true },
 ];
 
 function levelById(id) { return Progression.LEVELS.find(l => l.id === id) || null; }
@@ -86,8 +90,13 @@ function levelById(id) { return Progression.LEVELS.find(l => l.id === id) || nul
 Progression.isLevelUnlocked = function isLevelUnlocked(meta, levelId) {
   const lvl = levelById(levelId);
   if (!lvl) return false;
-  if (lvl.order === 1) return true;
   if (!lvl.playable) return false;
+  if (lvl.order === 1) {
+    if (lvl.world === 1) return true;
+    // world N's first level unlocks once the previous world's LAST level is beaten
+    const prevLast = Progression.LEVELS.filter(l => l.world === lvl.world - 1).sort((a, b) => b.order - a.order)[0];
+    return !!(prevLast && meta.levels && meta.levels[prevLast.id]);
+  }
   const prev = Progression.LEVELS.find(l => l.world === lvl.world && l.order === lvl.order - 1);
   return !!(prev && meta.levels && meta.levels[prev.id]);
 };
