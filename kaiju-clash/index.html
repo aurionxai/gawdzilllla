@@ -38,8 +38,14 @@ const ctx    = canvas.getContext('2d');
 let _baseTransform = null;   // declared here: resize() assigns it before the line below runs
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
-const ASSET_VER = '2';
+const ASSET_VER = '3';
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
+// Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
+// version tag (uncached) and, if this page is older, reload to a fresh cache-key URL — no manual
+// hard-refresh needed. (One fresh load is still needed the first time, to get this checker.)
+fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(r=>r.ok?r.text():null).then(v=>{
+  v=v&&v.trim(); if(v && v!==ASSET_VER && location.search.indexOf('v='+v)<0) location.replace(location.pathname+'?v='+v);
+}).catch(()=>{});
 
 function resize() {
   const vvp = window.visualViewport;
@@ -2564,7 +2570,9 @@ function render(){
   if(scene==='overworld'){ updateOverworld(); }
 
   if(scene==='bonus'){ drawBonus(); drawAudioBtn(); return; }
-  if(scene==='wordbook'){ drawWordBook(); drawAudioBtn(); return; }
+  if(scene==='wordbook'){ drawWordBook(); drawAudioBtn();
+    if(wasDown('Escape','KeyB','Backspace','Enter')) scene='overworld';   // keyboard exit (don't trap desktop players)
+    return; }
 
   if(scene==='howto'){
     if(state) drawBg(state.cam);
@@ -2664,7 +2672,7 @@ function updateOverworld(){
   const unlocked = Progression.isLevelUnlocked(meta, sel.id);
   if((wasDown('Space','ArrowUp','KeyW','Enter','KeyZ') || (freshTap && (touchInBtn('jump')||touchInBtn('fart')))) && unlocked && sel.playable){
     state = mkState(SEL_CHARS[selIdx], sel.id);
-    if(sel.id==='w1l1'){ scene = 'howto'; }              // quick how-to before the very first level
+    if(sel.id==='w1l1'){ scene = 'howto'; justDn.clear(); }   // quick how-to before level 1 (clear the start key so it doesn't instantly dismiss)
     else { scene = 'playing'; state.startTick = tick; }
   }
   _lastTouchCount = Object.keys(touches).length;
