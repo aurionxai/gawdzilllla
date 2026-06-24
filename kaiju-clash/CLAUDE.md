@@ -8,6 +8,10 @@ chars `P E D C o g` + enemies `s w t`(W1) `n h d k p z`(W2 neon). Worlds gate vi
 (world N order-1 unlocks once world N-1's last level is beaten). Bosses: `BOSS_CFG`/`mkBoss(type)` →
 `<frames>_<state>` sprites in `bosses/` (riot, giant). Add a level: rows → `LEVEL_BUILDERS` +
 `LEVEL_PAR` + `Progression.LEVELS` + (vocab) `WORLD_VOCAB[world]`. `playtest.js` LEVELS array.
+**Level terrain must ROLL (Mario/Alex-Kidd), not be flat** — vary the ground height (stairs, plateaus,
+valleys, hills) + pits/gaps; rooftop levels = buildings at varying heights with street gaps. Build
+from a HEIGHTMAP (surface-row per column) → fill `#` downward; keep steps gentle and pits ≤2–3 tiles
+so the playtest bot (and kids) clear them; gems/enemies sit on the local surface (`surfaceRow-1`).
 
 ## Controls — single source of truth (do not bypass)
 - ALL key bindings live in the **`CONTROLS`** map in `index.html`. NEVER write a raw
