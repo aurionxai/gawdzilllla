@@ -52,10 +52,16 @@ next to those and it must look like it belongs in the same set.
 - **STYLE** — **16-bit SNES pixel art**: crisp hard pixels, vibrant kid-friendly palette, cute
   friendly faces, side / ¾ view to match the heroes. On-model with the cast (Lulah = green body +
   pink/magenta glowing frills + red bow; Poppy = golden ape/Kong, pink flower, rosy cheeks).
-- **GROWTH SIZES follow the sheets, not guesses** — `GROWTH_SCALE` must track the stage proportions
-  in `../mockups/lulah-growth-FINAL.png` (measured 1 : 1.32 : 1.70 : 2.14 : 2.91). Baby stays under the
-  ~40px city creatures; the collision box stays a fixed 44×66 at every stage (shrinking it broke the
-  rooftop-gap physics) — only the SPRITE scales. Enemies render fixed-size so a grown kaiju towers.
+- **GROWTH = distinct per-stage FORMS + a tuned size curve.** Each stage 1-4 draws its OWN sprite
+  sliced from the growth sheets (`skins/default/{lulah,poppy}_grow0-4.png`, loaded by `loadGrowth`,
+  picked in `_heroKey`) — stage 0 keeps the animated baby frames. The FORMS follow the sheets; the
+  SIZE curve (`GROWTH_SCALE = [0.40,0.60,0.85,1.15,1.56]`, heights 26/38/54/74/100px) is deliberately
+  steeper than the sheet ratios (range 3.85× vs 2.91×) to keep the baby tiny AND make Apex tower ~2.5×
+  a city enemy — do NOT "correct" it back to the raw sheet ratios. Growth is gated on BOTH orbs AND
+  world reached (`Progression.stageFor`/`GROWTH_STAGES[i].minWorld`) so Apex is a **world-4 payoff**,
+  not farmable on world 1. Leveling up fires the evolve flourish on the victory screen (`drawEvolve`/
+  `_evoStart`, `lastResult.evolved`). Collision box stays a fixed 44×66 at every stage (shrinking it
+  broke rooftop-gap physics) — only the SPRITE scales. Enemies render fixed-size so a grown kaiju towers.
 - **RESOLUTION** — transparent-background PNG exported at native pixel-art res (never an
   upscaled/blurred big image). Size to the cast: **heroes/carriers ≈128 px tall** (fit a 128×128
   box), **enemies ≈96–110 px tall**, **NPCs ≈96 px tall**, width proportional. Multi-frame actions

@@ -47,7 +47,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '8';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '28';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '29';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -1146,6 +1146,7 @@ let owIdx = 0; // highlighted node in the overworld
 const SEL_CHARS = ['lulah','poppy'];
 let state = null;
 let lastResult = null; // populated by finishLevel(), shown on the victory screen
+let _evoStart = 0;     // Date.now() when an evolution flourish began (0 = none); drives drawEvolve
 
 // ── Persistent meta-progression (Spirit Orbs, growth stage, per-level stars) ──
 let meta = Progression.deserializeMeta(
@@ -1213,12 +1214,19 @@ function finishLevel(){
     timeSec, hitsTaken: s.hitsTaken, citizensSaved: s.savedCitizens, citizensTotal: total,
   });
   const before = meta.orbs;
+  const beforeStage = meta.growthStage || 0;
   meta = Progression.applyResult(meta, {
     levelId: s.levelId, rank, citizensSaved: s.savedCitizens, citizensTotal: total, sideQuestsDone: 0,
   });
   saveMeta();
-  lastResult = { rank, orbsEarned: meta.orbs - before, stars: earnedStars, timeSec, saved: s.savedCitizens, total, objectives };
+  // Growth/level-up: if this clear pushed the kaiju to a new growth stage, queue the
+  // evolution flourish shown on the victory screen (drawEvolve) so the player SEES they grew.
+  const evolved = (meta.growthStage||0) > beforeStage
+    ? { from: beforeStage, to: meta.growthStage, char: s.charKey } : null;
+  lastResult = { rank, orbsEarned: meta.orbs - before, stars: earnedStars, timeSec, saved: s.savedCitizens, total, objectives, evolved };
+  _evoStart = evolved ? Date.now() : 0;
   scene='victory'; sndVictory();
+  if(evolved){ sndRoar(); playSample('cheer', 0.9, 0.25, true); }   // roar + cheer as the kaiju grows
   _lbSubmit(s.levelId, Math.round((tick - s.startTick)/60*1000)); _lbSyncWords();   // leaderboard: best time + words
 }
 
@@ -2043,9 +2051,10 @@ function drawEnemy(e, x, y, dir, flash, stun){
 // reuses the existing animation frames at a stage-driven scale.
 // Spatial growth: start as a TINY baby (well under the fixed ~40px city creatures), then scale up
 // past them — Juvenile ≈ their size, Adolescent bigger, Apex TOWERS over them (the power fantasy).
-// Follows the approved growth sheets' proportions (mockups/lulah-growth-FINAL.png ratios
-// 1 : 1.32 : 1.70 : 2.14 : 2.91), based at 0.4 → baby 26px (under the ~40px creatures), Apex ~74px.
-const GROWTH_SCALE = [0.40, 0.53, 0.68, 0.86, 1.16];
+// The distinct per-stage FORMS follow the growth sheets (mockups/*-growth-FINAL.png); the SIZE curve
+// is tuned steeper than the sheet (range 3.85× vs 2.91×) to keep the baby tiny AND make the Apex a
+// towering ~2.5× a city enemy. Heights @64px base: 26 / 38 / 54 / 74 / 100 px.
+const GROWTH_SCALE = [0.40, 0.60, 0.85, 1.15, 1.56];
 function _kaijuScale(){ return GROWTH_SCALE[(meta && meta.growthStage) || 0] || 1; }
 // Collision box scales WITH growth but is CAPPED at 1.0 — the baby gets a fair little hitbox while
 // big stages keep the level-design box (a bigger box would fail gaps tuned for 44×66).
@@ -2445,7 +2454,58 @@ function drawTouchControls(){
 // ═══════════════════════════════════════════
 //  WIN / LOSE
 // ═══════════════════════════════════════════
+const EVO_DUR = 2400;   // ms the evolution flourish plays before settling into the results card
+// One sprite of the evolve flourish, feet on footY, centered on cx, at the given height + alpha.
+function _evoSprite(key, cx, footY, h, alpha){
+  const img = loadedSprites[key]; if(!img || alpha<=0) return;
+  const w = h * (img.naturalWidth / img.naturalHeight);
+  ctx.save(); ctx.globalAlpha = Math.min(1, alpha); ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(img, Math.round(cx-w/2), Math.round(footY-h), Math.round(w), Math.round(h));
+  ctx.restore();
+}
+// Evolution / level-up flourish: the OLD form shrinks/fades out while the NEW (bigger) form rises in
+// with a burst of light + sparkles, then the stage names. So the player clearly SEES they grew.
+function drawEvolve(){
+  const e = lastResult && lastResult.evolved; if(!e) return;
+  const t = Date.now() - _evoStart;
+  const cx = VW/2, footY = 196;
+  ctx.fillStyle='rgba(8,4,20,0.94)'; ctx.fillRect(-24,-24,VW+48,VH+48);
+  // morph progress 0..1 over 450..1350ms, eased
+  const g = Math.max(0, Math.min(1, (t-450)/900));
+  const ease = g<0.5 ? 2*g*g : 1 - Math.pow(-2*g+2,2)/2;
+  // expanding light burst peaking at the morph
+  const burst = Math.sin(Math.min(1,g)*Math.PI);
+  ctx.save(); ctx.globalAlpha = 0.5*burst; ctx.fillStyle='#fff6c8';
+  ctx.beginPath(); ctx.arc(cx, footY-46, 30+burst*150, 0, Math.PI*2); ctx.fill(); ctx.restore();
+  // radial light rays
+  ctx.save(); ctx.translate(cx, footY-46); ctx.globalAlpha=0.22+0.3*burst;
+  for(let i=0;i<12;i++){ ctx.rotate(Math.PI/6 + t*0.0006); ctx.fillStyle='#ffe06a';
+    ctx.fillRect(20, -4, 60+burst*120, 8); }
+  ctx.restore();
+  // old form out, new form in
+  _evoSprite(e.char+'_grow'+e.from, cx, footY, 78*(1-0.25*ease), 1-ease);
+  _evoSprite(e.char+'_grow'+e.to,   cx, footY, 70+62*ease,       Math.min(1, ease*1.4));
+  // sparkles orbiting the new form
+  ctx.textAlign='center'; ctx.font='16px serif';
+  for(let i=0;i<8;i++){ const a=t*0.004 + i*Math.PI/4; const r=70+12*Math.sin(t*0.005+i);
+    ctx.globalAlpha=0.5+0.5*Math.sin(t*0.006+i); ctx.fillText('✨', cx+Math.cos(a)*r, footY-50+Math.sin(a)*r*0.7); }
+  ctx.globalAlpha=1;
+  // title + stage names
+  const pop = 1 + 0.08*Math.sin(t*0.012);
+  ctx.save(); ctx.translate(cx, 52); ctx.scale(pop,pop);
+  ctx.fillStyle='#ffd84a'; ctx.font='bold 30px sans-serif'; ctx.shadowColor='#ff9a3c'; ctx.shadowBlur=16;
+  ctx.fillText('✨ EVOLVED! ✨', 0, 0); ctx.restore();
+  if(t>650){ ctx.globalAlpha=Math.min(1,(t-650)/350);
+    const fromN=(Progression.GROWTH_STAGES[e.from]||{}).name||'', toN=(Progression.GROWTH_STAGES[e.to]||{}).name||'';
+    ctx.fillStyle='#9be8ff'; ctx.font='bold 18px sans-serif';
+    ctx.fillText(fromN+'  →  '+toN, cx, footY+34); ctx.globalAlpha=1; }
+  ctx.fillStyle='#cfc6e6'; ctx.font='12px sans-serif';
+  ctx.fillText(t<EVO_DUR ? 'tap to skip' : 'Press Space / tap to continue', VW/2, VH-18);
+  ctx.textAlign='left';
+}
 function drawVictory(){
+  // Level-up moment takes over the card for its first ~2.4s, then settles into the results below.
+  if(lastResult && lastResult.evolved && (Date.now()-_evoStart) < EVO_DUR){ drawEvolve(); return; }
   ctx.fillStyle='rgba(8,4,20,0.86)'; ctx.fillRect(-24,-24,VW+48,VH+48);  // padded for screen-shake offset
   ctx.textAlign='center';
   ctx.fillStyle='#7CFF8A'; ctx.font='bold 30px sans-serif';
@@ -2462,6 +2522,8 @@ function drawVictory(){
     });
     ctx.textAlign='center'; ctx.fillStyle='#7CD7FF'; ctx.font='14px sans-serif';
     ctx.fillText('+'+lastResult.orbsEarned+' Spirit Orbs  (total '+meta.orbs+')', VW/2, oy+18);
+    if(lastResult.evolved){ ctx.fillStyle='#ffd84a'; ctx.font='bold 15px sans-serif';   // lingering grew-up badge
+      ctx.fillText('✨ Evolved to '+((Progression.GROWTH_STAGES[lastResult.evolved.to]||{}).name||'')+'!', VW/2, oy+42); }
   }
   ctx.fillStyle='#cfc6e6'; ctx.font='13px sans-serif';
   ctx.fillText('Press Space / tap to continue', VW/2, VH-22);
@@ -3113,7 +3175,10 @@ function render(){
   }
 
   if(scene==='victory'){
-    if(menuConfirm() || _lastTouchCount>0){
+    // While the evolution flourish is in its first beat, swallow the continue press so a held
+    // touch / queued key can't skip the level-up moment before the player sees it.
+    const evoLock = lastResult && lastResult.evolved && (Date.now()-_evoStart) < 900;
+    if(!evoLock && (menuConfirm() || _lastTouchCount>0)){
       scene='overworld';
     }
     if(state) drawBg(state.cam); drawVictory();

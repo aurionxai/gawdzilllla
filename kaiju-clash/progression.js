@@ -27,18 +27,45 @@ Progression.starsForResult = function starsForResult({ rank, citizensSaved, citi
   return stars;
 };
 
+// Growth is gated on BOTH effort (orbs) AND progress (minWorld): you only become a
+// towering Apex after reaching the late worlds. minWorld = the furthest world you must
+// have reached before that stage can unlock — so the player visibly grows world-by-world
+// and Apex is a world-4 payoff, not something farmable on world 1.
 Progression.GROWTH_STAGES = [
-  { key: 'hatchling',  name: 'Hatchling',  minOrbs: 0 },
-  { key: 'juvenile',   name: 'Juvenile',   minOrbs: 150 },
-  { key: 'adolescent', name: 'Adolescent', minOrbs: 400 },
-  { key: 'leviathan',  name: 'Leviathan',  minOrbs: 750 },
-  { key: 'apex',       name: 'Apex',       minOrbs: 1200 },
+  { key: 'hatchling',  name: 'Hatchling',  minOrbs: 0,    minWorld: 1 },
+  { key: 'juvenile',   name: 'Juvenile',   minOrbs: 150,  minWorld: 1 },
+  { key: 'adolescent', name: 'Adolescent', minOrbs: 400,  minWorld: 2 },
+  { key: 'leviathan',  name: 'Leviathan',  minOrbs: 750,  minWorld: 3 },
+  { key: 'apex',       name: 'Apex',       minOrbs: 1200, minWorld: 4 },
 ];
 
 Progression.stageForOrbs = function stageForOrbs(totalOrbs) {
   let idx = 0;
   for (let i = 0; i < Progression.GROWTH_STAGES.length; i++) {
     if (totalOrbs >= Progression.GROWTH_STAGES[i].minOrbs) idx = i;
+  }
+  return idx;
+};
+
+// Furthest world the player has set foot in = the highest world among levels they've beaten
+// (a level lands in meta.levels the moment it's cleared). Defaults to world 1.
+Progression.worldReached = function worldReached(meta) {
+  let w = 1;
+  const beaten = (meta && meta.levels) || {};
+  for (const id in beaten) {
+    const lv = Progression.LEVELS.find(function(l){ return l.id === id; });
+    if (lv && lv.world > w) w = lv.world;
+  }
+  return w;
+};
+
+// Final growth stage = the most advanced stage allowed by BOTH the orb total and the
+// world reached (the stricter of the two gates wins).
+Progression.stageFor = function stageFor(totalOrbs, worldReached) {
+  let idx = 0;
+  for (let i = 0; i < Progression.GROWTH_STAGES.length; i++) {
+    const st = Progression.GROWTH_STAGES[i];
+    if (totalOrbs >= st.minOrbs && worldReached >= (st.minWorld || 1)) idx = i;
   }
   return idx;
 };
@@ -70,7 +97,7 @@ Progression.applyResult = function applyResult(meta, { levelId, rank, citizensSa
   const bestStars = prev ? Math.max(prev.stars, stars) : stars;
   const bestRank = prev && RANK_ORDER[prev.rank] >= RANK_ORDER[rank] ? prev.rank : rank;
   next.levels[levelId] = { stars: bestStars, rank: bestRank, sideQuestsDone: sideQuestsDone };
-  next.growthStage = Progression.stageForOrbs(next.orbs);
+  next.growthStage = Progression.stageFor(next.orbs, Progression.worldReached(next));
   return next;
 };
 

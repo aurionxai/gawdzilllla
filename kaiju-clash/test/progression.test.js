@@ -83,6 +83,30 @@ test('stageForOrbs maps orb totals to stage index', () => {
   assert.strictEqual(Progression.stageForOrbs(99999), 4); // apex (capped)
 });
 
+test('worldReached = furthest world among beaten levels', () => {
+  assert.strictEqual(Progression.worldReached({ levels: {} }), 1);
+  assert.strictEqual(Progression.worldReached({ levels: { w1l1: {}, w1l3: {} } }), 1);
+  assert.strictEqual(Progression.worldReached({ levels: { w1l1: {}, w2l1: {} } }), 2);
+});
+
+test('stageFor gates growth on BOTH orbs and world reached', () => {
+  // tons of orbs but stuck on world 1 -> capped at juvenile (adolescent needs world 2)
+  assert.strictEqual(Progression.stageFor(99999, 1), 1);
+  assert.strictEqual(Progression.stageFor(99999, 2), 2); // world 2 unlocks adolescent
+  assert.strictEqual(Progression.stageFor(99999, 3), 3); // world 3 unlocks leviathan
+  assert.strictEqual(Progression.stageFor(99999, 4), 4); // apex only at world 4
+  // world is far ahead but orbs are low -> orb gate still binds
+  assert.strictEqual(Progression.stageFor(0, 9), 0);
+  assert.strictEqual(Progression.stageFor(150, 9), 1);
+});
+
+test('applyResult on a world-1 level cannot exceed juvenile even when rich', () => {
+  let m = Progression.defaultMeta();
+  m.orbs = 5000;
+  m = Progression.applyResult(m, { levelId: 'w1l1', rank: 'S', citizensSaved: 8, citizensTotal: 8, sideQuestsDone: 1 });
+  assert.strictEqual(m.growthStage, 1); // rich, but world 1 caps at juvenile
+});
+
 test('defaultMeta shape', () => {
   assert.deepStrictEqual(Progression.defaultMeta(),
     { version: 1, orbs: 0, growthStage: 0, levels: {} });
