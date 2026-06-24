@@ -47,7 +47,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '7';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '23';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '24';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -968,16 +968,18 @@ const W1L4_ROWS = [
 // Boss registry — each world's boss shares the telegraph→slam behavior but has its own sprite set,
 // HP and name. Frames load as `<frames>_<state>` (see BOSS_FRAMES).
 const BOSS_CFG = {
-  riot:  { frames:'riot',  hp:4, name:'⚙ RIOT MECHA' },
-  giant: { frames:'giant', hp:5, name:'🤖 GIANT MECHA' },
+  // riot = grounded SLAM boss (jump the ground shockwaves). giant = CANNON boss (jump the energy
+  // bolts it volleys) + faster + a triple wave. Both share the stomp-the-weak-point kill.
+  riot:  { frames:'riot',  hp:4, name:'⚙ RIOT MECHA',  teleMs:1000, vulnMs:2600, waves:2, shoots:0 },
+  giant: { frames:'giant', hp:5, name:'🤖 GIANT MECHA', teleMs:820,  vulnMs:2000, waves:3, shoots:2 },
 };
 function mkBoss(type){
   const cfg = BOSS_CFG[type] || BOSS_CFG.riot, w=84, h=112, footY=11*TS;
   return {
     x: 15*TS, y: footY - h, w, h, footY,
     hp: cfg.hp, maxHp: cfg.hp, dir:-1,
-    state:'intro', stateMs:800, vulnerable:false, flashMs:0, yOff:0, vy:0, slamDone:false,
-    frames: cfg.frames, name: cfg.name,
+    state:'intro', stateMs:800, vulnerable:false, flashMs:0, yOff:0, vy:0, slamDone:false, firedTele:false,
+    frames: cfg.frames, name: cfg.name, cfg,
   };
 }
 // SECRET vocab treasure room — reached via the hidden D door in w1l1; collect the words to leave.
@@ -1109,12 +1111,12 @@ const LEVEL_BUILDERS = {
   w1l2: () => buildFromRows(W1L2_ROWS),
   w1l3: () => buildFromRows(W1L3_ROWS),
   w1secret: () => buildFromRows(W1SECRET_ROWS),
-  w1l4: () => { const b = buildFromRows(W1L4_ROWS); b.boss = mkBoss('riot'); b.shocks = []; return b; },
+  w1l4: () => { const b = buildFromRows(W1L4_ROWS); b.boss = mkBoss('riot'); b.shocks = []; b.bolts = []; return b; },
   w2l1: () => buildFromRows(W2L1_ROWS),
   w2l2: () => buildFromRows(W2L2_ROWS),
   w2l3: () => buildFromRows(W2L3_ROWS),
   w2secret: () => buildFromRows(W2SECRET_ROWS),
-  w2l4: () => { const b = buildFromRows(W2L4_ROWS); b.boss = mkBoss('giant'); b.shocks = []; return b; },
+  w2l4: () => { const b = buildFromRows(W2L4_ROWS); b.boss = mkBoss('giant'); b.shocks = []; b.bolts = []; return b; },
 };
 
 // ═══════════════════════════════════════════
@@ -1985,15 +1987,15 @@ function _drawSprite(key, x, y, w, h, dir, flash){
   ctx.restore();
 }
 
-// Generic enemy draw: looks up the ENEMIES registry, scales with the hero's
-// growth stage (so enemies grow as the heroes grow), and anchors the sprite at
-// the feet (spawn ground line is 38px below e.y). x,y are screen coords.
+// Generic enemy draw: looks up the ENEMIES registry and anchors the sprite at the feet
+// (spawn ground line is 38px below e.y). x,y are screen coords. Enemies render at their FIXED
+// size (matching their hitbox) — so as the kaiju GROWS it visibly towers over the city creatures
+// (the spatial power-fantasy). Don't reintroduce _kaijuScale() here.
 const ENEMY_FOOT = 38;
 function drawEnemy(e, x, y, dir, flash, stun){
   const def = ENEMIES[e.type] || ENEMIES.slime;
   const key = 'en_' + (ENEMIES[e.type] ? e.type : 'slime');
-  const sc  = _kaijuScale();                 // same growth curve as the heroes
-  const sw  = def.w * sc, sh = def.h * sc;
+  const sw  = def.w, sh = def.h;             // fixed size (= hitbox), NOT scaled by the kaiju's growth
   const cx  = x + (enemyBig(e) ? 18 : 10);    // horizontal centre over the hitbox
   const dx  = cx - sw/2;
   const dy  = (y + ENEMY_FOOT) - sh;          // feet planted on the ground line
@@ -2009,7 +2011,9 @@ function drawEnemy(e, x, y, dir, flash, stun){
 // (Hatchling → Apex). Sprite is anchored at the feet so it grows upward.
 // Per-stage redesigned art (pink-frilled Lulah etc.) is a follow-on; this
 // reuses the existing animation frames at a stage-driven scale.
-const GROWTH_SCALE = [0.62, 0.78, 0.92, 1.12, 1.35];
+// Spatial growth: hatchling stays baby-sized; each stage gets visibly bigger so an Apex kaiju TOWERS
+// over the fixed-size city creatures (the "you became a giant" power fantasy).
+const GROWTH_SCALE = [0.6, 0.85, 1.15, 1.5, 1.95];
 function _kaijuScale(){ return GROWTH_SCALE[(meta && meta.growthStage) || 0] || 1; }
 function _drawKaijuSprite(key, bx, by, dir){
   const img = loadedSprites[key];
@@ -2453,20 +2457,23 @@ function updateBoss(dt, s){
   b.dir = pl.x < b.x ? -1 : 1;
 
   if(b.state==='intro'){
-    if(b.stateMs<=0){ b.state='telegraph'; b.stateMs=1000; }
+    if(b.stateMs<=0){ b.state='telegraph'; b.stateMs=b.cfg.teleMs; b.firedTele=false; }
   } else if(b.state==='telegraph'){
+    if(b.cfg.shoots && !b.firedTele){ b.firedTele=true;                      // GIANT: cannon energy-bolt volley — jump over them
+      for(let i=0;i<b.cfg.shoots;i++) s.level.bolts.push({x:b.x+b.w/2 - i*46*b.dir, y:b.footY-26, vx:b.dir*5.5});
+      sndCreature('clank',false);
+    }
     if(b.stateMs<=0){ b.state='slam'; b.stateMs=900; b.vy=-7; b.slamDone=false; }
   } else if(b.state==='slam'){
     b.yOff = (b.yOff||0) + (b.vy||0); b.vy += 0.7;
     if(b.yOff>=0){ b.yOff=0; b.vy=0;
       if(!b.slamDone){ b.slamDone=true; addShake(9,320); sndRoar();
-        s.level.shocks.push({x:b.x+b.w/2, dir:-1, dist:0});
-        s.level.shocks.push({x:b.x+b.w/2, dir: 1, dist:0});
+        for(let i=0;i<b.cfg.waves;i++){ const d=(i%2)?1:-1; s.level.shocks.push({x:b.x+b.w/2, dir:d, dist:i*36}); }   // riot=2 / giant=3 waves
       }
     }
-    if(b.stateMs<=0){ b.state='vulnerable'; b.stateMs=2600; b.vulnerable=true; }
+    if(b.stateMs<=0){ b.state='vulnerable'; b.stateMs=b.cfg.vulnMs; b.vulnerable=true; }
   } else if(b.state==='vulnerable'){
-    if(b.stateMs<=0){ b.vulnerable=false; b.state='telegraph'; b.stateMs=1000; }
+    if(b.stateMs<=0){ b.vulnerable=false; b.state='telegraph'; b.stateMs=b.cfg.teleMs; b.firedTele=false; }
   } else if(b.state==='defeated'){
     if(b.stateMs<=0) startBonus();   // end-of-world: match-the-words bonus, then victory
     return;
@@ -2482,8 +2489,8 @@ function updateBoss(dt, s){
       sndCreature('clank', b.hp<=0); if(b.hp<=0) sndRoar();
       pl.vy=-10; pl.stompCombo=0; s.score+=250;
       pushMsg(s,'💥 WEAK POINT!',900,'#ffee44','lg'); pushNum(s,bx+bw/2,by-12,'HIT!','#ff8844');
-      if(b.hp<=0){ b.state='defeated'; b.stateMs=1700; s.score+=1500; pushMsg(s,'🏆 RIOT MECHA DOWN!',2600,'#22ffaa','lg'); }
-      else { b.state='telegraph'; b.stateMs=1100; }
+      if(b.hp<=0){ b.state='defeated'; b.stateMs=1700; s.score+=1500; pushMsg(s,'🏆 '+b.name+' DOWN!',2600,'#22ffaa','lg'); }
+      else { b.state='telegraph'; b.stateMs=b.cfg.teleMs; b.firedTele=false; }
     }
   }
   // Body contact hurts the player (when not stomping the head)
@@ -2505,6 +2512,19 @@ function updateBoss(dt, s){
       }
     });
   }
+  // Energy bolts (GIANT) — travel low; JUMP to clear them
+  const bolts = s.level.bolts || (s.level.bolts=[]);
+  bolts.forEach(bo=>{ bo.x += bo.vx; });
+  s.level.bolts = bolts.filter(bo=> bo.x>s.cam.x-50 && bo.x<s.cam.x+VW+50);
+  if(pl.invincMs<=0 && b.state!=='defeated'){
+    s.level.bolts.forEach(bo=>{
+      if(Math.abs((pl.x+PW/2)-bo.x)<16 && pl.y+PH>bo.y-8 && pl.y<bo.y+10){
+        pl.hp=Math.max(0,pl.hp-12); pl.invincMs=1200; s.hitsTaken++;
+        pl.vy=-5; pl.vx=bo.vx>0?6:-6; addShake(4,160); pushNum(s,pl.x,pl.y-20,'-12','#5ad6ff'); sndHurt(); bo.dead=true;
+      }
+    });
+    s.level.bolts = s.level.bolts.filter(bo=>!bo.dead);
+  }
 }
 
 // Riot-Mecha boss — real Higgsfield pixel-art sprites (bosses/riot_{idle,windup,slam,defeat}.png),
@@ -2521,6 +2541,13 @@ function drawBoss(s){
     const a=Math.max(0,1-w.dist/460);
     ctx.strokeStyle='rgba(255,170,60,'+a.toFixed(2)+')'; ctx.lineWidth=3;
     ctx.beginPath(); ctx.arc(~~(w.x-cam.x), wy, 8+w.dist*0.14, Math.PI, 2*Math.PI); ctx.stroke();
+  });
+  // GIANT energy bolts — glowing cyan orbs the player jumps over
+  (s.level.bolts||[]).forEach(bo=>{ const bxp=~~(bo.x-cam.x), byp=~~(bo.y-cam.y);
+    ctx.save(); ctx.shadowColor='#5ad6ff'; ctx.shadowBlur=12;
+    ctx.fillStyle='#bdefff'; ctx.beginPath(); ctx.arc(bxp,byp,7,0,7); ctx.fill();
+    ctx.fillStyle='rgba(90,214,255,0.5)'; ctx.beginPath(); ctx.arc(bxp-bo.vx*1.5,byp,5,0,7); ctx.fill();   // trail
+    ctx.restore();
   });
 
   // ── Real pixel-art sprite path (once Higgsfield frames land) — keeps the shockwaves above and the
@@ -3102,17 +3129,17 @@ function drawOverworld(){
     } else {
       ctx.fillStyle='#9a8fb5'; ctx.font='bold 20px monospace'; ctx.fillText('🔒', cx, cy+7);
     }
-    // name
-    ctx.fillStyle = unlocked ? '#fff' : '#7d7299';
-    ctx.font='12px monospace';
-    ctx.fillText(n.name, cx, cy+50);
-    // stars
+    // stars (per node, above)
     const rec = meta.levels[n.id];
     if(rec){
       ctx.fillStyle='#ffd84a'; ctx.font='14px monospace';
       ctx.fillText('★'.repeat(rec.stars), cx, cy-40);
     }
   }
+  // ONLY the selected node's name — full names overlap badly with 8 nodes in a row
+  const selN = nodes[owIdx], selOk = Progression.isLevelUnlocked(meta, selN.id);
+  ctx.textAlign='center'; ctx.fillStyle = selOk ? '#fff' : '#7d7299'; ctx.font='bold 17px monospace';
+  ctx.fillText('World '+selN.world+' · '+(selOk ? selN.name : '🔒 Locked'), VW/2, cy+72);
   ctx.fillStyle='#cfc6e6'; ctx.font='12px monospace';
   ctx.fillText('← → choose   ↑/Space enter', VW/2, VH-24);
   ctx.textAlign='left';
