@@ -46,8 +46,8 @@ const ctx    = canvas.getContext('2d');
 let _baseTransform = null;   // declared here: resize() assigns it before the line below runs
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
-const ASSET_VER = '7';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '27';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const ASSET_VER = '8';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
+const BUILD = '28';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -168,6 +168,24 @@ function loadSkin(id){
     img.onerror = () => { res(); };
     img.src = _av(url);
   })));
+}
+
+// Per-growth-stage FORM sprites, sliced from the approved growth sheets
+// (mockups/{lulah,poppy}-growth-FINAL.png). Stage 0 keeps the animated baby frames;
+// stages 1-4 swap in these distinct forms so the in-game kaiju MATCHES the growth design
+// (e.g. the Apex is the bulky frilled adult, not a scaled-up hatchling). Keys: <char>_grow<0-4>.
+function loadGrowth(){
+  const jobs = [];
+  for(const ch of ['lulah','poppy']) for(let i=0;i<5;i++){
+    const key = ch+'_grow'+i;
+    jobs.push(new Promise(res => {
+      const img = new Image();
+      img.onload  = () => { loadedSprites[key] = img; res(); };
+      img.onerror = () => { res(); };
+      img.src = _av('skins/default/'+key+'.png');
+    }));
+  }
+  return Promise.all(jobs);
 }
 
 // ═══════════════════════════════════════════
@@ -2045,16 +2063,23 @@ function _drawKaijuSprite(key, bx, by, dir){
   // Plant the feet on the hitbox bottom: by = screenY-4, hitbox is 66 tall -> by+70.
   _drawSprite(key, (bx + 32) - w/2, (by + 70) - h, w, h, dir, false);
 }
+// Pick the sprite key: the animated baby frames at stage 0, the distinct growth-FORM
+// sprite at stages 1-4 (so the on-screen kaiju matches the growth sheet at every stage).
+function _heroKey(char, pl, tick){
+  const gs = (meta && meta.growthStage) || 0;
+  const gk = char+'_grow'+gs;
+  return (gs>0 && loadedSprites[gk]) ? gk : _kaijuKey(char, pl, tick);
+}
 function drawLulah(x, y, pl, tick){
   const invinc = (pl.invincMs||0)>0 && Math.floor(Date.now()/80)%2===0;
   if(invinc){ ctx.save(); ctx.globalAlpha=0.3; }
-  _drawKaijuSprite(_kaijuKey('lulah',pl,tick), x-10, y-4, pl.dir);
+  _drawKaijuSprite(_heroKey('lulah',pl,tick), x-10, y-4, pl.dir);
   if(invinc) ctx.restore();
 }
 function drawPoppy(x, y, pl, tick){
   const invinc = (pl.invincMs||0)>0 && Math.floor(Date.now()/80)%2===0;
   if(invinc){ ctx.save(); ctx.globalAlpha=0.3; }
-  _drawKaijuSprite(_kaijuKey('poppy',pl,tick), x-9, y-4, pl.dir);
+  _drawKaijuSprite(_heroKey('poppy',pl,tick), x-9, y-4, pl.dir);
   if(invinc) ctx.restore();
 }
 // ═══════════════════════════════════════════
@@ -2735,6 +2760,10 @@ window.addEventListener('pointerdown', e=>{
   if(scene==='bonus' || scene==='wordbook') _bonusClick={x,y};
   else if(scene==='overworld' && x>=VW-104 && x<=VW-8 && y>=8 && y<=32){ _lbOpen(); }       // 🏆 Ranks button
   else if(scene==='overworld' && x>=8 && x<=112 && y>=8 && y<=32){ scene='wordbook'; _bookPage=0; }
+  else if(scene==='overworld' && x>=8 && x<=140 && y>=VH-30 && y<=VH-8){                     // ↺ New Game (two-tap)
+    if(Date.now()-_resetArm < 3000){ meta = Progression.defaultMeta(); saveMeta(); _resetArm=0; owIdx=0; }
+    else { _resetArm = Date.now(); }
+  }
 }, {passive:true});
 
 // ── Winged-monster carry cinematic (secret-door intro/exit) ──
@@ -3113,6 +3142,7 @@ function updateOverworld(){
   _lastTouchCount = Object.keys(touches).length;
 }
 
+let _resetArm = 0;   // two-tap guard for the New Game / Reset button
 function drawOverworld(){
   ctx.fillStyle='#1b1030'; ctx.fillRect(0,0,VW,VH);
   ctx.textAlign='center';
@@ -3163,6 +3193,12 @@ function drawOverworld(){
   ctx.fillText('World '+selN.world+' · '+(selOk ? selN.name : '🔒 Locked'), VW/2, cy+72);
   ctx.fillStyle='#cfc6e6'; ctx.font='12px monospace';
   ctx.fillText('← → choose   ↑/Space enter', VW/2, VH-24);
+  // ↺ New Game / Reset (two-tap to avoid accidents) — restart from the tiny baby
+  const armed = (Date.now()-_resetArm) < 3000;
+  ctx.fillStyle = armed ? '#7a2424' : '#2a2150'; rrect(8, VH-30, 132, 22, 6); ctx.fill();
+  ctx.strokeStyle = armed ? '#ff7070' : '#473a73'; ctx.lineWidth=1.5; rrect(8, VH-30, 132, 22, 6); ctx.stroke();
+  ctx.fillStyle='#fff'; ctx.font='bold 11px sans-serif';
+  ctx.fillText(armed ? '⚠ Tap again to wipe' : '↺ New Game', 74, VH-15);
   ctx.textAlign='left';
 }
 
@@ -3212,7 +3248,7 @@ function loop(ts){
 }
 loadSfx();   // try real samples (sounds/*.{mp3,wav}); silently no-ops until they exist
 loadJpVoices();   // spoken Japanese vocab clips (sounds/jp/*.mp3)
-Promise.all([loadSprites(), loadSkin(activeSkin), loadEnemies(), loadNpcs(), loadFood(), loadBoss(), loadCrane()]).then(()=>{ spritesReady=true; lastT=performance.now(); });
+Promise.all([loadSprites(), loadSkin(activeSkin), loadGrowth(), loadEnemies(), loadNpcs(), loadFood(), loadBoss(), loadCrane()]).then(()=>{ spritesReady=true; lastT=performance.now(); });
 requestAnimationFrame(loop);
 </script>
 </body>
