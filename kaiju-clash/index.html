@@ -47,7 +47,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '7';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '24';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '25';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -1733,6 +1733,7 @@ function bgLayer(offset, bldClr, roofClr, maxH, maxW, winAlpha){
 function drawTiles(s){
   const cam = s.cam;
   const tiles = s.level.tiles;
+  const _WLD = (s.levelId||'w1').charAt(1);   // world → city palette (warm concrete vs neon night)
   const sc = Math.floor(cam.x/TS)-1;
   const ec = Math.min(LW, sc + Math.floor(VW/TS)+3);
 
@@ -1744,11 +1745,22 @@ function drawTiles(s){
       const px=~~(c*TS-cam.x), py=~~(r*TS-cam.y);
 
       if(t===T_SOLID){
-        ctx.fillStyle='#4a3a22'; ctx.fillRect(px,py,TS,TS);           // darker wall — separates from the warm backdrop
-        ctx.fillStyle='#d8b566'; ctx.fillRect(px,py,TS,3);            // bright walkable top edge (reads at a glance)
-        ctx.fillStyle='#8a6d3e'; ctx.fillRect(px,py+3,TS,2);          // warm under-glow
-        ctx.fillStyle='rgba(0,0,0,0.28)'; ctx.fillRect(px,py+TS-4,TS,4);
-        ctx.strokeStyle='rgba(0,0,0,0.45)'; ctx.lineWidth=1; ctx.strokeRect(px+0.5,py+0.5,TS-1,TS-1);  // crisp outline
+        // City pavement/wall block — per-tile colour variance + occasional graffiti (deterministic by r,c)
+        const hh = (((c*92837111) ^ (r*689287499)) >>> 0), neon = _WLD==='2';
+        const pal = neon ? ['#2f2b46','#34304e','#2a2740','#3a3556'] : ['#6e6f78','#656874','#74695c','#6b6360'];
+        ctx.fillStyle = pal[hh % pal.length]; ctx.fillRect(px,py,TS,TS);
+        ctx.fillStyle = neon ? '#5b5688' : '#9a9aa6'; ctx.fillRect(px,py,TS,3);          // lit sidewalk lip
+        ctx.fillStyle = 'rgba(255,255,255,0.06)'; ctx.fillRect(px,py+3,TS,1);
+        ctx.fillStyle = 'rgba(0,0,0,0.30)'; ctx.fillRect(px,py+TS-4,TS,4);               // bottom shadow
+        ctx.fillStyle='rgba(0,0,0,0.16)';                                                // grime speckles
+        for(let k=0;k<3;k++){ ctx.fillRect(px+((hh>>(k*5))%(TS-3)), py+5+((hh>>(k*3+2))%(TS-9)), 2, 2); }
+        if(hh % 7 === 0){                                                                // ~1-in-7 spray tag
+          const GC=['#ff3bdb','#5ad6ff','#ffe14d','#7CFF8A','#ff7a3c']; const gc=GC[(hh>>4)%GC.length];
+          ctx.save(); ctx.globalAlpha=0.85; ctx.strokeStyle=gc; ctx.lineWidth=2; ctx.lineCap='round';
+          ctx.beginPath(); ctx.moveTo(px+6,py+TS-8); ctx.quadraticCurveTo(px+TS/2, py+7+(hh%7), px+TS-6, py+TS-13); ctx.stroke();
+          ctx.fillStyle=gc; ctx.globalAlpha=0.5; ctx.fillRect(px+5+(hh%(TS-12)), py+TS-7, 3, 5); ctx.restore();   // drip
+        }
+        ctx.strokeStyle='rgba(0,0,0,0.40)'; ctx.lineWidth=1; ctx.strokeRect(px+0.5,py+0.5,TS-1,TS-1);   // mortar
       } else if(t===T_PLAT){
         ctx.fillStyle='#7a3527'; ctx.fillRect(px,py,TS,9);            // rooftop slab (taller, darker body)
         ctx.fillStyle='#ff9a5c'; ctx.fillRect(px,py,TS,3);            // bright landable lip
@@ -2011,9 +2023,9 @@ function drawEnemy(e, x, y, dir, flash, stun){
 // (Hatchling → Apex). Sprite is anchored at the feet so it grows upward.
 // Per-stage redesigned art (pink-frilled Lulah etc.) is a follow-on; this
 // reuses the existing animation frames at a stage-driven scale.
-// Spatial growth: hatchling stays baby-sized; each stage gets visibly bigger so an Apex kaiju TOWERS
-// over the fixed-size city creatures (the "you became a giant" power fantasy).
-const GROWTH_SCALE = [0.6, 0.85, 1.15, 1.5, 1.95];
+// Spatial growth: start as a SMALL baby (smaller than the fixed ~40px city creatures), then scale up
+// past them — Juvenile ≈ their size, Adolescent bigger, Apex TOWERS over them (the power fantasy).
+const GROWTH_SCALE = [0.45, 0.7, 1.0, 1.45, 1.95];
 function _kaijuScale(){ return GROWTH_SCALE[(meta && meta.growthStage) || 0] || 1; }
 function _drawKaijuSprite(key, bx, by, dir){
   const img = loadedSprites[key];
