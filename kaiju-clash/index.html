@@ -47,7 +47,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '7';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '26';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '27';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -2025,7 +2025,9 @@ function drawEnemy(e, x, y, dir, flash, stun){
 // reuses the existing animation frames at a stage-driven scale.
 // Spatial growth: start as a TINY baby (well under the fixed ~40px city creatures), then scale up
 // past them — Juvenile ≈ their size, Adolescent bigger, Apex TOWERS over them (the power fantasy).
-const GROWTH_SCALE = [0.35, 0.6, 0.92, 1.4, 1.95];
+// Follows the approved growth sheets' proportions (mockups/lulah-growth-FINAL.png ratios
+// 1 : 1.32 : 1.70 : 2.14 : 2.91), based at 0.4 → baby 26px (under the ~40px creatures), Apex ~74px.
+const GROWTH_SCALE = [0.40, 0.53, 0.68, 0.86, 1.16];
 function _kaijuScale(){ return GROWTH_SCALE[(meta && meta.growthStage) || 0] || 1; }
 // Collision box scales WITH growth but is CAPPED at 1.0 — the baby gets a fair little hitbox while
 // big stages keep the level-design box (a bigger box would fail gaps tuned for 44×66).
