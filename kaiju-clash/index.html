@@ -47,7 +47,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '7';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '25';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '26';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -1221,7 +1221,7 @@ function plat(t,r,c){  return tile(t,r,c)===T_PLAT; }
 function updatePlayer(dt, s){
   const pl = s.player;
   const tiles = s.level.tiles;
-  const PW=44, PH=66;  // player bounding box
+  const PW=pPW(), PH=pPH();  // player bounding box
 
   pl.invincMs    = Math.max(0, pl.invincMs  - dt);
   pl.eatAnim     = Math.max(0, pl.eatAnim   - dt);
@@ -1305,7 +1305,7 @@ function updatePlayer(dt, s){
 
   // ── Stomp enemies from above
   if(pl.vy > 0 && state){
-    const PW=44, PH=66;
+    const PW=pPW(), PH=pPH();
     state.level.enemies.forEach(e=>{
       if(e.dead) return;                                   // stunned enemies CAN be re-bopped (Mario chain)
       const ew=eW(e), eh=eH(e);
@@ -1425,7 +1425,7 @@ function resolveY(pl, tiles, PW, PH){
 // Hidden gems — the per-round collectible that isn't food. Invisible until a fart
 // reveals them (doFart flips g.hidden), then collected by touch like food.
 function updateGems(dt, s){
-  const pl = s.player, PW=44, PH=66;
+  const pl = s.player, PW=pPW(), PH=pPH();
   const gems = s.level.gems || [];
   gems.forEach(g=>{
     if(g.revealMs>0) g.revealMs = Math.max(0, g.revealMs - dt);
@@ -1444,7 +1444,7 @@ function updateGems(dt, s){
 }
 function updateFood(dt, s){
   const pl = s.player;
-  const PW=44, PH=66;
+  const PW=pPW(), PH=pPH();
   s.level.food.forEach(f=>{
     if(f.collected) return;
     // Collect when player overlaps
@@ -1572,7 +1572,7 @@ function updateFartCloud(dt, s){
 
 function updateEnemies(dt, s){
   const pl = s.player;
-  const PW=44, PH=66;
+  const PW=pPW(), PH=pPH();
   s.level.enemies.forEach(e=>{
     if(e.dead) return;
     e.flashMs = Math.max(0, (e.flashMs||0)-dt);
@@ -2023,10 +2023,17 @@ function drawEnemy(e, x, y, dir, flash, stun){
 // (Hatchling → Apex). Sprite is anchored at the feet so it grows upward.
 // Per-stage redesigned art (pink-frilled Lulah etc.) is a follow-on; this
 // reuses the existing animation frames at a stage-driven scale.
-// Spatial growth: start as a SMALL baby (smaller than the fixed ~40px city creatures), then scale up
+// Spatial growth: start as a TINY baby (well under the fixed ~40px city creatures), then scale up
 // past them — Juvenile ≈ their size, Adolescent bigger, Apex TOWERS over them (the power fantasy).
-const GROWTH_SCALE = [0.45, 0.7, 1.0, 1.45, 1.95];
+const GROWTH_SCALE = [0.35, 0.6, 0.92, 1.4, 1.95];
 function _kaijuScale(){ return GROWTH_SCALE[(meta && meta.growthStage) || 0] || 1; }
+// Collision box scales WITH growth but is CAPPED at 1.0 — the baby gets a fair little hitbox while
+// big stages keep the level-design box (a bigger box would fail gaps tuned for 44×66).
+// Collision box stays the proven 44×66 at every growth stage — the physics + level gaps are tuned to
+// it, and a smaller box broke the rooftop jumps. The baby just LOOKS tiny (visual scale below); the
+// generous box only makes stomping easier and hits slightly forgiving — fine for a kids' game.
+function pPW(){ return 44; }
+function pPH(){ return 66; }
 function _drawKaijuSprite(key, bx, by, dir){
   const img = loadedSprites[key];
   const h  = 64 * _kaijuScale();                 // drawn height (grows with the kaiju)
@@ -2463,7 +2470,7 @@ let tick = 0;
 // Riot Mecha boss: telegraph -> slam (ground shockwave) -> vulnerable (stomp the head) -> repeat.
 function updateBoss(dt, s){
   const b = s.level.boss; if(!b) return;
-  const pl = s.player, PW=44, PH=66;
+  const pl = s.player, PW=pPW(), PH=pPH();
   b.flashMs = Math.max(0,(b.flashMs||0)-dt);
   b.stateMs -= dt;
   b.dir = pl.x < b.x ? -1 : 1;
@@ -3023,7 +3030,7 @@ function render(){
   if(scene==='playing' && state){
     const s = state;
     const pl = s.player;
-    const PW=44;
+    const PW=pPW();
 
     drawBg(s.cam);
     drawTiles(s);
