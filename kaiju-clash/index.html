@@ -47,7 +47,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '8';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '30';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '31';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -729,6 +729,19 @@ const WORLD_VOCAB = {
     { key:'ongaku',     jp:'おんがく',     ro:'Ongaku',       en:'Music' },
     { key:'neon',       jp:'ネオン',       ro:'Neon',         en:'Neon' },
     { key:'biru',       jp:'ビル',         ro:'Biru',         en:'Building' },
+    // Neon-Shibuya colors + city set (the neon lights teach colors)
+    { key:'aka',        jp:'あか',         ro:'Aka',          en:'Red' },
+    { key:'ao',         jp:'あお',         ro:'Ao',           en:'Blue' },
+    { key:'midori',     jp:'みどり',       ro:'Midori',       en:'Green' },
+    { key:'kiiro',      jp:'きいろ',       ro:'Kiiro',        en:'Yellow' },
+    { key:'murasaki',   jp:'むらさき',     ro:'Murasaki',     en:'Purple' },
+    { key:'pinku',      jp:'ピンク',       ro:'Pinku',        en:'Pink' },
+    { key:'shiro',      jp:'しろ',         ro:'Shiro',        en:'White' },
+    { key:'kuro',       jp:'くろ',         ro:'Kuro',         en:'Black' },
+    { key:'niji',       jp:'にじ',         ro:'Niji',         en:'Rainbow' },
+    { key:'densha',     jp:'でんしゃ',     ro:'Densha',       en:'Train' },
+    { key:'kuruma',     jp:'くるま',       ro:'Kuruma',       en:'Car' },
+    { key:'sora',       jp:'そら',         ro:'Sora',         en:'Sky' },
   ],
 };
 function _vocab(){ const m = state && String(state.levelId||'').match(/w(\d)/); const w = m?+m[1]:1; return WORLD_VOCAB[w] || WORLD_VOCAB[1]; }
@@ -3006,20 +3019,32 @@ function _mastery(){ return meta.mastery || (meta.mastery = {}); }
 function _profScore(){ const m=_mastery(); let s=0; for(const k in m) s+=Math.min(m[k]||0,3); return s; }   // total mastery points (cap 3/word)
 function _profTier(s){ return s>=60?'先生 Sensei': s>=36?'Fluent': s>=18?'Apprentice': s>=6?'Student':'Novice'; }
 function _qShuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=a[i];a[i]=a[j];a[j]=t; } return a; }
-let _quiz=null, _quizReturn='overworld', _quizMsg='';
+let _quiz=null, _quizReturn='overworld', _quizMsg='', _quizPick=false;
+// Quiz difficulty = two independent toggles: hide the rōmaji crutch (read the kana) and/or race a timer.
+const _QMODES = {
+  normal: { label:'Normal',      desc:'rōmaji shown · no timer', noRomaji:false, timed:false },
+  hard:   { label:'Hard 🈵',      desc:'no rōmaji — read the kana', noRomaji:true,  timed:false },
+  speed:  { label:'Speed ⏱',     desc:'rōmaji shown · beat the clock', noRomaji:false, timed:true },
+  sensei: { label:'Sensei 先生',  desc:'no rōmaji + timer', noRomaji:true,  timed:true },
+};
+const _QORDER = ['normal','hard','speed','sensei'];
+const _QTIME = 7000;   // ms per question in timed modes
 function _quizPool(){ const idx=_wordIndex(); return Object.keys(meta.learned||{}).filter(k=>idx[k]).map(k=>({id:k,...idx[k]})); }
 function _quizStart(ret){
-  const pool=_quizPool();
-  if(pool.length<4){ _quizMsg='Learn at least 4 words first — play levels & grab 💎 word-gems!'; return false; }
-  _quizReturn=ret||'overworld'; _quizMsg='';
+  if(_quizPool().length<4){ _quizMsg='Learn at least 4 words first — play levels & grab 💎 word-gems!'; return false; }
+  _quizReturn=ret||'overworld'; _quizMsg=''; _quiz=null; _quizPick=true; scene='quiz';   // show the mode picker first
+  return true;
+}
+function _quizBegin(modeKey){
+  const pool=_quizPool(); const mode=_QMODES[modeKey]||_QMODES.normal;
   const N=Math.min(8,pool.length), targets=_qShuffle(pool.slice()).slice(0,N), types=['listen','read','recall'];
   const qs=targets.map((t,qi)=>{ const type=types[qi%3];
     const distract=_qShuffle(pool.filter(w=>w.id!==t.id)).slice(0,3);
     const opts=_qShuffle([t].concat(distract));
     return {t,type,opts,ans:opts.indexOf(t)}; });
-  _quiz={qs,i:0,correct:0,sel:-1,answered:false,gained:0,done:false}; scene='quiz';
+  _quiz={qs,i:0,correct:0,sel:-1,answered:false,gained:0,done:false,mode,modeKey,qStart:Date.now()};
+  _quizPick=false;
   if(qs[0].type==='listen') _quizPlay();
-  return true;
 }
 function _quizPlay(){ const q=_quiz&&_quiz.qs[_quiz.i]; if(q) try{ playSample(q.t.aud,1.0,0,true); }catch(e){} }
 function _quizAnswer(i){ if(!_quiz||_quiz.answered||_quiz.done) return; const q=_quiz.qs[_quiz.i];
@@ -3028,7 +3053,7 @@ function _quizAnswer(i){ if(!_quiz||_quiz.answered||_quiz.done) return; const q=
   else { try{sndHurt();}catch(e){} }
 }
 function _quizNext(){ if(!_quiz) return;
-  if(_quiz.i<_quiz.qs.length-1){ _quiz.i++; _quiz.sel=-1; _quiz.answered=false; if(_quiz.qs[_quiz.i].type==='listen') _quizPlay(); }
+  if(_quiz.i<_quiz.qs.length-1){ _quiz.i++; _quiz.sel=-1; _quiz.answered=false; _quiz.qStart=Date.now(); if(_quiz.qs[_quiz.i].type==='listen') _quizPlay(); }
   else { _quiz.done=true; _lbSyncWords(); try{sndVictory();}catch(e){} }
 }
 let _quizBtns=[];
@@ -3038,6 +3063,20 @@ function _qBtn(x,y,w,h,label,act,bg){ ctx.fillStyle=bg||'#2a2150'; rrect(x,y,w,h
   _quizBtns.push({x,y,w,h,act}); }
 function drawQuiz(){
   _quizBtns=[]; ctx.fillStyle='#120e29'; ctx.fillRect(0,0,VW,VH);
+  if(_quizPick){                                   // difficulty picker (shown before each quiz)
+    ctx.textAlign='center';
+    ctx.fillStyle='#ffe14d'; ctx.font='bold 23px sans-serif'; ctx.fillText('🎓 Choose your challenge', VW/2, 56);
+    const cols=['#2a5a32','#5a4a24','#244a5a','#5a2444'];
+    _QORDER.forEach((k,i)=>{ const m=_QMODES[k], bw=400, bh=46, bx=VW/2-bw/2, by=84+i*58;
+      ctx.fillStyle=cols[i]; rrect(bx,by,bw,bh,10); ctx.fill();
+      ctx.strokeStyle='#5a4a8a'; ctx.lineWidth=1.5; rrect(bx,by,bw,bh,10); ctx.stroke();
+      ctx.fillStyle='#fff'; ctx.font='bold 17px sans-serif'; ctx.fillText(m.label, VW/2, by+20);
+      ctx.fillStyle='#cfc6e6'; ctx.font='12px sans-serif'; ctx.fillText(m.desc, VW/2, by+37);
+      _quizBtns.push({x:bx,y:by,w:bw,h:bh,act:'begin_'+k}); });
+    ctx.textAlign='left';
+    _qBtn(VW/2-70, VH-34, 140, 26, '◀ Back', 'back', '#3a2d5a');
+    return;
+  }
   if(!_quiz){ scene=_quizReturn; return; }
   if(_quiz.done){ const p=_profScore(); ctx.textAlign='center';
     ctx.fillStyle='#ffe14d'; ctx.font='bold 24px sans-serif'; ctx.fillText('🎓 '+_quiz.correct+' / '+_quiz.qs.length+' correct!', VW/2, 92);
@@ -3046,19 +3085,28 @@ function drawQuiz(){
     _qBtn(VW/2-150,196,140,40,'↻ Again','again','#2a5a32'); _qBtn(VW/2+10,196,140,40,'◀ Back','back','#3a2d5a'); return;
   }
   const q=_quiz.qs[_quiz.i];
+  // Timed modes: a countdown bar; running out auto-locks the answer as wrong.
+  if(_quiz.mode.timed && !_quiz.answered){
+    const rem=Math.max(0, _QTIME-(Date.now()-_quiz.qStart));
+    if(rem<=0){ _quizAnswer(-1); }
+    const bw=300, bx=VW/2-bw/2, by=34;
+    ctx.fillStyle='#241a40'; rrect(bx,by,bw,7,3); ctx.fill();
+    ctx.fillStyle=rem<2000?'#ff5a5a':'#5ad0ff'; rrect(bx,by,bw*rem/_QTIME,7,3); ctx.fill();
+  }
   ctx.textAlign='center'; ctx.fillStyle='#8a7fb5'; ctx.font='bold 12px monospace';
-  ctx.fillText('QUESTION '+(_quiz.i+1)+' / '+_quiz.qs.length+'      ✓ '+_quiz.correct, VW/2, 26);
+  ctx.fillText('QUESTION '+(_quiz.i+1)+' / '+_quiz.qs.length+'   '+_quiz.mode.label+'   ✓ '+_quiz.correct, VW/2, 26);
   if(q.type==='listen'){ ctx.fillStyle='#fff'; ctx.font='bold 17px sans-serif'; ctx.fillText('🔊 Which word did you hear?', VW/2, 66); ctx.textAlign='left';
     _qBtn(VW/2-72,82,144,32,'🔊 Hear again','replay','#1e3a44'); }
   else if(q.type==='read'){ ctx.fillStyle='#fff'; ctx.font='bold 15px sans-serif'; ctx.fillText('What does this mean?', VW/2, 54);
     ctx.fillStyle='#ffe14d'; ctx.font='bold 40px sans-serif'; ctx.fillText(q.t.jp, VW/2, 100);
-    ctx.fillStyle='#9fb4d6'; ctx.font='15px monospace'; ctx.fillText('('+q.t.ro+')', VW/2, 124); ctx.textAlign='left'; }
+    if(!_quiz.mode.noRomaji){ ctx.fillStyle='#9fb4d6'; ctx.font='15px monospace'; ctx.fillText('('+q.t.ro+')', VW/2, 124); }
+    ctx.textAlign='left'; }
   else { ctx.fillStyle='#fff'; ctx.font='bold 15px sans-serif'; ctx.fillText('How do you say…', VW/2, 54);
     ctx.fillStyle='#ffd24d'; ctx.font='bold 30px sans-serif'; ctx.fillText('“'+q.t.en+'”', VW/2, 100); ctx.textAlign='left'; }
   const ow=246, oh=44, gx=12, gyy=12, ox=VW/2-ow-gx/2, oy=146;
   q.opts.forEach((o,i)=>{ const col=i%2, row=Math.floor(i/2), x=ox+col*(ow+gx), y=oy+row*(oh+gyy);
     let bg='#2a2150'; if(_quiz.answered){ if(i===q.ans) bg='#1f7a3a'; else if(i===_quiz.sel) bg='#7a2424'; else bg='#221a40'; }
-    _qBtn(x,y,ow,oh,(q.type==='recall')?(o.jp+'   '+o.ro):o.en, _quiz.answered?'':('opt'+i), bg); });
+    _qBtn(x,y,ow,oh,(q.type==='recall')?(o.jp+(_quiz.mode.noRomaji?'':('   '+o.ro))):o.en, _quiz.answered?'':('opt'+i), bg); });
   if(_quiz.answered){ ctx.textAlign='center'; ctx.fillStyle=_quiz.sel===q.ans?'#7CFF8A':'#ff8888'; ctx.font='bold 15px sans-serif';
     ctx.fillText(_quiz.sel===q.ans?'✓ Correct!':('✗  '+q.t.jp+' = '+q.t.en), VW/2, oy+2*oh+gyy+30); ctx.textAlign='left';
     _qBtn(VW/2-70, oy+2*oh+gyy+40, 140, 36, (_quiz.i<_quiz.qs.length-1?'Next ▶':'Finish ▶'),'next','#3a2d5a'); }
@@ -3067,8 +3115,9 @@ function _quizClick(x,y){ for(const b of _quizBtns){ if(x>=b.x&&x<=b.x+b.w&&y>=b
 function _quizDo(act){
   if(act==='replay') _quizPlay();
   else if(act==='next') _quizNext();
-  else if(act==='again') _quizStart(_quizReturn);
-  else if(act==='back') scene=_quizReturn;
+  else if(act==='again') _quizStart(_quizReturn);     // re-show the difficulty picker
+  else if(act==='back'){ _quizPick=false; _quiz=null; scene=_quizReturn; }
+  else if(act&&act.indexOf('begin_')===0) _quizBegin(act.slice(6));
   else if(act&&act.indexOf('opt')===0) _quizAnswer(+act.slice(3));
 }
 
