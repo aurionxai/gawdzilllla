@@ -47,7 +47,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '8';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '34';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '35';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -2793,8 +2793,16 @@ function _mgStart(game){
   const def=MG_DEFS[game]; const pool=_mgPool(def.teach);
   if(!def || pool.length<4) return;
   _mg={ game, def, pool, round:0, rounds:6, score:0, correct:0, gained:0,
-        hero:_mgHero(), phase:'play', target:null, items:[], pickT:0, fb:null, done:false, slot:0 };
+        hero:_mgHero(), phase:'play', target:null, items:[], pickT:0, fb:null, done:false, slot:0, fx:[] };
   _mgClickPt=null; scene='mg'; _mgRound();
+}
+// Confetti/sparkle burst — fired on a correct answer (and the finale). Cheap radial particles + gravity.
+const _MGFX_COLS = ['#ffe14d','#7CFF8A','#7CD7FF','#ff9ad2','#ffffff','#ffb347','#b98cff'];
+function _mgBurst(x, y, n){
+  if(!_mg) return; n=n||20;
+  for(let i=0;i<n;i++){ const a=(Math.PI*2*i/n)+Math.random()*0.5, sp=1.6+Math.random()*3.6;
+    _mg.fx.push({ x, y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp-2.0, life:0, max:520+Math.random()*320,
+      r:2+Math.random()*3.2, c:_MGFX_COLS[(Math.random()*_MGFX_COLS.length)|0], star:Math.random()<0.28 }); }
 }
 function _mgRound(){
   const m=_mg; m.phase='play'; m.fb=null; m.slot=0; m.hero.eatAnim=0; m.hero.fartAnim=0;
@@ -2829,17 +2837,24 @@ function _mgStrike(ok, idx){
     if(m.def.teach==='enemy' && it){ it.squish=1; try{ sndCreature(_VOICE[it.c.type]||'squish', true); }catch(e){} }
     if(m.def.teach==='food'  && it){ it.eaten=1; m.hero.eatAnim=420; }       // food shrinks/fades into the chomp
     if(m.def.teach==='vocab'){ m.hero.bounceT=260; try{ playSample('gem',0.8,0,false); }catch(e){} }  // catch: a happy hop + chime
+    _mgBurst(it? it.x : m.hero.x+22, it? it.y-18 : m.hero.y+8);              // 🎉 confetti on a correct answer
     try{ addShake(5,170); }catch(e){}
     try{ playSample(m.target.aud, 1.0, (m.def.teach==='enemy'?0.16:(m.def.teach==='vocab'?0.12:0)), true); }catch(e){}   // speak the word, just after the impact
   } else { if(it) it.bonk=Date.now(); try{sndHurt();}catch(e){} try{addShake(6,220);}catch(e){} }
 }
 function _mgAdvance(){ const m=_mg; m.round++;
-  if(m.round>=m.rounds){ m.done=true; try{_lbSyncWords();}catch(e){} try{sndVictory();}catch(e){} }
+  if(m.round>=m.rounds){ m.done=true; try{_lbSyncWords();}catch(e){} try{sndVictory();}catch(e){}
+    _mgBurst(VW/2, 120, 30); _mgBurst(VW*0.28, 150, 22); _mgBurst(VW*0.72, 150, 22); }   // 🎉 finale
   else _mgRound();
 }
 function _mgPick(i){ const m=_mg, it=m.items[i]; if(!it) return; _mgResolve(it.c.en===m.target.en, i); }
+function _mgStepFx(m, dt){ if(!m.fx||!m.fx.length) return;   // advance + gravity + cull (runs even on the done screen)
+  for(const p of m.fx){ p.life+=dt; const k=dt/16.67; p.x+=p.vx*k; p.y+=p.vy*k; p.vy+=0.14*k; p.vx*=0.99; }
+  m.fx = m.fx.filter(p=>p.life<p.max);
+}
 function updateMg(dt){
   const m=_mg; if(!m) return; tick++;
+  _mgStepFx(m, dt);
   if(menuBack()){ scene='play'; justDn.clear(); return; }
   const freshTap = Object.keys(touches).length>0 && !_lastTouchCount;
   if(m.done){ if(menuConfirm()||freshTap){ scene='play'; justDn.clear(); } _lastTouchCount=Object.keys(touches).length; return; }
@@ -2893,6 +2908,12 @@ function _mgItemImg(it, big){
   if(it.c.emoji){ if(e<=0) return; ctx.save(); ctx.globalAlpha=e; ctx.textAlign='center';   // most foods are emoji, not PNG
     ctx.font=Math.round((big?50:42)*Math.max(0.3,e))+'px serif'; ctx.fillText(it.c.emoji, it.x, it.y-2-(1-e)*18); ctx.restore(); }
 }
+function _mgDrawFx(m){ if(!m.fx) return;
+  for(const p of m.fx){ const a=Math.max(0, 1-p.life/p.max); ctx.save(); ctx.globalAlpha=a; ctx.fillStyle=p.c;
+    if(p.star){ ctx.translate(p.x,p.y); ctx.rotate(p.life*0.01); ctx.font=Math.round(p.r*4)+'px serif'; ctx.textAlign='center'; ctx.fillText('✦',0,p.r); }
+    else { ctx.beginPath(); ctx.arc(p.x, p.y, p.r*(0.5+a*0.7), 0, Math.PI*2); ctx.fill(); }
+    ctx.restore(); }
+}
 function drawMg(){
   const m=_mg; if(!m){ scene='play'; return; }
   ctx.fillStyle='#0e1226'; ctx.fillRect(0,0,VW,VH);
@@ -2908,6 +2929,7 @@ function drawMg(){
     _mgMenuBtns=[]; const b1={x:VW/2-150,y:198,w:140,h:42,act:'again'}, b2={x:VW/2+10,y:198,w:140,h:42,act:'menu'};
     [[b1,'↻ Again','#2a5a32'],[b2,'◀ Menu','#3a2d5a']].forEach(([b,l,c])=>{ ctx.fillStyle=c; rrect(b.x,b.y,b.w,b.h,9); ctx.fill();
       ctx.fillStyle='#fff'; ctx.font='bold 15px sans-serif'; ctx.fillText(l,b.x+b.w/2,b.y+b.h/2+5); _mgMenuBtns.push(b); });
+    _mgDrawFx(m);                       // finale confetti over the results
     ctx.textAlign='left'; return;
   }
   // prompt panel
@@ -2961,6 +2983,7 @@ function drawMg(){
       else if(it.c.emoji){ ctx.font=Math.round(s)+'px serif'; ctx.fillText(it.c.emoji, it.x, yy+s*0.35); } }
     ctx.restore();
   });
+  _mgDrawFx(m);                         // confetti on top of everything
   ctx.textAlign='left';
 }
 function _mgMenuClick(x,y){ for(const b of _mgMenuBtns){ if(x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h){
