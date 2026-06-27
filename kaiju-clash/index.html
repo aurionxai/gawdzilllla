@@ -47,7 +47,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '8';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '32';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '33';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -2785,7 +2785,7 @@ let _mg=null, _mgClickPt=null, _mgMenuBtns=[];
 
 function _mgPool(teach){
   if(teach==='food')  return FOOD_TYPES.map(f=>({id:'f:'+f.key, jp:f.jp, ro:f.ro, en:f.en, aud:'jp_'+f.key+'_f', sprite:'food_'+f.key, emoji:f.emoji}));
-  if(teach==='enemy') return Object.entries(ENEMIES).map(([k,e])=>({id:'e:'+k, jp:e.jp, ro:e.ro, en:e.en, aud:'jp_'+k+'_m', sprite:'en_'+k, ew:e.w, eh:e.h}));
+  if(teach==='enemy') return Object.entries(ENEMIES).map(([k,e])=>({id:'e:'+k, type:k, jp:e.jp, ro:e.ro, en:e.en, aud:'jp_'+k+'_m', sprite:'en_'+k, ew:e.w, eh:e.h}));
   return Object.values(WORLD_VOCAB).flat().map(w=>({id:'v:'+w.key, jp:w.jp, ro:w.ro, en:w.en, aud:'jp_'+w.key+'_f'}));
 }
 function _mgHero(){ return { x:VW/2-22, y:VH-110, dir:1, vx:0, onGround:true, eatAnim:0, fartAnim:0, invincMs:0 }; }
@@ -2812,11 +2812,25 @@ function _mgRound(){
 function _mgCredit(id){ const mm=_mastery(); const b=Math.min(3,mm[id]||0); mm[id]=Math.min(3,(mm[id]||0)+1); saveMeta(); return mm[id]-b; }
 function _mgResolve(ok, idx){
   const m=_mg; if(m.phase!=='play') return;
-  m.phase='resolve'; m.pickT=ok?720:980; m.fb={ok, idx};
-  if(m.def.teach==='food' && ok) m.hero.eatAnim=420;        // chomp on a correct food
-  if(ok){ m.correct++; m.score+=100; m.gained+=_mgCredit(m.target.id);
-    try{ playSample(m.target.aud,1.0,0,true); }catch(e){} }
-  else { try{sndHurt();}catch(e){} try{addShake(6,200);}catch(e){} }
+  m.phase='resolve'; m.pickT=ok?840:1000; m.fb={ok, idx};
+  if(ok){ m.correct++; m.score+=100; m.gained+=_mgCredit(m.target.id); }
+  // Row games: the hero LEAPS onto the picked item; the strike (squish/chomp + sound) fires on landing.
+  // Catch has no hero leap — it strikes immediately.
+  if(m.def.kind==='row' && idx>=0){ const it=m.items[idx];
+    m.hero.dir = (it.x >= m.hero.x+22) ? 1 : -1;
+    m.hero.onGround=false;
+    m.leap={ idx, fromX:m.hero.x, toX:Math.max(4,Math.min(VW-48,it.x-22)), t:0, dur:(m.def.teach==='enemy'?470:380), struck:false };
+  } else _mgStrike(ok, idx);
+}
+// The moment of impact — the satisfying part. Enemy flattens + its squish death-cry; food = chomp.
+function _mgStrike(ok, idx){
+  const m=_mg, it=(idx>=0?m.items[idx]:null);
+  if(ok){
+    if(m.def.teach==='enemy' && it){ it.squish=1; try{ sndCreature(_VOICE[it.c.type]||'squish', true); }catch(e){} }
+    if(m.def.teach==='food') m.hero.eatAnim=420;
+    try{ addShake(5,170); }catch(e){}
+    try{ playSample(m.target.aud, 1.0, (m.def.teach==='enemy'?0.16:0), true); }catch(e){}   // speak the word, just after the thud
+  } else { if(it) it.bonk=Date.now(); try{sndHurt();}catch(e){} try{addShake(6,220);}catch(e){} }
 }
 function _mgAdvance(){ const m=_mg; m.round++;
   if(m.round>=m.rounds){ m.done=true; try{_lbSyncWords();}catch(e){} try{sndVictory();}catch(e){} }
@@ -2828,9 +2842,10 @@ function updateMg(dt){
   if(menuBack()){ scene='play'; justDn.clear(); return; }
   const freshTap = Object.keys(touches).length>0 && !_lastTouchCount;
   if(m.done){ if(menuConfirm()||freshTap){ scene='play'; justDn.clear(); } _lastTouchCount=Object.keys(touches).length; return; }
-  const h=m.hero, SP=4.4; let mv=0;
-  if(isMoveL()) mv=-1; else if(isMoveR()) mv=1;
-  h.vx=mv*SP; h.x+=h.vx; if(mv) h.dir=mv;
+  const h=m.hero;
+  if(m.phase==='play'){ const SP=4.4; let mv=0;     // free movement only while choosing; the leap owns x during resolve
+    if(isMoveL()) mv=-1; else if(isMoveR()) mv=1;
+    h.vx=mv*SP; h.x+=h.vx; if(mv) h.dir=mv; }
   h.x=Math.max(4, Math.min(VW-48, h.x));
   h.eatAnim=Math.max(0,h.eatAnim-dt); h.fartAnim=Math.max(0,h.fartAnim-dt);
   if(m.def.kind==='row'){
@@ -2843,7 +2858,16 @@ function updateMg(dt){
       else if(it.y>VH+34){ it.dead=true; if(it.c.en===m.target.en) _mgResolve(false,-1); }
     }
   }
-  if(m.phase==='resolve'){ m.pickT-=dt; if(m.pickT<=0) _mgAdvance(); }
+  if(m.phase==='resolve'){
+    if(m.leap){ const L=m.leap; L.t+=dt; const p=Math.min(1, L.t/L.dur);
+      h.x = L.fromX + (L.toX-L.fromX)*p;
+      h.yOff = -Math.sin(p*Math.PI)*44;          // jump arc up-and-onto the target
+      h.vy = p<0.5 ? -6 : 6;                      // feeds _formAnim: stretch rising, squash on the way down
+      if(!L.struck && p>=0.78){ L.struck=true; _mgStrike(m.fb.ok, L.idx); }   // land = impact
+      if(p>=1){ h.yOff=0; h.vy=0; h.onGround=true; m.leap=null; }
+    }
+    m.pickT-=dt; if(m.pickT<=0) _mgAdvance();
+  }
   if(_mgClickPt){ const p=_mgClickPt; _mgClickPt=null;
     if(m.def.kind==='row' && m.phase==='play'){ let hit=-1; m.items.forEach((it,i)=>{ if(Math.abs(p.x-it.x)<40 && Math.abs(p.y-(it.y-22))<46) hit=i; }); if(hit>=0) _mgPick(hit); }
   }
@@ -2854,7 +2878,10 @@ function _mgItemImg(it, big){
   if(img){
     ctx.imageSmoothingEnabled=false;
     if(it.c.sprite.indexOf('food_')===0){ const s=big?52:44; ctx.drawImage(img, Math.round(it.x-s/2), Math.round(it.y-s), s, s); }
-    else { const sh=it.c.eh||40, sw=(it.c.ew||40); ctx.drawImage(img, Math.round(it.x-sw/2), Math.round(it.y-sh), sw, sh); }
+    else { let sh=it.c.eh||40, sw=(it.c.ew||40);
+      if(it.squish){ const q=it.squish; const w2=sw*(1+0.4*q), h2=sh*(1-0.6*q);   // stomped flat: wider + shorter, pinned to the ground
+        ctx.drawImage(img, Math.round(it.x-w2/2), Math.round(it.y-h2), w2, h2); }
+      else ctx.drawImage(img, Math.round(it.x-sw/2), Math.round(it.y-sh), sw, sh); }
     return;
   }
   if(it.c.emoji){ ctx.textAlign='center'; ctx.font=(big?50:42)+'px serif'; ctx.fillText(it.c.emoji, it.x, it.y-2); }   // most foods are emoji, not PNG
@@ -2907,7 +2934,7 @@ function drawMg(){
     ctx.fillStyle='#9be8ff'; ctx.font='16px serif'; ctx.textAlign='center'; ctx.fillText('▼', it.x, yy); } }
   // hero
   const ch=SEL_CHARS[selIdx]||'lulah';
-  (ch==='poppy'?drawPoppy:drawLulah)(m.hero.x, m.hero.y, m.hero, tick);
+  (ch==='poppy'?drawPoppy:drawLulah)(m.hero.x, m.hero.y + (m.hero.yOff||0), m.hero, tick);
   ctx.textAlign='left';
 }
 function _mgMenuClick(x,y){ for(const b of _mgMenuBtns){ if(x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h){
