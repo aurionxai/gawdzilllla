@@ -47,7 +47,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '8';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '33';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '34';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -2827,9 +2827,10 @@ function _mgStrike(ok, idx){
   const m=_mg, it=(idx>=0?m.items[idx]:null);
   if(ok){
     if(m.def.teach==='enemy' && it){ it.squish=1; try{ sndCreature(_VOICE[it.c.type]||'squish', true); }catch(e){} }
-    if(m.def.teach==='food') m.hero.eatAnim=420;
+    if(m.def.teach==='food'  && it){ it.eaten=1; m.hero.eatAnim=420; }       // food shrinks/fades into the chomp
+    if(m.def.teach==='vocab'){ m.hero.bounceT=260; try{ playSample('gem',0.8,0,false); }catch(e){} }  // catch: a happy hop + chime
     try{ addShake(5,170); }catch(e){}
-    try{ playSample(m.target.aud, 1.0, (m.def.teach==='enemy'?0.16:0), true); }catch(e){}   // speak the word, just after the thud
+    try{ playSample(m.target.aud, 1.0, (m.def.teach==='enemy'?0.16:(m.def.teach==='vocab'?0.12:0)), true); }catch(e){}   // speak the word, just after the impact
   } else { if(it) it.bonk=Date.now(); try{sndHurt();}catch(e){} try{addShake(6,220);}catch(e){} }
 }
 function _mgAdvance(){ const m=_mg; m.round++;
@@ -2854,10 +2855,13 @@ function updateMg(dt){
   } else if(m.phase==='play'){
     const cx=h.x+22;
     for(const it of m.items){ if(it.dead) continue; it.y += it.vy*(dt/16.67);
-      if(Math.abs(cx-it.x)<36 && it.y>h.y-2 && it.y<h.y+50){ it.dead=true; _mgResolve(it.c.en===m.target.en, m.items.indexOf(it)); }
+      if(Math.abs(cx-it.x)<36 && it.y>h.y-2 && it.y<h.y+50){ it.dead=true; it.pop=1; _mgResolve(it.c.en===m.target.en, m.items.indexOf(it)); }   // caught → collect-pop
       else if(it.y>VH+34){ it.dead=true; if(it.c.en===m.target.en) _mgResolve(false,-1); }
     }
   }
+  m.items.forEach(it=>{ if(it.eaten!=null) it.eaten=Math.max(0,it.eaten-dt/240);    // food shrink + catch pop decay
+    if(it.pop!=null) it.pop=Math.max(0,it.pop-dt/240); });
+  if((h.bounceT||0)>0 && !m.leap){ h.bounceT-=dt; const bp=Math.min(1, 1-Math.max(0,h.bounceT)/260); h.yOff=-Math.sin(bp*Math.PI)*16; if(h.bounceT<=0){ h.bounceT=0; h.yOff=0; } }   // catch hop
   if(m.phase==='resolve'){
     if(m.leap){ const L=m.leap; L.t+=dt; const p=Math.min(1, L.t/L.dur);
       h.x = L.fromX + (L.toX-L.fromX)*p;
@@ -2875,16 +2879,19 @@ function updateMg(dt){
 }
 function _mgItemImg(it, big){
   const img=loadedSprites[it.c.sprite];
+  const e=(it.eaten==null?1:it.eaten);   // 1=whole, →0 as it's eaten
   if(img){
     ctx.imageSmoothingEnabled=false;
-    if(it.c.sprite.indexOf('food_')===0){ const s=big?52:44; ctx.drawImage(img, Math.round(it.x-s/2), Math.round(it.y-s), s, s); }
+    if(it.c.sprite.indexOf('food_')===0){ if(e<=0) return; const s=(big?52:44)*e;
+      ctx.save(); ctx.globalAlpha=e; ctx.drawImage(img, Math.round(it.x-s/2), Math.round(it.y-s-(1-e)*18), s, s); ctx.restore(); }
     else { let sh=it.c.eh||40, sw=(it.c.ew||40);
       if(it.squish){ const q=it.squish; const w2=sw*(1+0.4*q), h2=sh*(1-0.6*q);   // stomped flat: wider + shorter, pinned to the ground
         ctx.drawImage(img, Math.round(it.x-w2/2), Math.round(it.y-h2), w2, h2); }
       else ctx.drawImage(img, Math.round(it.x-sw/2), Math.round(it.y-sh), sw, sh); }
     return;
   }
-  if(it.c.emoji){ ctx.textAlign='center'; ctx.font=(big?50:42)+'px serif'; ctx.fillText(it.c.emoji, it.x, it.y-2); }   // most foods are emoji, not PNG
+  if(it.c.emoji){ if(e<=0) return; ctx.save(); ctx.globalAlpha=e; ctx.textAlign='center';   // most foods are emoji, not PNG
+    ctx.font=Math.round((big?50:42)*Math.max(0.3,e))+'px serif'; ctx.fillText(it.c.emoji, it.x, it.y-2-(1-e)*18); ctx.restore(); }
 }
 function drawMg(){
   const m=_mg; if(!m){ scene='play'; return; }
@@ -2913,19 +2920,21 @@ function drawMg(){
   ctx.textAlign='left'; ctx.fillStyle='#cdbff0'; ctx.font='bold 12px monospace';
   ctx.fillText('Round '+(m.round+1)+'/'+m.rounds+'   ✓'+m.correct, 10, VH-12);
   // items
-  m.items.forEach((it,i)=>{ if(it.dead && m.def.kind==='catch') return;
+  m.items.forEach((it,i)=>{
     const isCorrect=it.c.en===m.target.en, reveal=(m.phase==='resolve');
     if(m.def.kind==='catch'){
-      const w=92,hh=40,bx=it.x-w/2,by=it.y-hh/2;
-      ctx.fillStyle=reveal&&isCorrect?'#1f7a3a':(reveal&&m.fb&&m.fb.idx===i?'#7a2424':'#241b48'); rrect(bx,by,w,hh,9); ctx.fill();
-      ctx.strokeStyle='#6a5fa0'; ctx.lineWidth=2; rrect(bx,by,w,hh,9); ctx.stroke();
+      if(it.dead) return;                                           // caught → drawn by the float pass; off-screen → gone
+      const correctReveal = reveal && isCorrect;                    // green-flag the right answer even on a miss
+      const w=92,hh=40;
+      ctx.fillStyle = correctReveal?'#1f7a3a':'#241b48'; rrect(it.x-w/2,it.y-hh/2,w,hh,9); ctx.fill();
+      ctx.strokeStyle=correctReveal?'#7CFF8A':'#6a5fa0'; ctx.lineWidth=correctReveal?3:2; rrect(it.x-w/2,it.y-hh/2,w,hh,9); ctx.stroke();
       ctx.textAlign='center'; ctx.fillStyle='#fff'; ctx.font='bold 20px sans-serif'; ctx.fillText(it.c.jp, it.x, it.y+7);
     } else {
+      const animFood = (m.def.teach==='food' && it.eaten!=null && it.eaten<1);   // eaten food floats up in the post pass
       // selection / feedback ring under the item
       if(!reveal && m.slot===i){ ctx.fillStyle='rgba(120,220,255,0.22)'; ctx.beginPath(); ctx.arc(it.x,it.y-22,30,0,Math.PI*2); ctx.fill(); }
       if(reveal && isCorrect){ ctx.fillStyle='rgba(80,230,120,0.30)'; ctx.beginPath(); ctx.arc(it.x,it.y-22,30,0,Math.PI*2); ctx.fill(); }
-      _mgItemImg(it, !reveal&&m.slot===i);
-      if(reveal && isCorrect){ ctx.fillStyle='#7CFF8A'; ctx.font='20px serif'; ctx.textAlign='center'; ctx.fillText('✓', it.x, it.y-50); }
+      if(!animFood) _mgItemImg(it, !reveal&&m.slot===i);
       if(reveal && m.fb && m.fb.idx===i && !isCorrect){ ctx.fillStyle='#ff8888'; ctx.font='20px serif'; ctx.textAlign='center'; ctx.fillText('✗', it.x, it.y-50); }
     }
   });
@@ -2935,6 +2944,23 @@ function drawMg(){
   // hero
   const ch=SEL_CHARS[selIdx]||'lulah';
   (ch==='poppy'?drawPoppy:drawLulah)(m.hero.x, m.hero.y + (m.hero.yOff||0), m.hero, tick);
+  // collected item floats UP above the hero (food eaten / word caught) so the reward isn't hidden behind the kaiju
+  if(m.phase==='resolve') m.items.forEach(it=>{
+    const fFood = m.def.teach==='food' && it.eaten!=null && it.eaten>0 && it.eaten<1;
+    const fCatch = m.def.kind==='catch' && it.dead && it.pop>0;
+    if(!fFood && !fCatch) return;
+    const prog = fFood ? it.eaten : it.pop;                  // 1 → 0
+    const yy = it.y - ((1-prog)*70 + 26);                    // rise above the hero
+    ctx.save(); ctx.globalAlpha=Math.min(1, prog*1.9); ctx.textAlign='center';   // hold opacity, fade only at the end
+    if(fCatch){ const sc=1.15+(1-prog)*0.5, w=96*sc,hh=42*sc, right=it.c.en===m.target.en;
+      ctx.fillStyle=right?'#3ad07a':'#e85a5a'; rrect(it.x-w/2,yy-hh/2,w,hh,10); ctx.fill();
+      ctx.lineWidth=3; ctx.strokeStyle='#fff'; rrect(it.x-w/2,yy-hh/2,w,hh,10); ctx.stroke();   // white outline pops on any bg
+      ctx.fillStyle='#fff'; ctx.font='bold '+Math.round(21*sc)+'px sans-serif'; ctx.fillText(it.c.jp,it.x,yy+7*sc); }
+    else { const s=50*Math.max(0.4,prog), img=loadedSprites[it.c.sprite];     // eaten food floats up
+      if(img){ ctx.imageSmoothingEnabled=false; ctx.drawImage(img, Math.round(it.x-s/2), Math.round(yy-s/2), s, s); }
+      else if(it.c.emoji){ ctx.font=Math.round(s)+'px serif'; ctx.fillText(it.c.emoji, it.x, yy+s*0.35); } }
+    ctx.restore();
+  });
   ctx.textAlign='left';
 }
 function _mgMenuClick(x,y){ for(const b of _mgMenuBtns){ if(x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h){
