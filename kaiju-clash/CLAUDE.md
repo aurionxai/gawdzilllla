@@ -115,9 +115,18 @@ stand-in → DELETE the placeholder code/asset (memory `delete-old-art-on-replac
 - **Quiz** (`scene='quiz'`, `_quiz*` fns): 4-option multiple-choice, mixed listen/read/recall, pool =
   `meta.learned` (needs ≥4). Correct → `meta.mastery[id]` (cap 3); `_profScore()` = total → `_profTier`
   (Novice→…→先生 Sensei). Finishing syncs proficiency to the board. Entry: Word Book + Proficiency board.
+  **Difficulty picker** (`_QMODES`/`_quizBegin`): Normal · Hard 🈵 (no rōmaji) · Speed ⏱ (per-Q timer
+  `_QTIME`) · Sensei 先生 (both). Two toggles `{noRomaji,timed}` on the same MC engine.
+- **Mini-games** (`scene='play'` menu → `scene='mg'`, `_mg*` fns, `MG_DEFS`): three hero-driven learning
+  games — 🍣 **Hungry Kaiju** (food), 👾 **Stomp Match** (enemies), 💎 **Catch the Word** (vocab/reading).
+  One engine: speak+show a target, drive the HERO (`drawLulah/Poppy`, move + `_hit('jump')`/tap to pick;
+  catch = falling tokens) to the match. Correct → `_mgCredit` grants the SAME `meta.mastery[id]` as the
+  quiz (so they count for proficiency). Pools from `FOOD_TYPES`/`ENEMIES`/`WORLD_VOCAB`. **Most foods are
+  emoji, not PNG** (only 6 have `food/<key>.png`) → `_mgItemImg` falls back to `f.emoji`; all 20 enemies
+  have sprites. Entry: **🎮 PLAY** button on the overworld (top-center).
 - **CORS test gotcha:** the API only allows the live origins, so headless **`file://` CANNOT call it**.
   Test the live chain by loading **https://kaijukids.co/kaiju-clash/** in chromium (an allowed origin).
-- Scenes now: `select·overworld·playing·howto·victory·gameover·bonus·wordbook·carry·leaderboard·quiz`.
+- Scenes now: `select·overworld·playing·howto·victory·gameover·bonus·wordbook·carry·leaderboard·quiz·play·mg`.
 
 ## Secret doors (see memory `kaiju-clash-art-rework` for the cinematic art)
 - Hidden `D` tile per level (`s.level.door`, `hidden:true`); **fart near it to reveal**, touch to enter

@@ -206,11 +206,15 @@ screen (kana + romaji + meaning) AND speaks it aloud.
 - Voice clips: `sounds/jp/<key>_<f|m>.mp3` (macOS Kyoko TTS, normalized -15 LUFS). 92 clips, loaded by `loadJpVoices()`.
 
 ### TODO
-- [ ] World 2/3/4 vocab sets (20-30 each): colors/numbers (W2), sea animals/nature (W3), weather/verbs (W4)
-- [ ] **Real male voice** — install Otoya (System Settings → Spoken Content → JP voices) + regenerate `_m` clips (currently pitch-shifted Kyoko: correct pronunciation, synthesized pitch)
-- [x] **Word book** screen ✅ — every learned word (rescue/food/enemy) tracked in `meta.learned` (persists), grouped by category, **tap any card to replay** its audio. Open from the overworld (📖 button / **B** key). Bonus round bumped to 6 pairs.
-- [ ] Bonus: add a speed/timer mode + recall mode (hide romaji) on later worlds
-- [ ] Localize to other languages (same structure, swap vocab + TTS voice)
+- [x] **Proficiency Quiz + Proficiency leaderboard** ✅ — 4-option active-recall (listen/read/recall), per-word `meta.mastery`, `_profScore`→tiers, synced to the board.
+- [x] **Harder quiz modes** ✅ — Normal · Hard 🈵 (no rōmaji) · Speed ⏱ (per-Q timer) · Sensei 先生 (both).
+- [x] **Hero learning mini-games** ✅ — 🎮 PLAY menu → Hungry Kaiju (food) · Stomp Match (enemies) · Catch the Word (vocab); all credit proficiency mastery.
+- [x] **W2 vocab to 24** ✅ — Neon-Shibuya colors + city set (aka/ao/midori/… + densha/kuruma/sora) with TTS.
+- [ ] World 3/4 vocab sets (20-30 each): sea animals/nature (W3), weather/verbs (W4) — pending those worlds.
+- [ ] **Real male voice** — install Otoya (System Settings → Spoken Content → JP voices) + regenerate `_m` clips (currently pitch-shifted Kyoko: correct pronunciation, synthesized pitch).
+- [x] **Word book** screen ✅ — every learned word tracked in `meta.learned`, grouped, **tap to replay**. Overworld 📖 / **B**.
+- [ ] Kanji-reading quiz mode — needs kanji added to the vocab entries first (words are currently kana+rōmaji+en only).
+- [ ] Localize to other languages (same structure, swap vocab + TTS voice).
 
 ## Phase 7 — Audio Engineering ✅ DONE
 - Loudness-normalized every clip (SFX -16, music -20 LUFS, -1 dB true-peak) — consistent mix
