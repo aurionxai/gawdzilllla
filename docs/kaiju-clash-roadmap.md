@@ -3,7 +3,7 @@
 > Live at **kaijukids.co** (GitHub Pages, repo `aurionxai/gawdzilllla`, game in `kaiju-clash/`).
 > Single-file vanilla-JS canvas, no build step. Rules: `kaiju-clash/CLAUDE.md`.
 
-## ✅ SHIPPED & LIVE (as of BUILD 19 · 2026-06-23)
+## ✅ SHIPPED & LIVE (as of BUILD 30 · 2026-06-26)
 
 **World 1 (Tokyo)** — 4 levels + boss + a secret level:
 - w1l1 (ground run), w1l2 Rooftop Run, w1l3 Tower Climb (vertical), w1l4 Riot-Mecha **boss arena**.
@@ -38,6 +38,20 @@ walk-into-rescue hints; forgiving rescue reach.
 + w2l4 **Giant Mecha** boss + w2secret. Signature **shock-tile** hazard (`~`: neon floor pulsing
 on/off, standable but zaps while live). Neon enemy set, `WORLD_VOCAB[2]` (12 words + TTS), world2
 backdrop. Boss system generalized (`BOSS_CFG`/`mkBoss`). Cross-world unlock gate (W2 needs W1 beaten).
+
+**Growth system** ✅ — the kaiju visibly evolves Hatchling → Juvenile → Adolescent → Leviathan → Apex.
+- **Distinct per-stage FORMS** sliced from the growth sheets (`skins/default/{lulah,poppy}_grow0-4.png`,
+  `loadGrowth`/`_heroKey`) — stage 0 keeps the animated baby; the Apex is the real bulky frilled adult,
+  not a scaled hatchling.
+- **Tuned size curve** (`GROWTH_SCALE`, heights 26/38/54/74/100px) — steeper than the sheet so the baby
+  stays tiny AND the Apex **towers ~2.5×** a city enemy. Scale is **visual-only**: hitbox fixed 44×66, so
+  controls/physics are identical at every stage (verified across all stages + device sizes).
+- **World-gated** (`Progression.stageFor`/`GROWTH_STAGES[i].minWorld`) — growth needs BOTH orbs AND world
+  reached; **Apex is a world-4 payoff**, not farmable on world 1.
+- **Evolution flourish** (`drawEvolve`) — leveling up plays a victory-screen morph (old→new form, light
+  burst, sparkles, stage names, roar+cheer), then settles into the results card with an "Evolved!" badge.
+- **Procedural animation** (`_formAnim`) — the static forms get squash/stretch + bob keyed to player state
+  (walk/jump/eat/fart/idle) so every size feels alive without hand-drawn per-stage frames.
 
 ## 🔜 NEXT UP
 - World 3 (Sunken City, underwater): backdrop `bg/world3.jpg` + boss mockup `boss3-mecha-kraken.png`
