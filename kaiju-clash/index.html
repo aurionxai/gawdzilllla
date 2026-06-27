@@ -47,7 +47,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '8';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '29';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '30';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -2063,14 +2063,47 @@ function _kaijuScale(){ return GROWTH_SCALE[(meta && meta.growthStage) || 0] || 
 // generous box only makes stomping easier and hits slightly forgiving — fine for a kids' game.
 function pPW(){ return 44; }
 function pPH(){ return 66; }
-function _drawKaijuSprite(key, bx, by, dir){
+// The grown-stage FORMS are single static sprites (one per stage), so we give them LIFE with
+// procedural squash/stretch + bob keyed to the player's state — walk, jump, eat, fart, idle all
+// read differently at every size, without needing dozens of hand-drawn frames per stage.
+function _formAnim(pl, tick){
+  let sx=1, sy=1, dy=0;
+  if(pl.eatAnim>0){                       // chomp: rapid squash pulse
+    const p=Math.abs(Math.sin((1-pl.eatAnim/420)*Math.PI*3));
+    sy=1-0.10*p; sx=1+0.10*p;
+  } else if(pl.fartAnim>0){               // fart: recoil squat + settle
+    const p=Math.min(1, pl.fartAnim/500);
+    sy=1-0.12*p; sx=1+0.12*p; dy=2*p;
+  } else if(!pl.onGround){                // air: stretch rising, squash on the way down
+    if((pl.vy||0)<0){ sy=1.12; sx=0.90; }
+    else { const q=Math.min(0.10,(pl.vy||0)*0.012); sy=1-q; sx=1+q; }
+  } else if(Math.abs(pl.vx||0)>0.3){      // walk: step-bob + gentle squash cycle
+    const ph=Math.sin(tick*0.35);
+    dy=-Math.abs(ph)*3; sy=1+0.05*ph; sx=1-0.05*ph;
+  } else {                                // idle: slow breathing
+    const ph=Math.sin(tick*0.08);
+    sy=1+0.03*ph; sx=1-0.03*ph;
+  }
+  return {sx, sy, dy};
+}
+function _drawKaijuSprite(key, bx, by, dir, pl, tick){
   const img = loadedSprites[key];
   const h  = 64 * _kaijuScale();                 // drawn height (grows with the kaiju)
   // Keep the frame's real aspect — the SNES frames aren't square; forcing a square
   // both squished the hero and (with the old 64px anchor) floated it above the ground.
   const w  = img ? h * (img.naturalWidth / img.naturalHeight) : h;
-  // Plant the feet on the hitbox bottom: by = screenY-4, hitbox is 66 tall -> by+70.
-  _drawSprite(key, (bx + 32) - w/2, (by + 70) - h, w, h, dir, false);
+  const footCx = bx + 32, footY = by + 70;       // feet planted on the hitbox bottom
+  // Grow forms (static sprites) get procedural motion; the baby uses its real frame animation.
+  if(img && pl && key.indexOf('_grow')>=0){
+    const a = _formAnim(pl, tick);
+    ctx.save(); ctx.imageSmoothingEnabled=false;
+    ctx.translate(footCx, footY + a.dy);
+    ctx.scale(a.sx*(dir<0?-1:1), a.sy);           // squash/stretch + flip, anchored at the feet
+    ctx.drawImage(img, Math.round(-w/2), Math.round(-h), Math.round(w), Math.round(h));
+    ctx.restore();
+    return;
+  }
+  _drawSprite(key, footCx - w/2, footY - h, w, h, dir, false);
 }
 // Pick the sprite key: the animated baby frames at stage 0, the distinct growth-FORM
 // sprite at stages 1-4 (so the on-screen kaiju matches the growth sheet at every stage).
@@ -2082,13 +2115,13 @@ function _heroKey(char, pl, tick){
 function drawLulah(x, y, pl, tick){
   const invinc = (pl.invincMs||0)>0 && Math.floor(Date.now()/80)%2===0;
   if(invinc){ ctx.save(); ctx.globalAlpha=0.3; }
-  _drawKaijuSprite(_heroKey('lulah',pl,tick), x-10, y-4, pl.dir);
+  _drawKaijuSprite(_heroKey('lulah',pl,tick), x-10, y-4, pl.dir, pl, tick);
   if(invinc) ctx.restore();
 }
 function drawPoppy(x, y, pl, tick){
   const invinc = (pl.invincMs||0)>0 && Math.floor(Date.now()/80)%2===0;
   if(invinc){ ctx.save(); ctx.globalAlpha=0.3; }
-  _drawKaijuSprite(_heroKey('poppy',pl,tick), x-9, y-4, pl.dir);
+  _drawKaijuSprite(_heroKey('poppy',pl,tick), x-9, y-4, pl.dir, pl, tick);
   if(invinc) ctx.restore();
 }
 // ═══════════════════════════════════════════
