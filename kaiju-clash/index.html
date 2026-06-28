@@ -47,7 +47,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '8';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '40';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '41';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -2434,24 +2434,26 @@ function pPH(){ return 66; }
 // procedural squash/stretch + bob keyed to the player's state — walk, jump, eat, fart, idle all
 // read differently at every size, without needing dozens of hand-drawn frames per stage.
 function _formAnim(pl, tick){
-  let sx=1, sy=1, dy=0, rot=0, swim=false;
+  let sx=1, sy=1, dy=0, rot=0, skew=0, swim=false;
   if(pl.eatAnim>0){                       // chomp: rapid squash pulse
     const p=Math.abs(Math.sin((1-pl.eatAnim/420)*Math.PI*3));
     sy=1-0.10*p; sx=1+0.10*p;
   } else if(pl.fartAnim>0){               // fart: recoil squat + settle
     const p=Math.min(1, pl.fartAnim/500);
     sy=1-0.12*p; sx=1+0.12*p; dy=2*p;
-  } else if(pl.swim){                      // SWIM: streamline lean + rhythmic undulation + nose tilt
+  } else if(pl.swim){                      // SWIM: forward dive posture + body undulation (skew) + tilt
     swim=true;
-    const f  = pl.thrust ? 0.34 : 0.20;    // kick faster when actively thrusting
+    const moving = Math.abs(pl.vx||0)>0.4;
+    const f  = pl.thrust ? 0.30 : 0.17;    // stroke faster when actively kicking
     const ph = tick*f;
-    const sway = Math.sin(ph)*0.15;        // body rocks (paddle/undulate)
-    const lean = (Math.abs(pl.vx||0)>0.3 ? 0.16 : 0.07);            // pitch forward into travel (streamline)
-    const tilt = Math.max(-0.34, Math.min(0.34, (pl.vy||0)*0.06));  // nose up rising / down sinking
-    rot = (pl.dir<0?-1:1)*(lean+tilt) + sway;
-    dy  = Math.sin(ph*0.5)*3;              // hover bob
-    const kick = 0.5+0.5*Math.sin(ph*2);   // stroke pulse (squash/stretch with each kick)
-    sy  = 1 - 0.06*kick; sx = 1 + 0.06*kick;
+    const undu = Math.sin(ph);             // the swim wave that drives the whole body
+    const lean = moving ? 0.42 : 0.12;     // pitch FORWARD into travel (clearly swimming, not standing)
+    const tilt = Math.max(-0.36, Math.min(0.36, (pl.vy||0)*0.06));  // nose up rising / down sinking
+    rot  = (pl.dir<0?-1:1)*(lean+tilt) + undu*0.10;
+    skew = (pl.dir<0?-1:1)*undu*0.18;      // oscillating horizontal shear → the body ripples/undulates
+    dy   = Math.sin(ph*0.5)*4;             // hover bob
+    const kick = 0.5+0.5*Math.sin(ph*2);   // tail/limb stroke pulse
+    sy   = 1 - 0.08*kick; sx = 1 + 0.07*kick;
   } else if(!pl.onGround){                // air: stretch rising, squash on the way down
     if((pl.vy||0)<0){ sy=1.12; sx=0.90; }
     else { const q=Math.min(0.10,(pl.vy||0)*0.012); sy=1-q; sx=1+q; }
@@ -2462,7 +2464,7 @@ function _formAnim(pl, tick){
     const ph=Math.sin(tick*0.08);
     sy=1+0.03*ph; sx=1-0.03*ph;
   }
-  return {sx, sy, dy, rot, swim};
+  return {sx, sy, dy, rot, skew, swim};
 }
 function _drawKaijuSprite(key, bx, by, dir, pl, tick){
   const img = loadedSprites[key];
@@ -2477,9 +2479,10 @@ function _drawKaijuSprite(key, bx, by, dir, pl, tick){
   if(img && pl && (grow || pl.swim)){
     const a = _formAnim(pl, tick);
     ctx.save(); ctx.imageSmoothingEnabled=false;
-    if(a.swim){                                   // pivot at the BODY centre and rotate (undulate/tilt)
+    if(a.swim){                                   // pivot at the BODY centre: rotate + shear (undulate) + tilt
       ctx.translate(footCx, footY - h/2 + a.dy);
       ctx.rotate(a.rot);
+      ctx.transform(1, 0, a.skew||0, 1, 0, 0);    // horizontal shear → body ripples like a swimmer
       ctx.scale(a.sx*(dir<0?-1:1), a.sy);
       ctx.drawImage(img, Math.round(-w/2), Math.round(-h/2), Math.round(w), Math.round(h));
     } else {                                      // walk/idle/air: squash/stretch anchored at the feet
