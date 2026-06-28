@@ -19,7 +19,10 @@ authored open-water row with a `homeY`/`bobP`; `updateEnemies` swim branch hover
 toward the kaiju in 2D when near. **Underwater ambience** (`_ensureSwimAmb`/`drawSwimBack`·`drawSwimFloor`
 ·`drawSwimFront`, gated on `s.level.swim`): drifting fish behind the terrain, kelp+coral anchored on the
 sand surface, rising bubble streams in front — all ctx VFX (like the existing bubbles/light-rays), NOT
-hero-class assets. Worlds gate via `Progression`
+hero-class assets. **Sand is borderless** (no per-tile grid/outline) + a smooth dune-cap surface pass in
+`drawTiles` so it reads as a continuous ocean bottom. **Heroes have a swim animation:** `updatePlayer`
+sets `pl.swim`/`pl.thrust`; `_formAnim` swim branch + `_drawKaijuSprite` rotate-about-body-centre give a
+streamline lean + undulation + nose tilt (baby also cycles `_walk_` frames to paddle). Worlds gate via `Progression`
 (world N order-1 unlocks once world N-1's last level is beaten). Bosses: `BOSS_CFG`/`mkBoss(type)` →
 `<frames>_<state>` sprites in `bosses/` (riot, giant, kraken). Add a level: rows → `LEVEL_BUILDERS` +
 `LEVEL_PAR` + `Progression.LEVELS` + (vocab) `WORLD_VOCAB[world]`. `playtest.js` LEVELS array.

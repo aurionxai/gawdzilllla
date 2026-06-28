@@ -47,7 +47,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '8';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '38';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '39';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -1424,6 +1424,8 @@ function updatePlayer(dt, s){
   //    Full vertical control so the diving/surging caves read as swimming, not jumping.
   const swim = !!s.level.swim;
   const jumpNow = isJump();
+  pl.swim = swim;
+  pl.thrust = swim && (jumpNow || isDuck());     // actively kicking (faster paddle anim)
   if(swim){
     if(jumpNow){ pl.vy = Math.max(-3.6, pl.vy - 0.55); pl.onGround=false; if(!pl.jumpPressed) sndJump(); }
     if(isDuck()){ pl.vy = Math.min(2.6, pl.vy + 0.45); pl.onGround=false; }
@@ -2065,23 +2067,24 @@ function drawTiles(s){
       const px=~~(c*TS-cam.x), py=~~(r*TS-cam.y);
 
       if(t===T_SOLID && s.level.swim){
-        // ── Sand seabed block (W3 swim caves): warm sand tones + pebble/shell speckles, with a
-        //    faint depth-blue overlay so the cavern walls read as underwater rock/sand.
-        const hh = (((c*92837111) ^ (r*689287499)) >>> 0);
-        const sp = ['#c9a76b','#bd9a5c','#d4b074','#c0a062'];
-        ctx.fillStyle = sp[hh % sp.length]; ctx.fillRect(px,py,TS,TS);
-        ctx.fillStyle = 'rgba(255,245,210,0.30)'; ctx.fillRect(px,py,TS,3);                 // top-lit sand crest
-        ctx.fillStyle = 'rgba(80,55,25,0.32)'; ctx.fillRect(px,py+TS-4,TS,4);               // shadowed underside
-        ctx.fillStyle = 'rgba(90,60,30,0.22)';                                              // grain speckles
-        for(let k=0;k<4;k++){ ctx.fillRect(px+((hh>>(k*5))%(TS-3)), py+5+((hh>>(k*3+2))%(TS-9)), 2, 2); }
-        if(hh % 6 === 0){                                                                   // ~1-in-6 shell/pebble
-          const SC=['#e9d9b8','#f2e6c8','#cdbfd6','#b8d6cf']; ctx.fillStyle=SC[(hh>>4)%SC.length];
-          const sx=px+5+(hh%(TS-12)), sy=py+8+((hh>>6)%(TS-14));
-          ctx.beginPath(); ctx.arc(sx,sy,3,0,Math.PI*2); ctx.fill();
-          ctx.fillStyle='rgba(0,0,0,0.18)'; ctx.fillRect(sx-3,sy+2,6,1);
+        // ── Continuous SAND seabed (W3 swim): no per-tile grid/outline — fill borderless, overlap
+        //    1px to kill seams, shade by depth, and soft-shade exposed sides (the rolling dune TOP
+        //    is drawn smooth in a separate surface pass after the loop, so it reads as ocean bottom).
+        const hh = (((c*374761393) ^ (r*668265263)) >>> 0);
+        ctx.fillStyle = ['#cdaa6c','#c7a365','#d1b074','#c9a968'][hh & 3];
+        ctx.fillRect(px-1,py-1,TS+2,TS+2);
+        ctx.fillStyle='rgba(70,48,20,0.10)'; ctx.fillRect(px,py+TS*0.5,TS,TS*0.5);          // deeper = darker
+        ctx.fillStyle='rgba(95,64,30,0.16)';                                                // grain
+        for(let k=0;k<5;k++){ ctx.fillRect(px+((hh>>(k*5))%(TS-2)), py+2+((hh>>(k*3+2))%(TS-4)), 2, 2); }
+        if(hh % 7 === 0){                                                                   // sparse pebble/shell
+          ctx.fillStyle=['#e9d9b8','#cdbfd6','#b8d6cf'][(hh>>4)%3];
+          ctx.beginPath(); ctx.arc(px+5+(hh%(TS-12)), py+8+((hh>>6)%(TS-14)), 2.4,0,6.283); ctx.fill();
         }
-        ctx.fillStyle = 'rgba(30,90,140,0.16)'; ctx.fillRect(px,py,TS,TS);                  // underwater depth tint
-        ctx.strokeStyle='rgba(60,40,18,0.38)'; ctx.lineWidth=1; ctx.strokeRect(px+0.5,py+0.5,TS-1,TS-1);
+        ctx.fillStyle = 'rgba(28,86,134,0.13)'; ctx.fillRect(px-1,py-1,TS+2,TS+2);          // depth tint
+        if(!(tiles[r] && tiles[r][c-1]===T_SOLID)){ const g=ctx.createLinearGradient(px,0,px+9,0);   // soft left edge
+          g.addColorStop(0,'rgba(16,52,92,0.26)'); g.addColorStop(1,'rgba(16,52,92,0)'); ctx.fillStyle=g; ctx.fillRect(px,py,9,TS); }
+        if(!(tiles[r] && tiles[r][c+1]===T_SOLID)){ const g=ctx.createLinearGradient(px+TS,0,px+TS-9,0); // soft right edge
+          g.addColorStop(0,'rgba(16,52,92,0.26)'); g.addColorStop(1,'rgba(16,52,92,0)'); ctx.fillStyle=g; ctx.fillRect(px+TS-9,py,9,TS); }
       } else if(t===T_SOLID){
         // City pavement/wall block — per-tile colour variance + occasional graffiti (deterministic by r,c)
         const hh = (((c*92837111) ^ (r*689287499)) >>> 0), neon = _WLD==='2';
@@ -2139,6 +2142,28 @@ function drawTiles(s){
           const bx=px+6+((seed*13)%(TS-12)), by=py+TS-((T5*0.06 + seed*40)% (TS+6)), br=1.5+((seed)%3);
           ctx.beginPath(); ctx.arc(bx,by,br,0,Math.PI*2); ctx.fill(); }
       }
+    }
+  }
+
+  // ── Smooth dune surface (swim levels): round each sand top into an organic mound so the seabed
+  //    reads as continuous ocean bottom, not stacked blocks. Local per-tile arches overlap into a
+  //    rolling dune line; steep cliffs keep their soft side-shade (terraced sand, still organic).
+  if(s.level.swim){
+    for(let c=Math.max(0,sc); c<ec; c++){
+      let sr=-1;
+      for(let r=0;r<LH;r++){ if(tiles[r]&&tiles[r][c]===T_SOLID){ if(!(tiles[r-1]&&tiles[r-1][c]===T_SOLID)) sr=r; break; } }
+      if(sr<1) continue;
+      const px=~~(c*TS-cam.x), py=~~(sr*TS-cam.y);
+      if(px<-TS||px>VW+TS||py<-TS||py>VH+TS) continue;
+      const hh=((c*2654435761)>>>0), bump=5+(hh%5);                 // 5–9px rounded rise
+      ctx.fillStyle='#cdaa6c';                                       // mound body (sand)
+      ctx.beginPath(); ctx.moveTo(px-2,py+7);
+      ctx.quadraticCurveTo(px+TS/2, py-bump, px+TS+2, py+7);
+      ctx.lineTo(px+TS+2,py+11); ctx.lineTo(px-2,py+11); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle='rgba(255,244,210,0.5)'; ctx.lineWidth=2;       // lit sand rim
+      ctx.beginPath(); ctx.moveTo(px-2,py+7); ctx.quadraticCurveTo(px+TS/2, py-bump, px+TS+2, py+7); ctx.stroke();
+      ctx.strokeStyle='rgba(14,44,78,0.16)'; ctx.lineWidth=3;         // soft water-side occlusion
+      ctx.beginPath(); ctx.moveTo(px-2,py-1); ctx.quadraticCurveTo(px+TS/2, py-bump-3, px+TS+2, py-1); ctx.stroke();
     }
   }
 }
@@ -2309,6 +2334,7 @@ function drawCitizens(s){
 function _kaijuKey(char, pl, tick){
   if(pl.eatAnim>0)  return char+'_eat_'+(Math.floor(tick/6)%2+1);
   if(pl.fartAnim>0) return char+'_fart_'+(Math.floor(tick/8)%2+1);
+  if(pl.swim)       return char+'_walk_'+(Math.floor(tick/(pl.thrust?5:9))%4+1);  // paddle (legs kick)
   if(!pl.onGround)  return char+'_jump';
   if(Math.abs(pl.vx)>0.3) return char+'_walk_'+(Math.floor(tick/8)%4+1);
   return char+'_idle';
@@ -2388,13 +2414,24 @@ function pPH(){ return 66; }
 // procedural squash/stretch + bob keyed to the player's state — walk, jump, eat, fart, idle all
 // read differently at every size, without needing dozens of hand-drawn frames per stage.
 function _formAnim(pl, tick){
-  let sx=1, sy=1, dy=0;
+  let sx=1, sy=1, dy=0, rot=0, swim=false;
   if(pl.eatAnim>0){                       // chomp: rapid squash pulse
     const p=Math.abs(Math.sin((1-pl.eatAnim/420)*Math.PI*3));
     sy=1-0.10*p; sx=1+0.10*p;
   } else if(pl.fartAnim>0){               // fart: recoil squat + settle
     const p=Math.min(1, pl.fartAnim/500);
     sy=1-0.12*p; sx=1+0.12*p; dy=2*p;
+  } else if(pl.swim){                      // SWIM: streamline lean + rhythmic undulation + nose tilt
+    swim=true;
+    const f  = pl.thrust ? 0.34 : 0.20;    // kick faster when actively thrusting
+    const ph = tick*f;
+    const sway = Math.sin(ph)*0.15;        // body rocks (paddle/undulate)
+    const lean = (Math.abs(pl.vx||0)>0.3 ? 0.16 : 0.07);            // pitch forward into travel (streamline)
+    const tilt = Math.max(-0.34, Math.min(0.34, (pl.vy||0)*0.06));  // nose up rising / down sinking
+    rot = (pl.dir<0?-1:1)*(lean+tilt) + sway;
+    dy  = Math.sin(ph*0.5)*3;              // hover bob
+    const kick = 0.5+0.5*Math.sin(ph*2);   // stroke pulse (squash/stretch with each kick)
+    sy  = 1 - 0.06*kick; sx = 1 + 0.06*kick;
   } else if(!pl.onGround){                // air: stretch rising, squash on the way down
     if((pl.vy||0)<0){ sy=1.12; sx=0.90; }
     else { const q=Math.min(0.10,(pl.vy||0)*0.012); sy=1-q; sx=1+q; }
@@ -2405,7 +2442,7 @@ function _formAnim(pl, tick){
     const ph=Math.sin(tick*0.08);
     sy=1+0.03*ph; sx=1-0.03*ph;
   }
-  return {sx, sy, dy};
+  return {sx, sy, dy, rot, swim};
 }
 function _drawKaijuSprite(key, bx, by, dir, pl, tick){
   const img = loadedSprites[key];
@@ -2415,12 +2452,21 @@ function _drawKaijuSprite(key, bx, by, dir, pl, tick){
   const w  = img ? h * (img.naturalWidth / img.naturalHeight) : h;
   const footCx = bx + 32, footY = by + 70;       // feet planted on the hitbox bottom
   // Grow forms (static sprites) get procedural motion; the baby uses its real frame animation.
-  if(img && pl && key.indexOf('_grow')>=0){
+  // SWIM applies to BOTH (grow + baby) so every stage gets the articulated swimming pose.
+  const grow = key.indexOf('_grow')>=0;
+  if(img && pl && (grow || pl.swim)){
     const a = _formAnim(pl, tick);
     ctx.save(); ctx.imageSmoothingEnabled=false;
-    ctx.translate(footCx, footY + a.dy);
-    ctx.scale(a.sx*(dir<0?-1:1), a.sy);           // squash/stretch + flip, anchored at the feet
-    ctx.drawImage(img, Math.round(-w/2), Math.round(-h), Math.round(w), Math.round(h));
+    if(a.swim){                                   // pivot at the BODY centre and rotate (undulate/tilt)
+      ctx.translate(footCx, footY - h/2 + a.dy);
+      ctx.rotate(a.rot);
+      ctx.scale(a.sx*(dir<0?-1:1), a.sy);
+      ctx.drawImage(img, Math.round(-w/2), Math.round(-h/2), Math.round(w), Math.round(h));
+    } else {                                      // walk/idle/air: squash/stretch anchored at the feet
+      ctx.translate(footCx, footY + a.dy);
+      ctx.scale(a.sx*(dir<0?-1:1), a.sy);
+      ctx.drawImage(img, Math.round(-w/2), Math.round(-h), Math.round(w), Math.round(h));
+    }
     ctx.restore();
     return;
   }
