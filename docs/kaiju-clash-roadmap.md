@@ -3,7 +3,7 @@
 > Live at **kaijukids.co** (GitHub Pages, repo `aurionxai/gawdzilllla`, game in `kaiju-clash/`).
 > Single-file vanilla-JS canvas, no build step. Rules: `kaiju-clash/CLAUDE.md`.
 
-## ✅ SHIPPED & LIVE (as of BUILD 37 · 2026-06-28)
+## ✅ SHIPPED & LIVE (as of BUILD 38 · 2026-06-28)
 
 **World 1 (Tokyo)** — 4 levels + boss + a secret level:
 - w1l1 (ground run), w1l2 Rooftop Run, w1l3 Tower Climb (vertical), w1l4 Riot-Mecha **boss arena**.
@@ -57,9 +57,10 @@ backdrop. Boss system generalized (`BOSS_CFG`/`mkBoss`). Cross-world unlock gate
 (`b.swim=true`): hold ⬆ to rise, slow drift down when idle, ⬇ to sink — no jump, no fall-death (caves are
 enclosed). Levels are **irregular sand-floor caverns** (deep basins + tall ridges/pillars, open water
 above = no ceiling) so you dive deep and surge up; gems sit on dive-bottoms / ridge-crests of the main
-path. Sand-tile rendering in `drawTiles` (`s.level.swim` branch); the playtest bot learned to swim. Still
-reuses the sea enemy set (jelly/puffer/eel/anchor/crab) + `WORLD_VOCAB[3]` (24 sea words + TTS), underwater
-`bg_w3`. w3l4 **Mecha-Kraken** boss stays a non-swim arena (tuned stomp fight). The `*` bubble-updraft
+path. Sand-tile rendering in `drawTiles` (`s.level.swim` branch); the playtest bot learned to swim. Sea enemies
+(jelly/puffer/eel/anchor/crab) now **float** (hover bob + 2D drift toward the kaiju), and an **underwater
+ambience layer** adds drifting fish, swaying kelp + coral on the sand, and rising bubbles (BUILD 38). Still
+uses `WORLD_VOCAB[3]` (24 sea words + TTS), underwater `bg_w3`. w3l4 **Mecha-Kraken** boss stays a non-swim arena (tuned stomp fight). The `*` bubble-updraft
 (`T_CURRENT`) hazard still exists for horizontal bonus ledges. **Authoring:** `scratchpad/swimgen.js`
 carves caves from a floor heightmap + validates no buried features. **Gotcha:** gems gate the exit, so
 every gem must be in open water on the bot's main path.
