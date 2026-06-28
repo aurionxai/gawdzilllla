@@ -112,7 +112,7 @@ Progression.LEVELS = [
   { id: 'w2l4', world: 2, name: 'Giant Mecha',      order: 4, playable: true },
   { id: 'w3l1', world: 3, name: 'Sunken Streets',   order: 1, playable: true },
   { id: 'w3l2', world: 3, name: 'Coral Ruins',      order: 2, playable: true },
-  { id: 'w3l3', world: 3, name: 'Kelp Tower',       order: 3, playable: true },
+  { id: 'w3l3', world: 3, name: 'Abyssal Trench',   order: 3, playable: true },
   { id: 'w3l4', world: 3, name: 'Mecha-Kraken',     order: 4, playable: true },
 ];
 

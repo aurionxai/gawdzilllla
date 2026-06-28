@@ -22,7 +22,12 @@ sand surface, rising bubble streams in front — all ctx VFX (like the existing 
 hero-class assets. **Sand is borderless** (no per-tile grid/outline) + a smooth dune-cap surface pass in
 `drawTiles` so it reads as a continuous ocean bottom. **Heroes have a swim animation:** `updatePlayer`
 sets `pl.swim`/`pl.thrust`; `_formAnim` swim branch + `_drawKaijuSprite` rotate-about-body-centre give a
-streamline lean + undulation + nose tilt (baby also cycles `_walk_` frames to paddle). Worlds gate via `Progression`
+streamline lean + undulation + nose tilt (baby also cycles `_walk_` frames to paddle). **Open-topped
+swim caves clamp `pl.y` to the level box** so the kaiju can't swim off-screen, and the camera adds HARD
+SAFETY MARGINS (keeps the hero on screen even mid-fast-swim) + snappier vertical follow. Swim levels
+**ramp in size+difficulty** (L1 92×20 easy → L2 118×24 +pillars+urchins → L3 78×36 deep-trench, most
+enemies/`^`); the playtest budget scales with level size. `^` urchins go on peak crests / off the gem
+path (gating gems stay in wide-open canyon columns, bot-reachable). Worlds gate via `Progression`
 (world N order-1 unlocks once world N-1's last level is beaten). Bosses: `BOSS_CFG`/`mkBoss(type)` →
 `<frames>_<state>` sprites in `bosses/` (riot, giant, kraken). Add a level: rows → `LEVEL_BUILDERS` +
 `LEVEL_PAR` + `Progression.LEVELS` + (vocab) `WORLD_VOCAB[world]`. `playtest.js` LEVELS array.

@@ -104,10 +104,11 @@ function botSource() {
     }, [CHAR, lvl]);
     // install bot
     await page.evaluate(`(${botSource.toString()})(); window.__bot.install();`);
-    // let it play
+    // let it play — give bigger levels proportionally more time (bot crosses ~50px/s incl. detours)
+    const budget = Math.max(PER_LEVEL_MS, (spawn.LW + spawn.LH) * 32 * 16);
     const t0 = Date.now();
     let tel;
-    while (Date.now() - t0 < PER_LEVEL_MS) {
+    while (Date.now() - t0 < budget) {
       await page.waitForTimeout(500);
       tel = await page.evaluate(() => window.__tel);
       if (tel.won || tel.died) break;
