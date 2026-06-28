@@ -14,7 +14,12 @@ enclosed), sand-tile rendering in `drawTiles` (`s.level.swim` branch), and a swi
 tall ridges/pillars, OPEN water above = no ceiling) so the kaiju dives deep & surges up; gems sit in
 open water on the dive-bottoms / ridge-crests of the main path. W3L4 (boss) stays a non-swim arena.
 Authoring helper: `scratchpad/swimgen.js` carves caves from a centerline/floor map + validates no buried
-features. Worlds gate via `Progression`
+features. **Swim enemies FLOAT** (no gravity): `buildFromRows(rows,{swim:true})` spawns them at their
+authored open-water row with a `homeY`/`bobP`; `updateEnemies` swim branch hovers them (sine bob), drifts
+toward the kaiju in 2D when near. **Underwater ambience** (`_ensureSwimAmb`/`drawSwimBack`·`drawSwimFloor`
+·`drawSwimFront`, gated on `s.level.swim`): drifting fish behind the terrain, kelp+coral anchored on the
+sand surface, rising bubble streams in front — all ctx VFX (like the existing bubbles/light-rays), NOT
+hero-class assets. Worlds gate via `Progression`
 (world N order-1 unlocks once world N-1's last level is beaten). Bosses: `BOSS_CFG`/`mkBoss(type)` →
 `<frames>_<state>` sprites in `bosses/` (riot, giant, kraken). Add a level: rows → `LEVEL_BUILDERS` +
 `LEVEL_PAR` + `Progression.LEVELS` + (vocab) `WORLD_VOCAB[world]`. `playtest.js` LEVELS array.

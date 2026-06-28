@@ -47,7 +47,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '8';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '37';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '38';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -881,7 +881,8 @@ const T_AIR=0, T_SOLID=1, T_PLAT=2, T_DEST=3, T_HAZARD=4, T_SHOCK=5, T_CURRENT=6
 function _shockState(){ const t=Date.now()%2200; return t<1100 ? 'on' : (t>1850 ? 'warn' : 'off'); }
 
 // Convert an ASCII tilemap (array of strings) into a game level object.
-function buildFromRows(rows){
+function buildFromRows(rows, opts){
+  const swim = !!(opts && opts.swim);
   const p = LevelParse.parseLevel(rows);
   LW = p.LW; LH = p.LH;                       // level dims are global, set on build
   // Spawn chars only give a column; the entity must rest on the first solid/platform
@@ -897,11 +898,14 @@ function buildFromRows(rows){
     type: FOOD_TYPES[i % FOOD_TYPES.length],
     x: s.c*TS + TS/2 - 10, y: surfaceTop(s.c, s.r) - 30, collected:false, bobOff:i*0.8,
   }));
-  const enemies = p.spawns.enemies.map(s=>({
-    x: s.c*TS, y: surfaceTop(s.c, s.r) - ENEMY_FOOT, dir:-1, type:s.type,
-    hp: ENEMIES[s.type].hp, maxHp: ENEMIES[s.type].hp,
-    patrol:[(s.c-3)*TS, (s.c+3)*TS], stunMs:0, dead:false, flashMs:0,
-  }));
+  const enemies = p.spawns.enemies.map((s,i)=>{
+    // Swim levels: the creature FLOATS at its authored open-water row (bobs there);
+    // land levels: it rests on the first surface at/below its row.
+    const y = swim ? (s.r*TS - 6) : (surfaceTop(s.c, s.r) - ENEMY_FOOT);
+    return { x: s.c*TS, y, homeY:y, bobP:i*1.7, dir:-1, type:s.type,
+      hp: ENEMIES[s.type].hp, maxHp: ENEMIES[s.type].hp,
+      patrol:[(s.c-3)*TS, (s.c+3)*TS], stunMs:0, dead:false, flashMs:0 };
+  });
   const citizens = p.spawns.citizens.map((s,i)=>({
     x: s.c*TS, y: surfaceTop(s.c, s.r) - 22, dir: i%2?1:-1, clr:'#ffd8a8', npc: NPC_TYPES[i % NPC_TYPES.length],
     saved:false, eaten:false, eatenTimer:0, savedTimer:0, particles:[],
@@ -914,7 +918,7 @@ function buildFromRows(rows){
   // the floor — otherwise resolveX reads the buried floor tile as a wall and marches
   // the player a tile/frame to the exit (the level "plays itself").
   const door = p.spawns.door ? { r:p.spawns.door.r, c:p.spawns.door.c, hidden:true, used:false } : null;  // hidden until fart-revealed
-  return { tiles:p.tiles, food, enemies, citizens, gems,
+  return { tiles:p.tiles, food, enemies, citizens, gems, swim,
            playerSpawn:{ x:ps.c*TS, y: surfaceTop(ps.c, ps.r) - 66 }, exit:p.spawns.exit, door, LW:p.LW, LH:p.LH };
 }
 
@@ -1285,9 +1289,9 @@ const LEVEL_BUILDERS = {
   w2l3: () => buildFromRows(W2L3_ROWS),
   w2secret: () => buildFromRows(W2SECRET_ROWS),
   w2l4: () => { const b = buildFromRows(W2L4_ROWS); b.boss = mkBoss('giant'); b.shocks = []; b.bolts = []; return b; },
-  w3l1: () => { const b = buildFromRows(W3L1_ROWS); b.swim = true; return b; },
-  w3l2: () => { const b = buildFromRows(W3L2_ROWS); b.swim = true; return b; },
-  w3l3: () => { const b = buildFromRows(W3L3_ROWS); b.swim = true; return b; },
+  w3l1: () => buildFromRows(W3L1_ROWS, { swim:true }),
+  w3l2: () => buildFromRows(W3L2_ROWS, { swim:true }),
+  w3l3: () => buildFromRows(W3L3_ROWS, { swim:true }),
   w3secret: () => buildFromRows(W3SECRET_ROWS),
   w3l4: () => { const b = buildFromRows(W3L4_ROWS); b.boss = mkBoss('kraken'); b.shocks = []; b.bolts = []; return b; },
 };
@@ -1786,16 +1790,33 @@ function updateEnemies(dt, s){
     const chaseRange = 90 + 34*d;                       // how close before it locks on
     const chaseSpd   = patrolSpd * 2.0;
     const dxP = pl.x - e.x, sameLevel = Math.abs(pl.y - e.y) < 50;
-    if(sameLevel && Math.abs(dxP) < chaseRange){
-      // Hunt the player (clamped to its patrol span so it won't walk off a ledge)
-      e.dir = dxP > 0 ? 1 : -1;
-      e.x += chaseSpd * e.dir;
-      e.chaseMs = 200;
+    if(s.level.swim){
+      // ── Aquatic drift: float at a home depth (gentle bob), patrol horizontally, and when the
+      //    kaiju is near, glide toward it in BOTH axes (no gravity — they hang in the water).
+      const dyP = pl.y - e.y, near = Math.hypot(dxP, dyP) < chaseRange + 30;
+      if(near){
+        e.dir = dxP > 0 ? 1 : -1;
+        e.x += chaseSpd*0.7 * e.dir;
+        e.homeY += Math.max(-1.4, Math.min(1.4, dyP*0.05));   // drift toward the kaiju's depth
+      } else {
+        e.x += patrolSpd*0.7 * e.dir;
+      }
+      if(e.x <= e.patrol[0]){ e.x=e.patrol[0]; e.dir=1; }
+      if(e.x+eW(e) >= e.patrol[1]){ e.x=e.patrol[1]-eW(e); e.dir=-1; }
+      e.homeY = Math.max(TS*0.5, Math.min((LH-2)*TS, e.homeY));
+      e.y = e.homeY + Math.sin(Date.now()*0.0013 + e.bobP) * (enemyBig(e)?7:11);   // hover bob
     } else {
-      e.x += patrolSpd * e.dir;                          // normal patrol
+      if(sameLevel && Math.abs(dxP) < chaseRange){
+        // Hunt the player (clamped to its patrol span so it won't walk off a ledge)
+        e.dir = dxP > 0 ? 1 : -1;
+        e.x += chaseSpd * e.dir;
+        e.chaseMs = 200;
+      } else {
+        e.x += patrolSpd * e.dir;                          // normal patrol
+      }
+      if(e.x <= e.patrol[0]){ e.x=e.patrol[0]; e.dir=1; }
+      if(e.x+eW(e) >= e.patrol[1]){ e.x=e.patrol[1]-eW(e); e.dir=-1; }
     }
-    if(e.x <= e.patrol[0]){ e.x=e.patrol[0]; e.dir=1; }
-    if(e.x+eW(e) >= e.patrol[1]){ e.x=e.patrol[1]-eW(e); e.dir=-1; }
 
     // Hurt player on contact
     if(pl.invincMs<=0){
@@ -1928,6 +1949,104 @@ function bgLayer(offset, bldClr, roofClr, maxH, maxW, winAlpha){
     }
   });
 }
+// ═══════════════════════════════════════════
+//  UNDERWATER AMBIENCE (W3 swim levels): drifting fish, rising bubbles, swaying kelp/coral.
+//  Environmental VFX (ctx) layered like the existing bubbles/light-rays — NOT hero-class assets.
+// ═══════════════════════════════════════════
+function _ambHash(n){ n=(n^61)^(n>>>16); n=(n+(n<<3))>>>0; n=n^(n>>>4); n=Math.imul(n,0x27d4eb2d); n=n^(n>>>15); return (n>>>0)/4294967296; }
+function _ensureSwimAmb(s){
+  if(s._amb) return s._amb;
+  const t = s.level.tiles;
+  const FISHCLR = [['#ff9a4d','#ffce9e','#c25a13'],['#5ad6ff','#bdefff','#1f7fb0'],
+                   ['#ffe14d','#fff3a8','#bd9a1a'],['#ff7ad0','#ffd0ee','#c23d92'],
+                   ['#7CFF8A','#caffd0','#2a9a45']];
+  const fish = [];
+  for(let i=0;i<14;i++){
+    fish.push({ y: 24 + _ambHash(i*7+1)*(VH-90), spd: 0.012+_ambHash(i*5+3)*0.026,
+      ph: _ambHash(i*9+2)*(VW+160), dir: _ambHash(i*3+5)>0.5?1:-1,
+      sz: 5+Math.floor(_ambHash(i*11)*5), wob: 6+_ambHash(i*4)*10, wf: 0.001+_ambHash(i*6)*0.0016,
+      clr: FISHCLR[i%FISHCLR.length] });
+  }
+  const bubbles = [];
+  for(let i=0;i<26;i++){ bubbles.push({ x:_ambHash(100+i*3)*VW, ph:_ambHash(200+i*5)*(VH+60),
+    spd:0.02+_ambHash(300+i*7)*0.05, rr:1.2+_ambHash(400+i)*2.2,
+    wob:4+_ambHash(500+i)*8, wf:0.001+_ambHash(600+i)*0.002 }); }
+  const flora = [];
+  for(let c=1;c<LW-1;c++){
+    let top=-1; for(let r=1;r<LH;r++){ if(t[r]&&t[r][c]===T_SOLID){ if(t[r-1]&&t[r-1][c]!==T_SOLID&&t[r-1][c]!==T_DEST) top=r; break; } }
+    if(top<2) continue;
+    if(_ambHash(c*13+7)<0.34) flora.push({ c, top, kind:_ambHash(c*17+3)<0.55?'kelp':'coral',
+      sz:0.7+_ambHash(c*5)*0.7, ph:_ambHash(c*3)*6.28, hue:_ambHash(c*19) });
+  }
+  s._amb = { fish, bubbles, flora };
+  return s._amb;
+}
+function _drawAmbFish(x,y,sz,dir,clr,alpha){
+  ctx.save(); ctx.globalAlpha=alpha; ctx.translate(x,y); ctx.scale(dir,1);
+  ctx.fillStyle=clr[2];                                                          // dark outline pass
+  ctx.beginPath(); ctx.ellipse(0,0,sz*1.5+1,sz+1,0,0,6.283); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-sz*1.3,0); ctx.lineTo(-sz*2.1,-sz*0.9); ctx.lineTo(-sz*2.1,sz*0.9); ctx.closePath(); ctx.fill();
+  ctx.fillStyle=clr[0]; ctx.beginPath(); ctx.ellipse(0,0,sz*1.5,sz,0,0,6.283); ctx.fill();   // body
+  ctx.fillStyle=clr[1]; ctx.beginPath(); ctx.ellipse(sz*0.2,-sz*0.25,sz*0.9,sz*0.5,0,0,6.283); ctx.fill(); // belly hi
+  ctx.fillStyle='#1a1a26'; ctx.beginPath(); ctx.arc(sz*0.85,-sz*0.1,sz*0.22+0.6,0,6.283); ctx.fill();
+  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(sz*0.92,-sz*0.18,sz*0.1+0.3,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function drawSwimBack(s){
+  const a=_ensureSwimAmb(s), now=Date.now();
+  for(const f of a.fish){
+    const span=VW+160, x=(((f.ph + now*f.spd*f.dir)%span)+span)%span - 80;
+    _drawAmbFish(x, f.y + Math.sin(now*f.wf + f.ph)*f.wob, f.sz, f.dir, f.clr, 0.55);
+  }
+}
+function _drawKelp(bx,by,fl,now){
+  const segs=4+Math.floor(fl.sz*3), seg=10*fl.sz;
+  const G = fl.hue<0.5?['#2f9e54','#54c47a','#1c6e3a']:['#3a8f7a','#5fc4ad','#236b5b'];
+  ctx.save(); ctx.lineCap='round'; let x=bx, y=by;
+  for(let i=0;i<segs;i++){
+    const nx=bx+Math.sin(now*0.0016 + fl.ph + i*0.5)*(2+i*1.2), ny=by-(i+1)*seg;
+    ctx.strokeStyle=G[2]; ctx.lineWidth=6*fl.sz; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(nx,ny); ctx.stroke();
+    ctx.strokeStyle=G[0]; ctx.lineWidth=4*fl.sz; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(nx,ny); ctx.stroke();
+    ctx.strokeStyle=G[1]; ctx.lineWidth=1.5*fl.sz; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(nx,ny); ctx.stroke();
+    x=nx; y=ny;
+  }
+  ctx.restore();
+}
+function _drawCoral(bx,by,fl,now){
+  const PAL=[['#ff7ad0','#ffd0ee','#c23d92'],['#ff9a4d','#ffce9e','#c25a13'],['#b98cff','#e0ccff','#7d4fd0']];
+  const cl=PAL[Math.floor(fl.hue*PAL.length)%PAL.length], h=18*fl.sz, w=14*fl.sz;
+  const sway=Math.sin(now*0.0014+fl.ph)*1.4;
+  ctx.save(); ctx.translate(bx,by); ctx.lineCap='round';
+  ctx.fillStyle=cl[2]; ctx.beginPath(); ctx.ellipse(0,-h*0.18,w*0.8+1,h*0.4+1,0,Math.PI,0); ctx.fill();
+  ctx.fillStyle=cl[0]; ctx.beginPath(); ctx.ellipse(0,-h*0.18,w*0.8,h*0.4,0,Math.PI,0); ctx.fill();
+  for(const dx of [-w*0.5,0,w*0.5]){
+    ctx.strokeStyle=cl[2]; ctx.lineWidth=5*fl.sz; ctx.beginPath(); ctx.moveTo(dx,-h*0.2); ctx.quadraticCurveTo(dx*1.3+sway,-h*0.7,dx*1.1+sway*1.5,-h); ctx.stroke();
+    ctx.strokeStyle=cl[0]; ctx.lineWidth=3*fl.sz; ctx.beginPath(); ctx.moveTo(dx,-h*0.2); ctx.quadraticCurveTo(dx*1.3+sway,-h*0.7,dx*1.1+sway*1.5,-h); ctx.stroke();
+    ctx.fillStyle=cl[1]; ctx.beginPath(); ctx.arc(dx*1.1+sway*1.5,-h,2*fl.sz,0,6.283); ctx.fill();
+  }
+  ctx.restore();
+}
+function drawSwimFloor(s){
+  const a=_ensureSwimAmb(s), cam=s.cam, now=Date.now();
+  for(const fl of a.flora){
+    const bx=fl.c*TS+TS/2-cam.x, by=fl.top*TS-cam.y;
+    if(bx<-40||bx>VW+40||by<-60||by>VH+40) continue;
+    if(fl.kind==='kelp') _drawKelp(bx,by,fl,now); else _drawCoral(bx,by,fl,now);
+  }
+}
+function drawSwimFront(s){
+  const a=_ensureSwimAmb(s), now=Date.now(), span=VH+60;
+  ctx.save();
+  for(const b of a.bubbles){
+    const y=VH+20-((b.ph+now*b.spd)%span), x=b.x+Math.sin(now*b.wf+b.ph)*b.wob, r=b.rr;
+    ctx.globalAlpha=0.4; ctx.strokeStyle='rgba(220,250,255,0.9)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.arc(x,y,r,0,6.283); ctx.stroke();
+    ctx.globalAlpha=0.5; ctx.fillStyle='rgba(255,255,255,0.85)';
+    ctx.beginPath(); ctx.arc(x-r*0.3,y-r*0.3,r*0.34,0,6.283); ctx.fill();
+  }
+  ctx.restore();
+}
+
 // ═══════════════════════════════════════════
 //  TILE DRAWING
 // ═══════════════════════════════════════════
@@ -3651,7 +3770,9 @@ function render(){
     const PW=pPW();
 
     drawBg(s.cam);
+    if(s.level.swim) drawSwimBack(s);     // drifting fish behind the terrain
     drawTiles(s);
+    if(s.level.swim) drawSwimFloor(s);    // kelp + coral anchored on the sand
     drawFood(s);
     drawGems(s);
     drawCitizens(s);
@@ -3664,6 +3785,8 @@ function render(){
     const py = ~~(pl.y - s.cam.y);
     if(s.charKey==='lulah') drawLulah(px, py, pl, tick);
     else                    drawPoppy(px, py, pl, tick);
+
+    if(s.level.swim) drawSwimFront(s);    // rising bubble streams in front of the scene
 
     // Exit portal — drawn at the actual 'E' tile (boss arenas have no exit)
     if(!s.level.boss){
