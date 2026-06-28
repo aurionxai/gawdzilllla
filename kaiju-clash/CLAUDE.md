@@ -7,7 +7,14 @@ tilemaps (`W1L*_ROWS`/`W2L*_ROWS`/`W3L*_ROWS`) → `buildFromRows` → `LevelPar
 `*`**bubble updraft** (W3 — non-solid column that floats you UP; `T_CURRENT`); spawn chars `P E D C o g` +
 enemies `s w t`(W1) `n h d k p z`(W2 neon) `j f u a r`(W3 sunken: jelly/puffer/eel/anchor/crab). **Don't
 put `*` in a vertical climb — it traps the playtest bot against the platform above** (use it in horizontal
-levels for bonus ledges; W3L3 is a plain W2L3-style climb). Worlds gate via `Progression`
+levels for bonus ledges). **W3L1–L3 are SWIM levels** (`b.swim=true` on the builder): buoyancy physics
+in `updatePlayer` (hold ⬆=rise, idle=slow drift down, ⬇=sink fast; no jump, no fall-death — caves are
+enclosed), sand-tile rendering in `drawTiles` (`s.level.swim` branch), and a swim branch in `playtest.js`
+(hold `ArrowUp` toward target). **Build swim levels from an irregular FLOOR heightmap** (deep basins +
+tall ridges/pillars, OPEN water above = no ceiling) so the kaiju dives deep & surges up; gems sit in
+open water on the dive-bottoms / ridge-crests of the main path. W3L4 (boss) stays a non-swim arena.
+Authoring helper: `scratchpad/swimgen.js` carves caves from a centerline/floor map + validates no buried
+features. Worlds gate via `Progression`
 (world N order-1 unlocks once world N-1's last level is beaten). Bosses: `BOSS_CFG`/`mkBoss(type)` →
 `<frames>_<state>` sprites in `bosses/` (riot, giant, kraken). Add a level: rows → `LEVEL_BUILDERS` +
 `LEVEL_PAR` + `Progression.LEVELS` + (vocab) `WORLD_VOCAB[world]`. `playtest.js` LEVELS array.

@@ -8,7 +8,8 @@ const PW_DIR = '/Users/tc/.npm/_npx/9833c18b2d85bc59/node_modules/playwright';
 const EXE = '/Users/tc/Library/Caches/ms-playwright/chromium_headless_shell-1228/chrome-headless-shell-mac-arm64/chrome-headless-shell';
 const { chromium } = require(PW_DIR);
 const URL = process.env.URL || 'http://localhost:8080/';
-const LEVELS = ['w1l1', 'w1l2', 'w1l3', 'w1l4', 'w2l1', 'w2l2', 'w2l3', 'w2l4', 'w3l1', 'w3l2', 'w3l3', 'w3l4'];
+const LEVELS = (process.env.LEVELS ? process.env.LEVELS.split(',') : null)
+  || ['w1l1', 'w1l2', 'w1l3', 'w1l4', 'w2l1', 'w2l2', 'w2l3', 'w2l4', 'w3l1', 'w3l2', 'w3l3', 'w3l4'];
 const CHAR = 'lulah';
 const PER_LEVEL_MS = 35000;
 
@@ -52,10 +53,19 @@ function botSource() {
       const gapAhead  = !solid(t, footR, aheadC) && !solid(t, footR+1, aheadC) && !solid(t, footR+2, aheadC);
       const needUp    = ty < pl.y - T*0.5;           // vertical climb (tower) or boss above
       const enemyAhead = s.level.enemies.some(e => !e.dead && Math.abs(e.y-pl.y)<70 && (goRight ? (e.x>pl.x && e.x-pl.x<80) : (e.x<pl.x && pl.x-e.x<80)));
-      const wantJump = pl.onGround && (wallAhead || gapAhead || enemyAhead || needUp);
-      // pulse jump (must release for re-trigger: jump fires on press edge + onGround)
-      if (wantJump && !jumpHeld) { keys.add('ArrowUp'); jumpHeld = true; }
-      else { keys.delete('ArrowUp'); jumpHeld = false; }
+      if (s.level.swim) {
+        // ── Swim controller: hold Up to rise toward the target, Down to descend, bob up on walls.
+        keys.delete('ArrowUp'); keys.delete('ArrowDown');
+        const wantRise = ty < pl.y - 6 || wallAhead;   // target above, or nose into a wall → lift over it
+        const wantSink = ty > pl.y + 24 && !wallAhead;  // target well below → drift down
+        if (wantRise) keys.add('ArrowUp');
+        else if (wantSink) keys.add('ArrowDown');
+      } else {
+        const wantJump = pl.onGround && (wallAhead || gapAhead || enemyAhead || needUp);
+        // pulse jump (must release for re-trigger: jump fires on press edge + onGround)
+        if (wantJump && !jumpHeld) { keys.add('ArrowUp'); jumpHeld = true; }
+        else { keys.delete('ArrowUp'); jumpHeld = false; }
+      }
       // attack toward boss/enemy
       if (boss || enemyAhead) { justDn.add('KeyZ'); }
       // telemetry

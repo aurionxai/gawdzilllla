@@ -47,7 +47,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '8';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '36';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '37';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -1166,83 +1166,83 @@ const W2L4_ROWS = [
   "##############################",
 ];
 
+// W3 levels are SWIM caves: irregular sand floor (deep basins + tall ridges), open water above
+// (no ceiling). Dive into a basin / surge over a ridge => the down-down-up-up buoyancy rhythm.
 const W3L1_ROWS = [
   "",
   "",
   "",
-  "",
-  "",
-  "",
-  "                                                  oC",
-  "                                                  *",
-  "                                                  *",
-  "                                                  *",
-  "                  u",
-  "            o   g ####  g                     g j#####o D                       o f",
-  " P  g C   j ##############f   o         r  ###############u   g           a  ######   g   o j     C gE",
-  "################################      C##########################       C###############################",
-  "################################  ################################  ####################################",
-  "################################  ################################  ####################################"
+  "                      o",
+  "                                             C",
+  "                      #",
+  "                    ###                      ###",
+  "                  ######                  ######",
+  "                 #######                  #######             E",
+  "  P  C           #######                 j#######           #",
+  "                 ########                ########g          ###",
+  "#######          ########                #########         #####",
+  "#######         ##########               #########        f#####",
+  "########        ##########              ###########   C   ######",
+  "#########   o   ############   u    o   ###########       ######",
+  "#########    g  ################        ########################",
+  "################################################################",
+  "################################################################"
 ];
 const W3L2_ROWS = [
   "",
   "",
   "",
   "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "                                           gj  o",
-  "              f o g               C  r   ########      a",
-  "  P C g    ########     oDu    ########  ########  ########     g         f o     C   g   g   E",
-  " ########  ########  ########  ########  ########  ########  ########  #########################",
-  " ########  ########  ########  ########  ########  ########  ########  #########################",
-  " ########  ########  ########  ########  ########  ########  ########  #########################"
+  "                                                  o",
+  "                        o",
+  "                                                 #",
+  "                       #                       a##",
+  "                     ###                      ####",
+  "                   #####                     ######",
+  "                  #######                    ######     ###         E",
+  "  P   C           #######            ###     ######     ###",
+  "                  #######            ###    ########    ###      ##",
+  "######           #########           ###    ########    ###     f#####",
+  "######           #########           ###    #########   ###     ######",
+  "#######          #########           ###   ##########   ###     ######",
+  "#######          ##########          ###   ##########   ###    #######",
+  "#######         ###########          ###  o###########  ###   C#######",
+  "########    o   ###########    C     ###  ############  ###   ########",
+  "########   g u  #############   j    ###  ############  ### g ########",
+  "#################################    ###  ############################",
+  "######################################################################"
 ];
 const W3L3_ROWS = [
-  "                    ",
-  "                    ",
-  "                    ",
-  "                    ",
-  "        E           ",
-  "    ===========     ",
-  "                    ",
-  "          u         ",
-  "       ===========  ",
-  "                    ",
-  "       C  o         ",
-  "    ===========     ",
-  "                    ",
-  "          f g       ",
-  "       ===========  ",
-  "  D                 ",
-  " ===   C  o         ",
-  "    ===========     ",
-  "                    ",
-  "          o u       ",
-  "       ===========  ",
-  "                    ",
-  "       f  o         ",
-  "    ===========     ",
-  "                    ",
-  "          u g       ",
-  "       ===========  ",
-  "                    ",
-  "       C  o         ",
-  "    ===========     ",
-  "                    ",
-  "          f         ",
-  "       ===========  ",
-  "                    ",
-  "       o            ",
-  "    ===========     ",
-  "                    ",
-  "  P                 ",
-  "####################",
-  "####################",
+  "###                            ###",
+  "###                            ###",
+  "###             E              ###",
+  "###                            ###",
+  "###                            ###",
+  "###      ######         g j    ###",
+  "###      ######       #######  ###",
+  "###      ######       #######  ###",
+  "###                   #######  ###",
+  "###         o                  ###",
+  "###                            ###",
+  "#######         u   o          ###",
+  "#######         g              ###",
+  "#######      ######            ###",
+  "###          ######            ###",
+  "###          ######            ###",
+  "###  C                         ###",
+  "###      o                     ###",
+  "###                            ###",
+  "###  P                        ####",
+  "#########                    #####",
+  "#########           f     C ######",
+  "#########           ##   #########",
+  "#########          ##### #########",
+  "#########         ################",
+  "######### ##     #################",
+  "##############  ##################",
+  "##################################",
+  "##################################",
+  "##################################"
 ];
 const W3SECRET_ROWS = [
   "                              ",
@@ -1285,9 +1285,9 @@ const LEVEL_BUILDERS = {
   w2l3: () => buildFromRows(W2L3_ROWS),
   w2secret: () => buildFromRows(W2SECRET_ROWS),
   w2l4: () => { const b = buildFromRows(W2L4_ROWS); b.boss = mkBoss('giant'); b.shocks = []; b.bolts = []; return b; },
-  w3l1: () => buildFromRows(W3L1_ROWS),
-  w3l2: () => buildFromRows(W3L2_ROWS),
-  w3l3: () => buildFromRows(W3L3_ROWS),
+  w3l1: () => { const b = buildFromRows(W3L1_ROWS); b.swim = true; return b; },
+  w3l2: () => { const b = buildFromRows(W3L2_ROWS); b.swim = true; return b; },
+  w3l3: () => { const b = buildFromRows(W3L3_ROWS); b.swim = true; return b; },
   w3secret: () => buildFromRows(W3SECRET_ROWS),
   w3l4: () => { const b = buildFromRows(W3L4_ROWS); b.boss = mkBoss('kraken'); b.shocks = []; b.bolts = []; return b; },
 };
@@ -1416,17 +1416,26 @@ function updatePlayer(dt, s){
   else if(isMoveR()){ pl.vx=spd; pl.dir=1; }
   else { pl.vx *= 0.60; if(Math.abs(pl.vx)<0.35) pl.vx=0; }
 
-  // ── Jump
+  // ── Buoyancy swim (W3 underwater levels): hold ⬆ to rise, drift down when idle, ⬇ to sink fast.
+  //    Full vertical control so the diving/surging caves read as swimming, not jumping.
+  const swim = !!s.level.swim;
   const jumpNow = isJump();
-  if(jumpNow && !pl.jumpPressed && pl.onGround){
-    pl.vy = s.charKey==='poppy' ? -10.5 : -9.8;   // lulah: 9.8 clears a 3-tile (96px) gap with ~30px margin
-    pl.onGround = false;
-    sndJump();
-  }
-  pl.jumpPressed = jumpNow;
+  if(swim){
+    if(jumpNow){ pl.vy = Math.max(-3.6, pl.vy - 0.55); pl.onGround=false; if(!pl.jumpPressed) sndJump(); }
+    if(isDuck()){ pl.vy = Math.min(2.6, pl.vy + 0.45); pl.onGround=false; }
+    pl.jumpPressed = jumpNow;
+  } else {
+    // ── Jump
+    if(jumpNow && !pl.jumpPressed && pl.onGround){
+      pl.vy = s.charKey==='poppy' ? -10.5 : -9.8;   // lulah: 9.8 clears a 3-tile (96px) gap with ~30px margin
+      pl.onGround = false;
+      sndJump();
+    }
+    pl.jumpPressed = jumpNow;
 
-  // ── Drop through platform
-  if(isDuck() && pl.onGround){ pl.y+=4; pl.onGround=false; }
+    // ── Drop through platform
+    if(isDuck() && pl.onGround){ pl.y+=4; pl.onGround=false; }
+  }
 
   // ── Attack (Z/X): bite when no meter, fart when charged
   if(isFart()){
@@ -1434,8 +1443,10 @@ function updatePlayer(dt, s){
     else doBite(s);
   }
 
-  // ── Gravity
-  if(!pl.onGround){ pl.vy = Math.min(pl.vy+GRAV, MAXVY); }
+  // ── Gravity (swim: buoyant drift instead — gentle sink, never a fall)
+  if(swim){
+    if(!jumpNow && !isDuck()){ pl.vy = Math.min(pl.vy + 0.10, 1.8); }
+  } else if(!pl.onGround){ pl.vy = Math.min(pl.vy+GRAV, MAXVY); }
 
   // ── Move X
   pl.x += pl.vx;
@@ -1481,8 +1492,8 @@ function updatePlayer(dt, s){
   pl.x = Math.max(0, Math.min(LW*TS - PW, pl.x));
   // Fall in a hole / off the edge -> you're done. Scream the moment you pass the floor
   // line, then die a beat later so it reads as a fall, not a teleport.
-  if(pl.y > LH*TS && !pl.falling){ pl.falling = true; sndFall(); pushMsg(s, '😱 AAAH!', 700, '#ff5555', 'lg'); }
-  if(pl.y > LH*TS + 70){ pl.hp = 0; }
+  if(!swim && pl.y > LH*TS && !pl.falling){ pl.falling = true; sndFall(); pushMsg(s, '😱 AAAH!', 700, '#ff5555', 'lg'); }
+  if(!swim && pl.y > LH*TS + 70){ pl.hp = 0; }   // swim caves are enclosed — no fall-out death
 
   // ── Camera
   const tx = pl.x + PW/2 - VW/2;
@@ -1934,7 +1945,25 @@ function drawTiles(s){
       if(t===T_AIR) continue;
       const px=~~(c*TS-cam.x), py=~~(r*TS-cam.y);
 
-      if(t===T_SOLID){
+      if(t===T_SOLID && s.level.swim){
+        // ── Sand seabed block (W3 swim caves): warm sand tones + pebble/shell speckles, with a
+        //    faint depth-blue overlay so the cavern walls read as underwater rock/sand.
+        const hh = (((c*92837111) ^ (r*689287499)) >>> 0);
+        const sp = ['#c9a76b','#bd9a5c','#d4b074','#c0a062'];
+        ctx.fillStyle = sp[hh % sp.length]; ctx.fillRect(px,py,TS,TS);
+        ctx.fillStyle = 'rgba(255,245,210,0.30)'; ctx.fillRect(px,py,TS,3);                 // top-lit sand crest
+        ctx.fillStyle = 'rgba(80,55,25,0.32)'; ctx.fillRect(px,py+TS-4,TS,4);               // shadowed underside
+        ctx.fillStyle = 'rgba(90,60,30,0.22)';                                              // grain speckles
+        for(let k=0;k<4;k++){ ctx.fillRect(px+((hh>>(k*5))%(TS-3)), py+5+((hh>>(k*3+2))%(TS-9)), 2, 2); }
+        if(hh % 6 === 0){                                                                   // ~1-in-6 shell/pebble
+          const SC=['#e9d9b8','#f2e6c8','#cdbfd6','#b8d6cf']; ctx.fillStyle=SC[(hh>>4)%SC.length];
+          const sx=px+5+(hh%(TS-12)), sy=py+8+((hh>>6)%(TS-14));
+          ctx.beginPath(); ctx.arc(sx,sy,3,0,Math.PI*2); ctx.fill();
+          ctx.fillStyle='rgba(0,0,0,0.18)'; ctx.fillRect(sx-3,sy+2,6,1);
+        }
+        ctx.fillStyle = 'rgba(30,90,140,0.16)'; ctx.fillRect(px,py,TS,TS);                  // underwater depth tint
+        ctx.strokeStyle='rgba(60,40,18,0.38)'; ctx.lineWidth=1; ctx.strokeRect(px+0.5,py+0.5,TS-1,TS-1);
+      } else if(t===T_SOLID){
         // City pavement/wall block — per-tile colour variance + occasional graffiti (deterministic by r,c)
         const hh = (((c*92837111) ^ (r*689287499)) >>> 0), neon = _WLD==='2';
         const pal = neon ? ['#2f2b46','#34304e','#2a2740','#3a3556'] : ['#6e6f78','#656874','#74695c','#6b6360'];
