@@ -2,12 +2,16 @@
 
 Single-file vanilla-JS HTML5 Canvas game (`index.html`, **no build step**). Logic in
 `levelparse.js` + `progression.js` (CommonJS + browser global, unit-tested). Levels are ASCII
-tilemaps (`W1L*_ROWS`/`W2L*_ROWS`) → `buildFromRows` → `LevelParse`. Tile chars: `#`solid `=`one-way
-`x`destructible `^`spikes `~`**shock floor** (W2 — standable, zaps while live; `_shockState()`); spawn
-chars `P E D C o g` + enemies `s w t`(W1) `n h d k p z`(W2 neon). Worlds gate via `Progression`
+tilemaps (`W1L*_ROWS`/`W2L*_ROWS`/`W3L*_ROWS`) → `buildFromRows` → `LevelParse`. Tile chars: `#`solid
+`=`one-way `x`destructible `^`spikes `~`**shock floor** (W2 — standable, zaps while live; `_shockState()`)
+`*`**bubble updraft** (W3 — non-solid column that floats you UP; `T_CURRENT`); spawn chars `P E D C o g` +
+enemies `s w t`(W1) `n h d k p z`(W2 neon) `j f u a r`(W3 sunken: jelly/puffer/eel/anchor/crab). **Don't
+put `*` in a vertical climb — it traps the playtest bot against the platform above** (use it in horizontal
+levels for bonus ledges; W3L3 is a plain W2L3-style climb). Worlds gate via `Progression`
 (world N order-1 unlocks once world N-1's last level is beaten). Bosses: `BOSS_CFG`/`mkBoss(type)` →
-`<frames>_<state>` sprites in `bosses/` (riot, giant). Add a level: rows → `LEVEL_BUILDERS` +
+`<frames>_<state>` sprites in `bosses/` (riot, giant, kraken). Add a level: rows → `LEVEL_BUILDERS` +
 `LEVEL_PAR` + `Progression.LEVELS` + (vocab) `WORLD_VOCAB[world]`. `playtest.js` LEVELS array.
+**Gems gate the exit (must be bot-reachable on the main path); citizens/food can sit on optional ledges.**
 **Level terrain must ROLL (Mario/Alex-Kidd), not be flat** — vary the ground height (stairs, plateaus,
 valleys, hills) + pits/gaps; rooftop levels = buildings at varying heights with street gaps. Build
 from a HEIGHTMAP (surface-row per column) → fill `#` downward; keep steps gentle and pits ≤2–3 tiles

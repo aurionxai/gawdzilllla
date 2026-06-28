@@ -110,6 +110,10 @@ Progression.LEVELS = [
   { id: 'w2l2', world: 2, name: 'Shibuya Rooftops', order: 2, playable: true },
   { id: 'w2l3', world: 2, name: 'Neon Tower',       order: 3, playable: true },
   { id: 'w2l4', world: 2, name: 'Giant Mecha',      order: 4, playable: true },
+  { id: 'w3l1', world: 3, name: 'Sunken Streets',   order: 1, playable: true },
+  { id: 'w3l2', world: 3, name: 'Coral Ruins',      order: 2, playable: true },
+  { id: 'w3l3', world: 3, name: 'Kelp Tower',       order: 3, playable: true },
+  { id: 'w3l4', world: 3, name: 'Mecha-Kraken',     order: 4, playable: true },
 ];
 
 function levelById(id) { return Progression.LEVELS.find(l => l.id === id) || null; }

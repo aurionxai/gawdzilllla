@@ -2,10 +2,11 @@
 // Wrapped in an IIFE so its internal constants don't leak into the page's globals
 // (the game script also declares T_AIR etc.).
 (function(root){
-  const T_AIR=0, T_SOLID=1, T_PLAT=2, T_DEST=3, T_HAZARD=4, T_SHOCK=5;
-  const TILE = { ' ':T_AIR, '#':T_SOLID, '=':T_PLAT, 'x':T_DEST, '^':T_HAZARD, '~':T_SHOCK };  // ~ = World-2 shock floor (pulses on/off)
+  const T_AIR=0, T_SOLID=1, T_PLAT=2, T_DEST=3, T_HAZARD=4, T_SHOCK=5, T_CURRENT=6;
+  const TILE = { ' ':T_AIR, '#':T_SOLID, '=':T_PLAT, 'x':T_DEST, '^':T_HAZARD, '~':T_SHOCK, '*':T_CURRENT };  // ~ = W2 shock floor; * = W3 bubble updraft (non-solid, floats you up)
   const ENEMY = { 's':'slime', 'w':'whelp', 't':'tinbot',                                       // W1
-                  'n':'neonbot', 'h':'ghoul', 'd':'glitch_drone', 'k':'karaoke_bot', 'p':'pixel_ghost', 'z':'neon_serpent' };  // W2 neon set
+                  'n':'neonbot', 'h':'ghoul', 'd':'glitch_drone', 'k':'karaoke_bot', 'p':'pixel_ghost', 'z':'neon_serpent',  // W2 neon set
+                  'j':'jellymech', 'f':'mecha_pufferfish', 'u':'bubble_eel', 'a':'anchor_bot', 'r':'coral_crab' };  // W3 sunken set
 
   const LevelParse = {};
   LevelParse.parseLevel = function parseLevel(rows){

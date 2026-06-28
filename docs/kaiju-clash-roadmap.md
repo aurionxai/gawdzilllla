@@ -3,7 +3,7 @@
 > Live at **kaijukids.co** (GitHub Pages, repo `aurionxai/gawdzilllla`, game in `kaiju-clash/`).
 > Single-file vanilla-JS canvas, no build step. Rules: `kaiju-clash/CLAUDE.md`.
 
-## ✅ SHIPPED & LIVE (as of BUILD 30 · 2026-06-26)
+## ✅ SHIPPED & LIVE (as of BUILD 36 · 2026-06-27)
 
 **World 1 (Tokyo)** — 4 levels + boss + a secret level:
 - w1l1 (ground run), w1l2 Rooftop Run, w1l3 Tower Climb (vertical), w1l4 Riot-Mecha **boss arena**.
@@ -53,9 +53,20 @@ backdrop. Boss system generalized (`BOSS_CFG`/`mkBoss`). Cross-world unlock gate
 - **Procedural animation** (`_formAnim`) — the static forms get squash/stretch + bob keyed to player state
   (walk/jump/eat/fart/idle) so every size feels alive without hand-drawn per-stage frames.
 
+**World 3 (Sunken City)** ✅ — 3 levels (w3l1 Sunken Streets · w3l2 Coral Ruins · w3l3 Kelp Tower) +
+w3l4 **Mecha-Kraken** boss + w3secret. Signature **bubble-updraft** hazard (`*`/`T_CURRENT`: non-solid
+column that floats you UP to bonus ledges — horizontal levels only; it traps the bot in a vertical climb).
+Reuses the existing sea enemy set (jelly/puffer/eel/anchor/crab) + `WORLD_VOCAB[3]` (24 sea/ocean words +
+TTS). Underwater `bg_w3` backdrop. Mecha-Kraken boss art (idle/windup/slam/defeat) made via Higgsfield from
+`mockups/boss3-mecha-kraken.png`. **Gotcha learned:** gems gate the exit, so every gem must be on the bot's
+main path — an extra side gem left w3l3 unbeatable until removed.
+
+**Hero learning mini-games** ✅ — 🎮 PLAY menu: Hungry Kaiju / Stomp Match / Catch the Word, all credit
+proficiency. Confetti bursts + per-game animation (leap-stomp, eat, catch-pop).
+
 ## 🔜 NEXT UP
-- World 3 (Sunken City, underwater): backdrop `bg/world3.jpg` + boss mockup `boss3-mecha-kraken.png`
-  ready; reuse the shock/level/boss pipeline. New hazard idea: currents / air-meter.
+- World 4 (Volcano Skyline): backdrop `bg/world4.jpg` + the fire enemy set (lavaimp/golem/magma_slug/
+  ember_bat/obsidian_crab/flame_wisp, all `world:4`) already exist — needs levels + vocab + a boss.
 - Polish: leaderboard streaks + your-rank highlight; quiz hard modes (type rōmaji, kanji).
 - Leaderboard polish: streaks, your-rank highlight, daily word challenge; harder quiz types (type the
   rōmaji, kanji reading). Optional: cloud save-game sync (reuse the Railway DB).

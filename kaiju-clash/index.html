@@ -47,7 +47,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '8';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '35';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '36';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -246,7 +246,8 @@ function loadNpcs(){
 // Boss frames (Higgsfield pixel art — see bosses/HIGGSFIELD-RIOT-MECHA.md). Optional: until the
 // PNGs exist, onerror just leaves them unloaded and drawBoss falls back to the procedural placeholder.
 const BOSS_FRAMES = { riot_idle:'bosses/riot_idle.png', riot_windup:'bosses/riot_windup.png', riot_slam:'bosses/riot_slam.png', riot_defeat:'bosses/riot_defeat.png',
-                      giant_idle:'bosses/giant_idle.png', giant_windup:'bosses/giant_windup.png', giant_slam:'bosses/giant_slam.png', giant_defeat:'bosses/giant_defeat.png' };
+                      giant_idle:'bosses/giant_idle.png', giant_windup:'bosses/giant_windup.png', giant_slam:'bosses/giant_slam.png', giant_defeat:'bosses/giant_defeat.png',
+                      kraken_idle:'bosses/kraken_idle.png', kraken_windup:'bosses/kraken_windup.png', kraken_slam:'bosses/kraken_slam.png', kraken_defeat:'bosses/kraken_defeat.png' };
 function loadBoss(){
   return Promise.all(Object.entries(BOSS_FRAMES).map(([key,url]) => new Promise(res => {
     const img = new Image();
@@ -743,6 +744,32 @@ const WORLD_VOCAB = {
     { key:'kuruma',     jp:'くるま',       ro:'Kuruma',       en:'Car' },
     { key:'sora',       jp:'そら',         ro:'Sora',         en:'Sky' },
   ],
+  3: [
+    { key:'tasukete',   jp:'たすけて！',   ro:'Tasukete!',   en:'Help me!' },
+    { key:'mamotte',    jp:'まもって！',   ro:'Mamotte!',    en:'Protect me!' },
+    { key:'heiki',      jp:'へいき！',     ro:'Heiki!',      en:"I'm okay!" },
+    { key:'yokatta',    jp:'よかった！',   ro:'Yokatta!',    en:'Thank goodness!' },
+    { key:'odoroita',   jp:'おどろいた！', ro:'Odoroita!',   en:'Wow!' },
+    { key:'sasuga',     jp:'さすが！',     ro:'Sasuga!',     en:'Impressive!' },
+    { key:'umi',        jp:'うみ',         ro:'Umi',         en:'Sea' },
+    { key:'nami',       jp:'なみ',         ro:'Nami',        en:'Wave' },
+    { key:'kai',        jp:'かい',         ro:'Kai',         en:'Shell' },
+    { key:'tako',       jp:'たこ',         ro:'Tako',        en:'Octopus' },
+    { key:'ika',        jp:'いか',         ro:'Ika',         en:'Squid' },
+    { key:'kujira',     jp:'くじら',       ro:'Kujira',      en:'Whale' },
+    { key:'iruka',      jp:'いるか',       ro:'Iruka',       en:'Dolphin' },
+    { key:'sango',      jp:'さんご',       ro:'Sango',       en:'Coral' },
+    { key:'shinju',     jp:'しんじゅ',     ro:'Shinju',      en:'Pearl' },
+    { key:'kame',       jp:'かめ',         ro:'Kame',        en:'Turtle' },
+    { key:'ebi',        jp:'えび',         ro:'Ebi',         en:'Shrimp' },
+    { key:'fune',       jp:'ふね',         ro:'Fune',        en:'Ship' },
+    { key:'shima',      jp:'しま',         ro:'Shima',       en:'Island' },
+    { key:'suna',       jp:'すな',         ro:'Suna',        en:'Sand' },
+    { key:'fukai',      jp:'ふかい',       ro:'Fukai',       en:'Deep' },
+    { key:'shizuka',    jp:'しずか',       ro:'Shizuka',     en:'Quiet' },
+    { key:'namida',     jp:'なみだ',       ro:'Namida',      en:'Tears' },
+    { key:'minato',     jp:'みなと',       ro:'Minato',      en:'Harbor' },
+  ],
 };
 function _vocab(){ const m = state && String(state.levelId||'').match(/w(\d)/); const w = m?+m[1]:1; return WORLD_VOCAB[w] || WORLD_VOCAB[1]; }
 let _npcSayIdx = 0;
@@ -849,7 +876,7 @@ function isFart(){  return _hit('fart')   || touchInBtn('fart'); }   // B is the
 //  LEVEL DATA
 // ═══════════════════════════════════════════
 // T=0 air, T=1 solid, T=2 one-way platform, T=3 destructible
-const T_AIR=0, T_SOLID=1, T_PLAT=2, T_DEST=3, T_HAZARD=4, T_SHOCK=5;
+const T_AIR=0, T_SOLID=1, T_PLAT=2, T_DEST=3, T_HAZARD=4, T_SHOCK=5, T_CURRENT=6;   // T_CURRENT = W3 bubble updraft
 // World-2 shock floor pulses on a shared clock: ~1.1s LIVE (zaps), brief WARN flicker, then ~1s SAFE.
 function _shockState(){ const t=Date.now()%2200; return t<1100 ? 'on' : (t>1850 ? 'warn' : 'off'); }
 
@@ -1003,6 +1030,8 @@ const BOSS_CFG = {
   // bolts it volleys) + faster + a triple wave. Both share the stomp-the-weak-point kill.
   riot:  { frames:'riot',  hp:4, name:'⚙ RIOT MECHA',  teleMs:1000, vulnMs:2600, waves:2, shoots:0 },
   giant: { frames:'giant', hp:5, name:'🤖 GIANT MECHA', teleMs:820,  vulnMs:2000, waves:3, shoots:2 },
+  // kraken = SLAM boss with the widest triple-wave AND a bolt volley (the toughest yet) — jump both.
+  kraken:{ frames:'kraken',hp:6, name:'🐙 MECHA-KRAKEN', teleMs:760,  vulnMs:1900, waves:4, shoots:2 },
 };
 function mkBoss(type){
   const cfg = BOSS_CFG[type] || BOSS_CFG.riot, w=84, h=112, footY=11*TS;
@@ -1137,6 +1166,114 @@ const W2L4_ROWS = [
   "##############################",
 ];
 
+const W3L1_ROWS = [
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "                                                  oC",
+  "                                                  *",
+  "                                                  *",
+  "                                                  *",
+  "                  u",
+  "            o   g ####  g                     g j#####o D                       o f",
+  " P  g C   j ##############f   o         r  ###############u   g           a  ######   g   o j     C gE",
+  "################################      C##########################       C###############################",
+  "################################  ################################  ####################################",
+  "################################  ################################  ####################################"
+];
+const W3L2_ROWS = [
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "                                           gj  o",
+  "              f o g               C  r   ########      a",
+  "  P C g    ########     oDu    ########  ########  ########     g         f o     C   g   g   E",
+  " ########  ########  ########  ########  ########  ########  ########  #########################",
+  " ########  ########  ########  ########  ########  ########  ########  #########################",
+  " ########  ########  ########  ########  ########  ########  ########  #########################"
+];
+const W3L3_ROWS = [
+  "                    ",
+  "                    ",
+  "                    ",
+  "                    ",
+  "        E           ",
+  "    ===========     ",
+  "                    ",
+  "          u         ",
+  "       ===========  ",
+  "                    ",
+  "       C  o         ",
+  "    ===========     ",
+  "                    ",
+  "          f g       ",
+  "       ===========  ",
+  "  D                 ",
+  " ===   C  o         ",
+  "    ===========     ",
+  "                    ",
+  "          o u       ",
+  "       ===========  ",
+  "                    ",
+  "       f  o         ",
+  "    ===========     ",
+  "                    ",
+  "          u g       ",
+  "       ===========  ",
+  "                    ",
+  "       C  o         ",
+  "    ===========     ",
+  "                    ",
+  "          f         ",
+  "       ===========  ",
+  "                    ",
+  "       o            ",
+  "    ===========     ",
+  "                    ",
+  "  P                 ",
+  "####################",
+  "####################",
+];
+const W3SECRET_ROWS = [
+  "                              ",
+  "                              ",
+  "                              ",
+  "                              ",
+  "                              ",
+  "                              ",
+  "      =======   =======       ",
+  "                              ",
+  "                              ",
+  " P  g  g  C  g   g  C  g    E ",
+  "##############################",
+  "##############################"
+];
+const W3L4_ROWS = [
+  "#                            #",
+  "#                            #",
+  "#                            #",
+  "#         o        o         #",
+  "#                            #",
+  "#    ====            ====    #",
+  "#                            #",
+  "#                            #",
+  "#                            #",
+  "#                            #",
+  "# P                          #",
+  "##############################",
+  "##############################"
+];
+
 const LEVEL_BUILDERS = {
   w1l1: () => buildFromRows(W1L1_ROWS),
   w1l2: () => buildFromRows(W1L2_ROWS),
@@ -1148,6 +1285,11 @@ const LEVEL_BUILDERS = {
   w2l3: () => buildFromRows(W2L3_ROWS),
   w2secret: () => buildFromRows(W2SECRET_ROWS),
   w2l4: () => { const b = buildFromRows(W2L4_ROWS); b.boss = mkBoss('giant'); b.shocks = []; b.bolts = []; return b; },
+  w3l1: () => buildFromRows(W3L1_ROWS),
+  w3l2: () => buildFromRows(W3L2_ROWS),
+  w3l3: () => buildFromRows(W3L3_ROWS),
+  w3secret: () => buildFromRows(W3SECRET_ROWS),
+  w3l4: () => { const b = buildFromRows(W3L4_ROWS); b.boss = mkBoss('kraken'); b.shocks = []; b.bolts = []; return b; },
 };
 
 // ═══════════════════════════════════════════
@@ -1207,7 +1349,8 @@ function mkState(charKey, levelId){
 }
 
 const LEVEL_PAR = { w1l1:55, w1l2:65, w1l3:75, w1l4:90, w1secret:40,
-                    w2l1:60, w2l2:70, w2l3:80, w2l4:100, w2secret:40 };   // par time (s) for the ⏱ speed star
+                    w2l1:60, w2l2:70, w2l3:80, w2l4:100, w2secret:40,
+                    w3l1:65, w3l2:75, w3l3:85, w3l4:110, w3secret:40 };   // par time (s) for the ⏱ speed star
 function finishLevel(){
   if(scene==='victory') return; // already finished
   const s = state;
@@ -1324,6 +1467,14 @@ function updatePlayer(dt, s){
       pushNum(s, pl.x, pl.y-20, '-12', '#ff3333');
       pushMsg(s, '🌵 OUCH!', 600, '#ff5555', 'md');
     }
+  }
+
+  // ── W3 bubble updraft (T_CURRENT): a non-solid column that floats the kaiju UP (swim through it
+  // to reach higher ledges). Always active — gentle upward boost, capped so it lifts but never flings.
+  { const c0=Math.floor(pl.x/TS), c1=Math.floor((pl.x+PW)/TS), r0=Math.floor(pl.y/TS), r1=Math.floor((pl.y+PH)/TS);
+    let inCurrent=false;
+    for(let r=r0;r<=r1;r++) for(let c=c0;c<=c1;c++){ if(tile(tiles,r,c)===T_CURRENT){ inCurrent=true; break; } }
+    if(inCurrent){ pl.vy = Math.max(-4.2, pl.vy - 0.85); pl.onGround=false; }
   }
 
   // ── Bounds
@@ -1830,6 +1981,15 @@ function drawTiles(s){
         } else {
           ctx.fillStyle='#2a4a5a'; ctx.fillRect(px,py,TS,3);                          // dim/safe surface tube
         }
+      } else if(t===T_CURRENT){
+        // W3 bubble updraft: a faint cyan column with rising bubbles (swim up through it)
+        const T5=Date.now();
+        ctx.fillStyle='rgba(90,210,255,0.10)'; ctx.fillRect(px,py,TS,TS);
+        ctx.fillStyle='rgba(120,225,255,0.16)'; ctx.fillRect(px+TS/2-5,py,10,TS);     // brighter core
+        ctx.fillStyle='rgba(220,250,255,0.85)';
+        for(let k=0;k<3;k++){ const seed=(c*7+k*131);                                 // bubbles drifting upward
+          const bx=px+6+((seed*13)%(TS-12)), by=py+TS-((T5*0.06 + seed*40)% (TS+6)), br=1.5+((seed)%3);
+          ctx.beginPath(); ctx.arc(bx,by,br,0,Math.PI*2); ctx.fill(); }
       }
     }
   }
