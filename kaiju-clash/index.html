@@ -47,7 +47,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '8';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '44';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '45';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -863,7 +863,7 @@ const _CTL_CTX = { gameplay:['left','right','jump','duck','fart','book','music']
 const _held = a => CONTROLS[a].some(k=>keys.has(k));     // action held this frame
 const _hit  = a => CONTROLS[a].some(k=>justDn.has(k));   // action just pressed this frame
 const _PD = new Set([].concat(CONTROLS.left,CONTROLS.right,CONTROLS.jump,CONTROLS.duck,CONTROLS.fart,CONTROLS.book));  // suppress browser default (scroll/nav) for these
-function isDuck(){ return _held('duck'); }
+function isDuck(){ return _held('duck') || touchInBtn('down'); }   // touch ▼ = duck / drop-through / dive-sink in swim
 function pressedBook(){ return _hit('book'); }
 function menuConfirm(){ return _hit('confirm'); }  // start / select / continue
 function menuBack(){    return _hit('back'); }
@@ -2939,9 +2939,11 @@ function drawTouchControls(){
   // Left side: ◀ ▶
   BTNS.left  = {x: PAD,           y: Y, w: BS, h: BS};
   BTNS.right = {x: PAD+BS+GAP,    y: Y, w: BS, h: BS};
-  // Right side: 💨 ▲
+  // Right side: 💨 ATK (bottom-left of cluster) + a vertical ▲ jump / ▼ down pair on the far right
+  // (right thumb works depth — essential for diving in swim levels and dropping through platforms).
   BTNS.fart  = {x: VW-PAD-BS*2-GAP, y: Y, w: BS, h: BS};
-  BTNS.jump  = {x: VW-PAD-BS,       y: Y, w: BS, h: BS};
+  BTNS.down  = {x: VW-PAD-BS,       y: Y,           w: BS, h: BS};
+  BTNS.jump  = {x: VW-PAD-BS,       y: Y-BS-GAP,    w: BS, h: BS};
 
   const drawBtn = (b, active, emoji, label, fill, glow)=>{
     ctx.save();
@@ -2972,7 +2974,9 @@ function drawTouchControls(){
   drawBtn(BTNS.left,  touchInBtn('left'),  '◀', 'LEFT',  'rgba(80,120,220,0.9)',  '#88aaff');
   drawBtn(BTNS.right, touchInBtn('right'), '▶', 'RIGHT', 'rgba(80,120,220,0.9)',  '#88aaff');
   drawBtn(BTNS.fart,  touchInBtn('fart'),  '💨', 'ATK',   'rgba(40,200,100,0.9)', '#44ff88');
-  drawBtn(BTNS.jump,  touchInBtn('jump'),  '▲', 'JUMP',  'rgba(220,150,40,0.9)', '#ffcc44');
+  const _sw = state && state.level && state.level.swim;
+  drawBtn(BTNS.jump,  touchInBtn('jump'),  '▲', _sw?'RISE':'JUMP', 'rgba(220,150,40,0.9)', '#ffcc44');
+  drawBtn(BTNS.down,  touchInBtn('down'),  '▼', _sw?'DIVE':'DUCK', 'rgba(150,110,220,0.9)', '#bb88ff');
 }
 
 // ═══════════════════════════════════════════
