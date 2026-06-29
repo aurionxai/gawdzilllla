@@ -19,8 +19,11 @@ authored open-water row with a `homeY`/`bobP`; `updateEnemies` swim branch hover
 toward the kaiju in 2D when near. **Underwater ambience** (`_ensureSwimAmb`/`drawSwimBack`·`drawSwimFloor`
 ·`drawSwimFront`, gated on `s.level.swim`): drifting fish behind the terrain, kelp+coral anchored on the
 sand surface, rising bubble streams in front — all ctx VFX (like the existing bubbles/light-rays), NOT
-hero-class assets. **Sand is borderless** (no per-tile grid/outline) + a smooth dune-cap surface pass in
-`drawTiles` so it reads as a continuous ocean bottom. **Heroes have a REAL swim animation:** each growth stage has a head-locked **3-frame swim cycle**
+hero-class assets. **Seabed renders as sand+reef, NOT blocks**: grid-free fill that lerps bright SAND (top) → mottled ROCK
+substrate by depth-below-surface (`surfTop[c]`), an **all-edge organic crust** pass (bumpy lobes +
+rounded corners on every water-facing edge; stroke ONLY exposed edges or you redraw the tile grid), and
+dense coral/anemone/rock/kelp grown on EVERY exposed face (tops + vertical walls) via `_ensureSwimAmb`
+flora + `drawSwimFloor` (`_drawCoral/_drawAnemone/_drawRock/_drawKelp`, oriented outward per face). **Heroes have a REAL swim animation:** each growth stage has a head-locked **3-frame swim cycle**
 (`skins/default/<char>_swim<0-4>_<1-3>.png`, loaded by `loadSwim`, picked in `_heroKey` when `pl.swim`,
 cycled by `tick`, drawn horizontal+centred with a bob in `_drawKaijuSprite`). Frames were Higgsfield-
 generated (frame1 from the grow sprite; frames 2/3 reference frame1 for consistency) then processed by

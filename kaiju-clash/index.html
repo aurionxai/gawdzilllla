@@ -47,7 +47,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '8';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '43';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '44';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -2013,12 +2013,28 @@ function _ensureSwimAmb(s){
   for(let i=0;i<26;i++){ bubbles.push({ x:_ambHash(100+i*3)*VW, ph:_ambHash(200+i*5)*(VH+60),
     spd:0.02+_ambHash(300+i*7)*0.05, rr:1.2+_ambHash(400+i)*2.2,
     wob:4+_ambHash(500+i)*8, wf:0.001+_ambHash(600+i)*0.002 }); }
+  // Decoration grows on EVERY exposed sand face (tops AND vertical walls) so the straight tile edges
+  // disappear behind coral / anemones / rocks / kelp — natural reef, not blocks.
+  const sand=(r,c)=> t[r] && t[r][c]===T_SOLID;
   const flora = [];
-  for(let c=1;c<LW-1;c++){
-    let top=-1; for(let r=1;r<LH;r++){ if(t[r]&&t[r][c]===T_SOLID){ if(t[r-1]&&t[r-1][c]!==T_SOLID&&t[r-1][c]!==T_DEST) top=r; break; } }
-    if(top<2) continue;
-    if(_ambHash(c*13+7)<0.34) flora.push({ c, top, kind:_ambHash(c*17+3)<0.55?'kelp':'coral',
-      sz:0.7+_ambHash(c*5)*0.7, ph:_ambHash(c*3)*6.28, hue:_ambHash(c*19) });
+  for(let r=0;r<LH;r++){ if(!t[r]) continue;
+    for(let c=1;c<LW-1;c++){
+      if(t[r][c]!==T_SOLID) continue;
+      const oU=!sand(r-1,c), oL=!sand(r,c-1), oR=!sand(r,c+1);
+      const seed=(c*131+r*977);
+      // TOP faces: kelp / coral / rock / anemone, growing UP (dense)
+      if(oU && _ambHash(seed*3+1)<0.85){
+        const k=_ambHash(seed*7+2); const kind = k<0.30?'kelp' : k<0.60?'coral' : k<0.78?'rock':'anemone';
+        flora.push({ c, r, face:'U', kind, sz:0.7+_ambHash(seed*5)*0.9, ph:_ambHash(seed*3)*6.28, hue:_ambHash(seed*19) });
+      }
+      // SIDE faces (vertical walls): coral / anemone clinging outward (dense, hides the flat face)
+      if(oL && _ambHash(seed*11+4)<0.72){
+        flora.push({ c, r, face:'L', kind:_ambHash(seed*13)<0.55?'coral':'anemone', sz:0.55+_ambHash(seed*9)*0.7, ph:_ambHash(seed*2)*6.28, hue:_ambHash(seed*23) });
+      }
+      if(oR && _ambHash(seed*11+6)<0.72){
+        flora.push({ c, r, face:'R', kind:_ambHash(seed*17)<0.55?'coral':'anemone', sz:0.55+_ambHash(seed*8)*0.7, ph:_ambHash(seed*4)*6.28, hue:_ambHash(seed*29) });
+      }
+    }
   }
   s._amb = { fish, bubbles, flora };
   return s._amb;
@@ -2068,12 +2084,42 @@ function _drawCoral(bx,by,fl,now){
   }
   ctx.restore();
 }
+function _drawRock(bx,by,fl){
+  const w=12*fl.sz, h=9*fl.sz;
+  ctx.save(); ctx.translate(bx,by);
+  ctx.fillStyle='#5f5648'; ctx.beginPath(); ctx.ellipse(0,-h*0.5,w+1,h+1,0,Math.PI,0); ctx.fill();   // outline
+  ctx.fillStyle='#897d68'; ctx.beginPath(); ctx.ellipse(0,-h*0.5,w,h,0,Math.PI,0); ctx.fill();        // body
+  ctx.fillStyle='#a89a7e'; ctx.beginPath(); ctx.ellipse(-w*0.3,-h*0.85,w*0.5,h*0.5,0,Math.PI,0); ctx.fill(); // highlight
+  ctx.fillStyle='rgba(40,30,18,0.28)'; ctx.fillRect(-w,-1,w*2,2);                                     // base shadow
+  ctx.restore();
+}
+function _drawAnemone(bx,by,fl,now){
+  const C=[['#ff6fae','#ffd0e6'],['#7fd4ff','#d6f3ff'],['#ffd24d','#fff0b0'],['#b98cff','#e6d6ff']][Math.floor(fl.hue*4)%4];
+  const w=7*fl.sz, n=7;
+  ctx.save(); ctx.translate(bx,by); ctx.lineCap='round';
+  for(let i=0;i<n;i++){ const a=(-Math.PI*0.5)+(i/(n-1)-0.5)*Math.PI*0.95;
+    const len=(8+(i%2)*3)*fl.sz, sway=Math.sin(now*0.003+fl.ph+i)*2;
+    const tx=Math.cos(a)*len+sway, ty=Math.sin(a)*len-4*fl.sz;
+    ctx.strokeStyle=C[0]; ctx.lineWidth=2.4*fl.sz; ctx.beginPath(); ctx.moveTo(0,-2*fl.sz); ctx.quadraticCurveTo(tx*0.5,ty*0.7-3,tx,ty); ctx.stroke();
+    ctx.fillStyle=C[1]; ctx.beginPath(); ctx.arc(tx,ty,1.4*fl.sz,0,6.283); ctx.fill(); }
+  ctx.fillStyle=C[0]; ctx.beginPath(); ctx.ellipse(0,-2*fl.sz,w,5*fl.sz,0,Math.PI,0); ctx.fill();     // bulb
+  ctx.restore();
+}
 function drawSwimFloor(s){
   const a=_ensureSwimAmb(s), cam=s.cam, now=Date.now();
   for(const fl of a.flora){
-    const bx=fl.c*TS+TS/2-cam.x, by=fl.top*TS-cam.y;
-    if(bx<-40||bx>VW+40||by<-60||by>VH+40) continue;
-    if(fl.kind==='kelp') _drawKelp(bx,by,fl,now); else _drawCoral(bx,by,fl,now);
+    let ax, ay, ang;
+    if(fl.face==='L'){ ax=fl.c*TS;      ay=fl.r*TS+TS/2; ang=-Math.PI/2; }
+    else if(fl.face==='R'){ ax=fl.c*TS+TS; ay=fl.r*TS+TS/2; ang=Math.PI/2; }
+    else { ax=fl.c*TS+TS/2; ay=fl.r*TS; ang=0; }                    // top face grows up
+    const bx=ax-cam.x, by=ay-cam.y;
+    if(bx<-50||bx>VW+50||by<-70||by>VH+70) continue;
+    ctx.save(); ctx.translate(bx,by); if(ang) ctx.rotate(ang);
+    if(fl.kind==='kelp') _drawKelp(0,0,fl,now);
+    else if(fl.kind==='rock') _drawRock(0,0,fl);
+    else if(fl.kind==='anemone') _drawAnemone(0,0,fl,now);
+    else _drawCoral(0,0,fl,now);
+    ctx.restore();
   }
 }
 function drawSwimFront(s){
@@ -2098,6 +2144,11 @@ function drawTiles(s){
   const _WLD = (s.levelId||'w1').charAt(1);   // world → city palette (warm concrete vs neon night)
   const sc = Math.floor(cam.x/TS)-1;
   const ec = Math.min(LW, sc + Math.floor(VW/TS)+3);
+  // Surface row per visible column → depth-shade the sand mass (top-lit → darker deep = it has FORM,
+  // not a flat tan rectangle).
+  let surfTop=null;
+  if(s.level.swim){ surfTop={}; for(let c=Math.max(0,sc); c<ec; c++){ let tr=LH;
+    for(let r=0;r<LH;r++){ if(tiles[r]&&tiles[r][c]===T_SOLID){ tr=r; break; } } surfTop[c]=tr; } }
 
   for(let r=0;r<LH;r++){
     const row = tiles[r]; if(!row) continue;          // guard: never index past the row count during a level/scene swap
@@ -2107,24 +2158,26 @@ function drawTiles(s){
       const px=~~(c*TS-cam.x), py=~~(r*TS-cam.y);
 
       if(t===T_SOLID && s.level.swim){
-        // ── Continuous SAND seabed (W3 swim): no per-tile grid/outline — fill borderless, overlap
-        //    1px to kill seams, shade by depth, and soft-shade exposed sides (the rolling dune TOP
-        //    is drawn smooth in a separate surface pass after the loop, so it reads as ocean bottom).
+        // ── Continuous SAND seabed (W3 swim): grid-FREE fill (no per-tile stripes), mottled with
+        //    2-tile-scale patches; the organic bumpy crust on EVERY water-facing edge + rounded
+        //    corners are drawn in a separate pass after the loop so the whole silhouette reads as
+        //    sand, not stacked blocks.
         const hh = (((c*374761393) ^ (r*668265263)) >>> 0);
-        ctx.fillStyle = ['#cdaa6c','#c7a365','#d1b074','#c9a968'][hh & 3];
-        ctx.fillRect(px-1,py-1,TS+2,TS+2);
-        ctx.fillStyle='rgba(70,48,20,0.10)'; ctx.fillRect(px,py+TS*0.5,TS,TS*0.5);          // deeper = darker
-        ctx.fillStyle='rgba(95,64,30,0.16)';                                                // grain
+        // bright SAND on top → fades to mottled ROCK reef substrate deeper (so a tall mass isn't a
+        // uniform tan block; it's sand-capped rock).
+        const dp = Math.min(1, (r-(surfTop[c]||r))/7), jit=(hh&7)-3;
+        const R=Math.round(214+(118-214)*dp)+jit, G=Math.round(180+(102-180)*dp)+jit, Bl=Math.round(116+(80-116)*dp)+(jit>>1);
+        ctx.fillStyle='rgb('+R+','+G+','+Bl+')'; ctx.fillRect(px-1,py-1,TS+2,TS+2);
+        const mh = (((c>>1)*73856093) ^ ((r>>1)*19349663))>>>0;                             // 2-tile mottle (no grid)
+        if(mh & 1){ ctx.fillStyle='rgba(74,50,22,0.07)'; ctx.fillRect(px-1,py-1,TS+2,TS+2); }
+        else if(mh & 2){ ctx.fillStyle='rgba(255,238,200,0.05)'; ctx.fillRect(px-1,py-1,TS+2,TS+2); }
+        ctx.fillStyle='rgba(95,64,30,0.15)';                                                // grain speckles
         for(let k=0;k<5;k++){ ctx.fillRect(px+((hh>>(k*5))%(TS-2)), py+2+((hh>>(k*3+2))%(TS-4)), 2, 2); }
-        if(hh % 7 === 0){                                                                   // sparse pebble/shell
-          ctx.fillStyle=['#e9d9b8','#cdbfd6','#b8d6cf'][(hh>>4)%3];
+        if(hh % 6 === 0){                                                                   // pebbles / shells
+          ctx.fillStyle=['#e9d9b8','#cdbfd6','#b8d6cf','#9a8a64'][(hh>>4)&3];
           ctx.beginPath(); ctx.arc(px+5+(hh%(TS-12)), py+8+((hh>>6)%(TS-14)), 2.4,0,6.283); ctx.fill();
         }
-        ctx.fillStyle = 'rgba(28,86,134,0.13)'; ctx.fillRect(px-1,py-1,TS+2,TS+2);          // depth tint
-        if(!(tiles[r] && tiles[r][c-1]===T_SOLID)){ const g=ctx.createLinearGradient(px,0,px+9,0);   // soft left edge
-          g.addColorStop(0,'rgba(16,52,92,0.26)'); g.addColorStop(1,'rgba(16,52,92,0)'); ctx.fillStyle=g; ctx.fillRect(px,py,9,TS); }
-        if(!(tiles[r] && tiles[r][c+1]===T_SOLID)){ const g=ctx.createLinearGradient(px+TS,0,px+TS-9,0); // soft right edge
-          g.addColorStop(0,'rgba(16,52,92,0.26)'); g.addColorStop(1,'rgba(16,52,92,0)'); ctx.fillStyle=g; ctx.fillRect(px+TS-9,py,9,TS); }
+        ctx.fillStyle = 'rgba(28,86,134,0.12)'; ctx.fillRect(px-1,py-1,TS+2,TS+2);          // depth tint
       } else if(t===T_SOLID){
         // City pavement/wall block — per-tile colour variance + occasional graffiti (deterministic by r,c)
         const hh = (((c*92837111) ^ (r*689287499)) >>> 0), neon = _WLD==='2';
@@ -2185,25 +2238,37 @@ function drawTiles(s){
     }
   }
 
-  // ── Smooth dune surface (swim levels): round each sand top into an organic mound so the seabed
-  //    reads as continuous ocean bottom, not stacked blocks. Local per-tile arches overlap into a
-  //    rolling dune line; steep cliffs keep their soft side-shade (terraced sand, still organic).
+  // ── Organic SAND CRUST (swim): every water-facing edge of the sand mass gets bumpy sand lobes and
+  //    every convex corner is rounded, so the whole silhouette is eroded/natural — never a block.
   if(s.level.swim){
-    for(let c=Math.max(0,sc); c<ec; c++){
-      let sr=-1;
-      for(let r=0;r<LH;r++){ if(tiles[r]&&tiles[r][c]===T_SOLID){ if(!(tiles[r-1]&&tiles[r-1][c]===T_SOLID)) sr=r; break; } }
-      if(sr<1) continue;
-      const px=~~(c*TS-cam.x), py=~~(sr*TS-cam.y);
-      if(px<-TS||px>VW+TS||py<-TS||py>VH+TS) continue;
-      const hh=((c*2654435761)>>>0), bump=5+(hh%5);                 // 5–9px rounded rise
-      ctx.fillStyle='#cdaa6c';                                       // mound body (sand)
-      ctx.beginPath(); ctx.moveTo(px-2,py+7);
-      ctx.quadraticCurveTo(px+TS/2, py-bump, px+TS+2, py+7);
-      ctx.lineTo(px+TS+2,py+11); ctx.lineTo(px-2,py+11); ctx.closePath(); ctx.fill();
-      ctx.strokeStyle='rgba(255,244,210,0.5)'; ctx.lineWidth=2;       // lit sand rim
-      ctx.beginPath(); ctx.moveTo(px-2,py+7); ctx.quadraticCurveTo(px+TS/2, py-bump, px+TS+2, py+7); ctx.stroke();
-      ctx.strokeStyle='rgba(14,44,78,0.16)'; ctx.lineWidth=3;         // soft water-side occlusion
-      ctx.beginPath(); ctx.moveTo(px-2,py-1); ctx.quadraticCurveTo(px+TS/2, py-bump-3, px+TS+2, py-1); ctx.stroke();
+    const sand=(r,c)=> tiles[r] && tiles[r][c]===T_SOLID;
+    const SAND='#ceac6e', LIT='rgba(255,246,214,0.5)', OCC='rgba(12,40,72,0.18)';
+    for(let r=0;r<LH;r++){ if(!tiles[r]) continue;
+      for(let c=Math.max(0,sc); c<ec; c++){
+        if(tiles[r][c]!==T_SOLID) continue;
+        const oU=!sand(r-1,c), oD=!sand(r+1,c), oL=!sand(r,c-1), oR=!sand(r,c+1);
+        if(!(oU||oD||oL||oR)) continue;                              // interior tile — nothing to do
+        const px=~~(c*TS-cam.x), py=~~(r*TS-cam.y);
+        if(px<-TS||px>VW+TS||py<-TS||py>VH+TS) continue;
+        const hh=((c*2654435761) ^ (r*40503))>>>0;
+        const B=(n)=> 4 + ((hh>>(n*3))%8);                          // 4..11px lobe per slot (varied)
+        const x0=px, y0=py, x1=px+TS, y1=py+TS, m=TS/2;
+        const bU=B(0), bR=B(1), bD=B(2), bL=B(3);
+        // FILL: walk the tile perimeter, bulging OUT only on exposed edges → organic silhouette
+        ctx.fillStyle=SAND; ctx.beginPath(); ctx.moveTo(x0, y0);
+        if(oU) ctx.quadraticCurveTo(x0+m, y0-bU-3, x1, y0); else ctx.lineTo(x1,y0);
+        if(oR) ctx.quadraticCurveTo(x1+bR+3, y0+m, x1, y1); else ctx.lineTo(x1,y1);
+        if(oD) ctx.quadraticCurveTo(x0+m, y1+bD+3, x0, y1); else ctx.lineTo(x0,y1);
+        if(oL) ctx.quadraticCurveTo(x0-bL-3, y0+m, x0, y0); else ctx.lineTo(x0,y0);
+        ctx.closePath(); ctx.fill();
+        // RIM: stroke ONLY the exposed edges (stroking the whole path would draw light lines on the
+        // internal tile borders shared with sand neighbours = a grid).
+        ctx.lineWidth=2; ctx.strokeStyle=LIT;
+        if(oU){ ctx.beginPath(); ctx.moveTo(x0,y0); ctx.quadraticCurveTo(x0+m,y0-bU-3,x1,y0); ctx.stroke(); }
+        if(oR){ ctx.beginPath(); ctx.moveTo(x1,y0); ctx.quadraticCurveTo(x1+bR+3,y0+m,x1,y1); ctx.stroke(); }
+        if(oL){ ctx.beginPath(); ctx.moveTo(x0,y1); ctx.quadraticCurveTo(x0-bL-3,y0+m,x0,y0); ctx.stroke(); }
+        if(oU){ ctx.strokeStyle=OCC; ctx.beginPath(); ctx.moveTo(x0,y0-2); ctx.quadraticCurveTo(x0+m,y0-bU-5,x1,y0-2); ctx.stroke(); }
+      }
     }
   }
 }
