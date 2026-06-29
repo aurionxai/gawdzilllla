@@ -70,7 +70,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '8';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '48';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '49';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // ── ONE codebase, TWO distributions ──────────────────────────────────────────────────────────
 // IS_NATIVE is true only inside the packaged iOS/Android app (Capacitor shell). The WEB build
@@ -3743,11 +3743,14 @@ async function _lbEnsureIdentity(){   // create the leaderboard identity once, b
   const n=await _handlePicker(); if(!n) return false;
   await _lbRegister(n); _lbSyncWords(); return true;
 }
+async function _openPrivacy(){   // privacy policy = a link out of the app → parental-gated (Kids Category)
+  if(!await _parentGate()) return;
+  try{ window.open('privacy.html','_blank'); }catch(e){}
+}
 
 let _lbScene={tab:'speedrun',scope:'global',lvl:'w1l1',rows:null,loading:false,msg:''};
 const _lbLevels=['w1l1','w1l2','w1l3','w1l4'];
-async function _lbOpen(){
-  if(!await _lbEnsureIdentity()) return;
+async function _lbOpen(){   // open READ-ONLY (collects nothing); joining the board is gated separately
   scene='leaderboard'; _lbScene.msg=''; _lbLoad();
 }
 async function _lbLoad(){
@@ -3795,7 +3798,10 @@ function drawLeaderboard(){
       ctx.fillText(_lbScene.tab==='scholar'?((r.words_learned||0)+' pts'):_lbTime(r.best_ms),VW/2+156,ry+15); ctx.textAlign='left'; });
   const fy=VH-34;
   if(_lb){ ctx.fillStyle='#bfa8ff'; ctx.font='11px monospace'; ctx.textAlign='left'; ctx.fillText('You: '+_lb.name+'   code '+_lb.code,12,fy+16); }
+  else { ctx.fillStyle='#8a7fb5'; ctx.font='11px sans-serif'; ctx.textAlign='left'; ctx.fillText('Viewing as guest', 12, fy+16); }
+  _lbBtn(VW-368,fy,110,26,'🔒 Privacy','privacy',false);
   if(_lb) _lbBtn(VW-250,fy,110,26,'+ Add Friend','addfriend',false);
+  else    _lbBtn(VW-250,fy,110,26,'➕ Join Board','join',false);
   _lbBtn(VW-130,fy,118,26,'◀ Back','back',false);
   if(_lbScene.msg){ ctx.fillStyle='#ffe14d'; ctx.font='bold 12px sans-serif'; ctx.textAlign='center'; ctx.fillText(_lbScene.msg,VW/2,fy-6); ctx.textAlign='left'; }
 }
@@ -3807,6 +3813,8 @@ function _lbDo(act){ _lbScene.msg='';
   else if(act==='lvl_prev'){ const i=_lbLevels.indexOf(_lbScene.lvl); _lbScene.lvl=_lbLevels[(i-1+_lbLevels.length)%_lbLevels.length]; _lbLoad(); }
   else if(act==='lvl_next'){ const i=_lbLevels.indexOf(_lbScene.lvl); _lbScene.lvl=_lbLevels[(i+1)%_lbLevels.length]; _lbLoad(); }
   else if(act==='addfriend'){ _lbAddFriendFlow(); }
+  else if(act==='join'){ _lbEnsureIdentity().then(ok=>{ if(ok){ _lbScene.msg="You're on the board! 🎉"; _lbLoad(); } }); }
+  else if(act==='privacy'){ _openPrivacy(); }
   else if(act==='takequiz'){ if(!_quizStart('leaderboard')) _lbScene.msg=_quizMsg; }
   else if(act==='back'){ scene='overworld'; }
 }

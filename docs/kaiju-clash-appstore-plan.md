@@ -77,15 +77,20 @@ Kids Category (Guideline 1.3 + 5.1.4) is strict. For THIS app:
 - [ ] **Privacy policy** written for children's apps (what's collected, why, no third-party sharing, parental
       contact). Host it (kaijukids.co/privacy) AND surface it in-app behind the parental gate.
 
-## Phase 4 — Privacy paperwork (must all tell the SAME story)  *(CLAUDE drafts)*
-- [ ] **`PrivacyInfo.xcprivacy` privacy manifest** in the iOS target. Declare any **required-reason APIs**
-      (Capacitor/WebKit may touch UserDefaults/file-timestamps → needs reason codes) and any data collection.
-- [ ] **App Store privacy "nutrition labels"** in App Store Connect — declare the leaderboard/quiz data
-      (likely *User Content: username/handle*, *Usage Data: scores*) and crucially mark **not used for
-      tracking** and **not linked to identity** where true.
-- [ ] **Consistency check (blocking):** privacy manifest ↔ nutrition labels ↔ privacy policy ↔ actual network
-      calls must match exactly. Mismatches are a top rejection reason.
-- [ ] **No ATT prompt** — you don't track across apps; showing ATT would itself be a rejection.
+## Phase 4 — Privacy paperwork (must all tell the SAME story)  ✅ DRAFTED (CLAUDE) — BUILD 49
+- [x] **`PrivacyInfo.xcprivacy`** drafted at `kaiju-clash-app/ios-template/PrivacyInfo.xcprivacy` — tracking
+      false, two collected types (User ID, Other Usage Data; linked, app-functionality, no tracking),
+      UserDefaults `CA92.1`. **USER:** add it to the Xcode App target + run Archive → Generate Privacy Report
+      to catch any extra required-reason API.
+- [x] **App Store privacy "nutrition label" answers** written in `docs/kaiju-clash-privacy-labels.md`
+      (exact rows, Linked=Yes, Tracking=No, App Functionality) — to enter in App Store Connect.
+- [x] **Kids privacy policy** at `kaiju-clash/privacy.html` → live `https://kaijukids.co/kaiju-clash/privacy.html`
+      and **reachable in-app** (🔒 Privacy button on the Leaderboards screen, parental-gated). Bundled into
+      the app via the www sync.
+- [x] **No ATT** — not tracking; no ATT prompt.
+- [ ] **Consistency check (blocking, at submit):** manifest ↔ labels ↔ policy ↔ live network (only the
+      Railway leaderboard host) must match. Checklist in `kaiju-clash-privacy-labels.md`. Also **purge test
+      rows** from the Railway DB before launch.
 
 ## Phase 5 — Store assets & metadata  *(CLAUDE produces; can reuse the game's art pipeline)*
 - [ ] **App icon** — full set, no transparency, no rounded corners (Apple rounds it). Generate from the kaiju art.

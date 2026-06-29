@@ -9,7 +9,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const SRC = join(__dirname, '..', '..', 'kaiju-clash');   // the live game folder
 const WWW = join(__dirname, '..', 'www');
 
-const FILES = ['index.html', 'progression.js', 'levelparse.js'];   // the scripts index.html loads
+const FILES = ['index.html', 'progression.js', 'levelparse.js', 'privacy.html'];   // runtime + policy
 const DIRS  = ['bg', 'bosses', 'enemies', 'food', 'npcs', 'skins', 'sounds'];   // bundled assets
 
 rmSync(WWW, { recursive: true, force: true });

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Kaiju Kids — App privacy manifest.
+  Add this file to the Xcode app target at: ios/App/App/PrivacyInfo.xcprivacy
+  (drag into the "App" group in Xcode and ensure target membership = App).
+
+  What it declares:
+   - NSPrivacyTracking = false, no tracking domains (we never track across apps/sites → no ATT).
+   - Collected data: the leaderboard's generated handle/account id (User ID) + game scores
+     (Other Usage Data). Linked to the play account, NOT used for tracking, App Functionality only.
+   - Required-reason API: UserDefaults (CA92.1 — read/write info accessible only to this app).
+     Capacitor's WebView/config touches UserDefaults. VERIFY with Xcode → Product → Archive →
+     "Generate Privacy Report" and add any other flagged required-reason API here. Capacitor's own
+     CocoaPods ship their own PrivacyInfo manifests for their code.
+   - These declarations must MATCH the App Store Connect privacy "nutrition label" answers
+     (see docs/kaiju-clash-privacy-labels.md) and the privacy policy.
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>NSPrivacyTracking</key>
+  <false/>
+  <key>NSPrivacyTrackingDomains</key>
+  <array/>
+  <key>NSPrivacyCollectedDataTypes</key>
+  <array>
+    <dict>
+      <key>NSPrivacyCollectedDataType</key>
+      <string>NSPrivacyCollectedDataTypeUserID</string>
+      <key>NSPrivacyCollectedDataTypeLinked</key>
+      <true/>
+      <key>NSPrivacyCollectedDataTypeTracking</key>
+      <false/>
+      <key>NSPrivacyCollectedDataTypePurposes</key>
+      <array>
+        <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+      </array>
+    </dict>
+    <dict>
+      <key>NSPrivacyCollectedDataType</key>
+      <string>NSPrivacyCollectedDataTypeOtherUsageData</string>
+      <key>NSPrivacyCollectedDataTypeLinked</key>
+      <true/>
+      <key>NSPrivacyCollectedDataTypeTracking</key>
+      <false/>
+      <key>NSPrivacyCollectedDataTypePurposes</key>
+      <array>
+        <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+      </array>
+    </dict>
+  </array>
+  <key>NSPrivacyAccessedAPITypes</key>
+  <array>
+    <dict>
+      <key>NSPrivacyAccessedAPIType</key>
+      <string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+      <key>NSPrivacyAccessedAPITypeReasons</key>
+      <array>
+        <string>CA92.1</string>
+      </array>
+    </dict>
+  </array>
+</dict>
+</plist>
