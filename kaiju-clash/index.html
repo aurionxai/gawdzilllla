@@ -34,6 +34,29 @@
       <button id="lbcancel" style="font-size:15px;padding:8px 16px;border:0;border-radius:8px;background:#553f7a;color:#fff;cursor:pointer;margin-left:6px;">Cancel</button></div>
   </div>
 </div>
+<!-- Kids-safe leaderboard identity: a GENERATED handle (no free-typed names = no PII), gated by a
+     grown-ups-only math challenge before any data is created/submitted (App Store Kids Category). -->
+<div id="hpov" style="display:none;position:fixed;inset:0;background:rgba(6,4,16,.72);z-index:50;align-items:center;justify-content:center;font-family:system-ui,sans-serif;">
+  <div style="background:#1d1640;border:2px solid #6b4fb0;padding:22px 26px;border-radius:14px;text-align:center;max-width:320px;">
+    <div style="color:#fff;font-weight:700;font-size:15px;margin-bottom:4px;">Your kaiju name 🦖</div>
+    <div style="color:#9b88d8;font-size:11px;margin-bottom:14px;">Made-up names only — never use your real name.</div>
+    <div id="hpname" style="font-size:24px;font-weight:800;color:#ffe14d;letter-spacing:.4px;margin-bottom:16px;"></div>
+    <div><button id="hpnew" style="font-size:14px;padding:8px 16px;border:0;border-radius:8px;background:#553f7a;color:#fff;cursor:pointer;">🎲 New name</button>
+      <button id="hpok" style="font-size:14px;padding:8px 18px;border:0;border-radius:8px;background:#22cc77;color:#04210f;font-weight:700;cursor:pointer;margin-left:6px;">Let's go!</button></div>
+    <div style="margin-top:10px;"><button id="hpcancel" style="font-size:12px;padding:5px 12px;border:0;border-radius:8px;background:transparent;color:#8a7fb5;cursor:pointer;">Cancel</button></div>
+  </div>
+</div>
+<div id="pgov" style="display:none;position:fixed;inset:0;background:rgba(6,4,16,.82);z-index:51;align-items:center;justify-content:center;font-family:system-ui,sans-serif;">
+  <div style="background:#1d1640;border:2px solid #b79cff;padding:22px 26px;border-radius:14px;text-align:center;max-width:320px;">
+    <div style="color:#fff;font-weight:700;font-size:15px;margin-bottom:4px;">🔒 Grown-ups only</div>
+    <div style="color:#9b88d8;font-size:11px;margin-bottom:12px;">Ask a parent to solve this to continue.</div>
+    <div id="pgq" style="font-size:22px;font-weight:800;color:#bfe9ff;margin-bottom:10px;"></div>
+    <input id="pginput" inputmode="numeric" autocomplete="off" style="font-size:20px;padding:8px 12px;border-radius:8px;border:2px solid #6b4fb0;text-align:center;width:120px;outline:none;">
+    <div id="pgerr" style="color:#ff7a7a;font-size:11px;height:14px;margin-top:6px;"></div>
+    <div style="margin-top:8px;"><button id="pgok" style="font-size:15px;padding:8px 22px;border:0;border-radius:8px;background:#22cc77;color:#04210f;font-weight:700;cursor:pointer;">Enter</button>
+      <button id="pgcancel" style="font-size:14px;padding:8px 16px;border:0;border-radius:8px;background:#553f7a;color:#fff;cursor:pointer;margin-left:6px;">Cancel</button></div>
+  </div>
+</div>
 <script src="progression.js"></script>
 <script src="levelparse.js"></script>
 <script>
@@ -47,7 +70,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '8';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '45';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '46';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -3671,10 +3694,45 @@ function _lbPromptText(label, upper){
   });
 }
 
+// ── Kids-safe identity: generated handle (no PII) + parental gate ──────────────────────────────
+const _HANDLE_ADJ=['Mighty','Brave','Tiny','Mega','Cosmic','Turbo','Sneaky','Golden','Neon','Lucky',
+  'Wild','Super','Bouncy','Zippy','Roaring','Jelly','Spiky','Salty','Bubbly','Rocket'];
+const _HANDLE_NOUN=['Kaiju','Dragon','Stomp','Roar','Fang','Titan','Fin','Claw','Bubble','Tako',
+  'Kong','Lulah','Poppy','Wave','Reef','Squid','Gecko','Newt','Whale','Crab'];
+function _genHandle(){ const R=a=>a[Math.floor(Math.random()*a.length)]; return R(_HANDLE_ADJ)+R(_HANDLE_NOUN)+(10+Math.floor(Math.random()*90)); }
+function _handlePicker(){
+  const ov=document.getElementById('hpov'), nm=document.getElementById('hpname');
+  return new Promise(res=>{
+    nm.textContent=_genHandle(); ov.style.display='flex';
+    const done=v=>{ ov.style.display='none'; document.getElementById('hpnew').onclick=null; document.getElementById('hpok').onclick=null; document.getElementById('hpcancel').onclick=null; res(v); };
+    document.getElementById('hpnew').onclick=()=>{ nm.textContent=_genHandle(); };
+    document.getElementById('hpok').onclick=()=>done(nm.textContent);
+    document.getElementById('hpcancel').onclick=()=>done(null);
+  });
+}
+function _parentGate(){   // grown-ups-only gate: 2-digit addition typed in (no multiple-choice guessing)
+  const ov=document.getElementById('pgov'), q=document.getElementById('pgq'), inp=document.getElementById('pginput'), err=document.getElementById('pgerr');
+  return new Promise(res=>{
+    let a,b; const fresh=()=>{ a=12+Math.floor(Math.random()*76); b=12+Math.floor(Math.random()*76); q.textContent=a+' + '+b+' = ?'; inp.value=''; };
+    fresh(); err.textContent=''; ov.style.display='flex'; setTimeout(()=>inp.focus(),30);
+    const done=v=>{ ov.style.display='none'; document.getElementById('pgok').onclick=null; document.getElementById('pgcancel').onclick=null; inp.onkeydown=null; res(v); };
+    const check=()=>{ if(parseInt(inp.value,10)===a+b) done(true); else { err.textContent='Not quite — try again.'; fresh(); inp.focus(); } };
+    document.getElementById('pgok').onclick=check;
+    document.getElementById('pgcancel').onclick=()=>done(false);
+    inp.onkeydown=e=>{ e.stopPropagation(); if(e.key==='Enter')check(); else if(e.key==='Escape')done(false); };
+  });
+}
+async function _lbEnsureIdentity(){   // create the leaderboard identity once, behind the parental gate
+  if(_lb) return true;
+  if(!await _parentGate()) return false;
+  const n=await _handlePicker(); if(!n) return false;
+  await _lbRegister(n); _lbSyncWords(); return true;
+}
+
 let _lbScene={tab:'speedrun',scope:'global',lvl:'w1l1',rows:null,loading:false,msg:''};
 const _lbLevels=['w1l1','w1l2','w1l3','w1l4'];
 async function _lbOpen(){
-  if(!_lb){ const n=await _lbPromptText('Pick a name for the leaderboard:',false); if(!n) return; await _lbRegister(n); _lbSyncWords(); }
+  if(!await _lbEnsureIdentity()) return;
   scene='leaderboard'; _lbScene.msg=''; _lbLoad();
 }
 async function _lbLoad(){

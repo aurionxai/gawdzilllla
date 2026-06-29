@@ -143,8 +143,10 @@ stand-in → DELETE the placeholder code/asset (memory `delete-old-art-on-replac
   Writes gated by a per-player **secret**; tables read-only to the public; **CORS = exact-match** allowlist
   (kaijukids.co + aurionxai.github.io — no `startsWith`).
 - Two boards: **🏁 Speedrun** (per-level best ms, Global/Friends) + **🎓 Proficiency** (quiz mastery
-  points, NOT words-seen). Identity = username + 6-char friend code in `localStorage['kaiju_lb']`;
-  **COPPA-safe** (no email/PII). Client `_lb*` fns + `drawLeaderboard`; **🏆 Ranks** button on the
+  points, NOT words-seen). Identity = a **GENERATED handle** (`_genHandle` adjective+kaiju+number — NO
+  free-typed names = no PII, App Store Kids Category) + 6-char friend code in `localStorage['kaiju_lb']`.
+  Creating an identity is gated by `_lbEnsureIdentity` → **parental gate** (`_parentGate`, 2-digit
+  addition, `#pgov`) then **handle picker** (`_handlePicker`, `#hpov`); **COPPA-safe** (no email/PII). Client `_lb*` fns + `drawLeaderboard`; **🏆 Ranks** button on the
   overworld; HTML overlay `#lbov` for text entry. All calls no-op gracefully offline.
 - **Quiz** (`scene='quiz'`, `_quiz*` fns): 4-option multiple-choice, mixed listen/read/recall, pool =
   `meta.learned` (needs ≥4). Correct → `meta.mastery[id]` (cap 3); `_profScore()` = total → `_profTier`
