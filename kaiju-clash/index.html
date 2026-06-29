@@ -47,7 +47,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '8';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '42';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '43';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -250,12 +250,17 @@ const NPC_TYPES = ['chef','obachan','otaku','idol','tourist','sumo','salaryman',
 // Gender per townsperson, so the spoken Japanese uses a matching male/female voice.
 const NPC_GENDER = { chef:'m', obachan:'f', otaku:'m', idol:'f', tourist:'f', sumo:'m', salaryman:'m', schoolgirl:'f' };
 function loadNpcs(){
-  return Promise.all(NPC_TYPES.map(n => new Promise(res => {
-    const img = new Image();
-    img.onload  = () => { loadedSprites['npc_'+n] = img; res(); };
-    img.onerror = () => { res(); };
-    img.src = _av('npcs/'+n+'.png');
-  })));
+  const jobs = [];
+  for(const n of NPC_TYPES){
+    jobs.push(new Promise(res => { const img = new Image();
+      img.onload  = () => { loadedSprites['npc_'+n] = img; res(); };
+      img.onerror = () => { res(); }; img.src = _av('npcs/'+n+'.png'); }));
+    // underwater variant (snorkel/diving gear) — used on swim levels; missing ones fall back to base
+    jobs.push(new Promise(res => { const img = new Image();
+      img.onload  = () => { loadedSprites['npc_'+n+'_dive'] = img; res(); };
+      img.onerror = () => { res(); }; img.src = _av('npcs/'+n+'_dive.png'); }));
+  }
+  return Promise.all(jobs);
 }
 
 // Boss frames (Higgsfield pixel art — see bosses/HIGGSFIELD-RIOT-MECHA.md). Optional: until the
@@ -2340,7 +2345,8 @@ function drawCitizens(s){
     // Shadow
     ctx.fillStyle='rgba(0,0,0,0.3)';
     ctx.beginPath(); ctx.ellipse(cx2, cy2+20, 9, 3, 0, 0, Math.PI*2); ctx.fill();
-    const npcKey = 'npc_' + (c.npc || 'salaryman');
+    let npcKey = 'npc_' + (c.npc || 'salaryman');
+    if(s.level.swim && loadedSprites[npcKey+'_dive']) npcKey += '_dive';   // diving gear underwater
     const img = loadedSprites[npcKey];
     if(img){
       const NH = 34;                                    // in-game citizen height

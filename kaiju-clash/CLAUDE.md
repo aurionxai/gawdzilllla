@@ -27,7 +27,9 @@ generated (frame1 from the grow sprite; frames 2/3 reference frame1 for consiste
 `scratchpad/normAll.js` (local grey-bg flood-fill removal + **centroid-anchored** normalize so body stays
 put while limbs/tail swing — head-anchor fails for Poppy's reaching arms). If a stage's art is missing it
 falls back to the procedural swim in `_formAnim` (`pl.swim`/`pl.thrust` → streamline lean + undulation
-skew + nose tilt). **Open-topped
+skew + nose tilt). **Rescued NPCs wear diving gear underwater:** each of the 8 townsfolk has a
+`npcs/<name>_dive.png` (snorkel mask + tube, Higgsfield-generated from the base sprite); `loadNpcs` loads
+both and `drawCitizens` uses `npc_<n>_dive` when `s.level.swim` (falls back to base if missing). **Open-topped
 swim caves clamp `pl.y` to the level box** so the kaiju can't swim off-screen, and the camera adds HARD
 SAFETY MARGINS (keeps the hero on screen even mid-fast-swim) + snappier vertical follow. Swim levels
 **ramp in size+difficulty** (L1 92×20 easy → L2 118×24 +pillars+urchins → L3 78×36 deep-trench, most
