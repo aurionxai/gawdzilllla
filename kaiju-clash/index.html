@@ -47,7 +47,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '8';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '41';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '42';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
 // build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
@@ -178,6 +178,21 @@ function loadGrowth(){
   const jobs = [];
   for(const ch of ['lulah','poppy']) for(let i=0;i<5;i++){
     const key = ch+'_grow'+i;
+    jobs.push(new Promise(res => {
+      const img = new Image();
+      img.onload  = () => { loadedSprites[key] = img; res(); };
+      img.onerror = () => { res(); };
+      img.src = _av('skins/default/'+key+'.png');
+    }));
+  }
+  return Promise.all(jobs);
+}
+// Per-stage 3-frame SWIM cycles (real animated frames, head-locked). Any missing stage silently
+// falls back to the procedural swim pose in _formAnim, so we can ship stages incrementally.
+function loadSwim(){
+  const jobs = [];
+  for(const ch of ['lulah','poppy']) for(let i=0;i<5;i++) for(let f=1;f<=3;f++){
+    const key = ch+'_swim'+i+'_'+f;
     jobs.push(new Promise(res => {
       const img = new Image();
       img.onload  = () => { loadedSprites[key] = img; res(); };
@@ -2473,8 +2488,19 @@ function _drawKaijuSprite(key, bx, by, dir, pl, tick){
   // both squished the hero and (with the old 64px anchor) floated it above the ground.
   const w  = img ? h * (img.naturalWidth / img.naturalHeight) : h;
   const footCx = bx + 32, footY = by + 70;       // feet planted on the hitbox bottom
+  // Real animated SWIM frame (head-locked 3-frame cycle): horizontal, centred on the body, gentle bob.
+  if(img && pl && pl.swim && key.indexOf('_swim')>=0){
+    const ch = 64*_kaijuScale()*1.62;
+    const cw = ch*(img.naturalWidth/img.naturalHeight);
+    const cy = footY - 33 + Math.sin(tick*0.12)*2;     // body centre + soft hover bob
+    ctx.save(); ctx.imageSmoothingEnabled=true;
+    if(dir<0){ ctx.translate(footCx, cy); ctx.scale(-1,1); ctx.drawImage(img, Math.round(-cw/2), Math.round(-ch/2), Math.round(cw), Math.round(ch)); }
+    else     { ctx.drawImage(img, Math.round(footCx-cw/2), Math.round(cy-ch/2), Math.round(cw), Math.round(ch)); }
+    ctx.restore();
+    return;
+  }
   // Grow forms (static sprites) get procedural motion; the baby uses its real frame animation.
-  // SWIM applies to BOTH (grow + baby) so every stage gets the articulated swimming pose.
+  // SWIM (procedural fallback) applies to BOTH (grow + baby) for stages without real swim art yet.
   const grow = key.indexOf('_grow')>=0;
   if(img && pl && (grow || pl.swim)){
     const a = _formAnim(pl, tick);
@@ -2499,6 +2525,10 @@ function _drawKaijuSprite(key, bx, by, dir, pl, tick){
 // sprite at stages 1-4 (so the on-screen kaiju matches the growth sheet at every stage).
 function _heroKey(char, pl, tick){
   const gs = (meta && meta.growthStage) || 0;
+  if(pl && pl.swim){                                   // real 3-frame swim cycle if this stage has art
+    const sf = char+'_swim'+gs+'_'+(Math.floor(tick/(pl.thrust?5:8))%3+1);
+    if(loadedSprites[sf]) return sf;
+  }
   const gk = char+'_grow'+gs;
   return (gs>0 && loadedSprites[gk]) ? gk : _kaijuKey(char, pl, tick);
 }
@@ -4030,7 +4060,7 @@ function loop(ts){
 }
 loadSfx();   // try real samples (sounds/*.{mp3,wav}); silently no-ops until they exist
 loadJpVoices();   // spoken Japanese vocab clips (sounds/jp/*.mp3)
-Promise.all([loadSprites(), loadSkin(activeSkin), loadGrowth(), loadEnemies(), loadNpcs(), loadFood(), loadBoss(), loadCrane()]).then(()=>{ spritesReady=true; lastT=performance.now(); });
+Promise.all([loadSprites(), loadSkin(activeSkin), loadGrowth(), loadSwim(), loadEnemies(), loadNpcs(), loadFood(), loadBoss(), loadCrane()]).then(()=>{ spritesReady=true; lastT=performance.now(); });
 requestAnimationFrame(loop);
 </script>
 </body>

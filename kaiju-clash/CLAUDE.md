@@ -20,9 +20,14 @@ toward the kaiju in 2D when near. **Underwater ambience** (`_ensureSwimAmb`/`dra
 ·`drawSwimFront`, gated on `s.level.swim`): drifting fish behind the terrain, kelp+coral anchored on the
 sand surface, rising bubble streams in front — all ctx VFX (like the existing bubbles/light-rays), NOT
 hero-class assets. **Sand is borderless** (no per-tile grid/outline) + a smooth dune-cap surface pass in
-`drawTiles` so it reads as a continuous ocean bottom. **Heroes have a swim animation:** `updatePlayer`
-sets `pl.swim`/`pl.thrust`; `_formAnim` swim branch + `_drawKaijuSprite` rotate-about-body-centre give a
-streamline lean + undulation + nose tilt (baby also cycles `_walk_` frames to paddle). **Open-topped
+`drawTiles` so it reads as a continuous ocean bottom. **Heroes have a REAL swim animation:** each growth stage has a head-locked **3-frame swim cycle**
+(`skins/default/<char>_swim<0-4>_<1-3>.png`, loaded by `loadSwim`, picked in `_heroKey` when `pl.swim`,
+cycled by `tick`, drawn horizontal+centred with a bob in `_drawKaijuSprite`). Frames were Higgsfield-
+generated (frame1 from the grow sprite; frames 2/3 reference frame1 for consistency) then processed by
+`scratchpad/normAll.js` (local grey-bg flood-fill removal + **centroid-anchored** normalize so body stays
+put while limbs/tail swing — head-anchor fails for Poppy's reaching arms). If a stage's art is missing it
+falls back to the procedural swim in `_formAnim` (`pl.swim`/`pl.thrust` → streamline lean + undulation
+skew + nose tilt). **Open-topped
 swim caves clamp `pl.y` to the level box** so the kaiju can't swim off-screen, and the camera adds HARD
 SAFETY MARGINS (keeps the hero on screen even mid-fast-swim) + snappier vertical follow. Swim levels
 **ramp in size+difficulty** (L1 92×20 easy → L2 118×24 +pillars+urchins → L3 78×36 deep-trench, most
