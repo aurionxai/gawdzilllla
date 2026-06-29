@@ -70,14 +70,26 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '8';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '46';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '47';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
-// Auto-update: GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the latest
-// build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual hard-
-// refresh needed. (One fresh load is still needed the FIRST time, to get this checker.)
-fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(r=>r.ok?r.text():null).then(v=>{
-  v=v&&v.trim(); if(v && v!==BUILD && location.search.indexOf('b='+v)<0) location.replace(location.pathname+'?b='+v);
-}).catch(()=>{});
+// ── ONE codebase, TWO distributions ──────────────────────────────────────────────────────────
+// IS_NATIVE is true only inside the packaged iOS/Android app (Capacitor shell). The WEB build
+// (kaijukids.co) is !IS_NATIVE. Web-only behaviours (the stale-page auto-reload below) are gated on
+// !IS_NATIVE; the native app ships fully bundled/offline and updates via the App Store — fetching
+// remote content/code there would break offline play and violate App Store review (Guideline 2.5.2).
+const IS_NATIVE = (typeof window!=='undefined') && (
+  !!(window.Capacitor && (typeof window.Capacitor.isNativePlatform==='function'
+       ? window.Capacitor.isNativePlatform()
+       : (window.Capacitor.getPlatform && window.Capacitor.getPlatform()!=='web')))
+  || (typeof location!=='undefined' && (location.protocol==='capacitor:' || location.protocol==='ionic:')));
+// Auto-update (WEB ONLY): GitHub caches the HTML ~10 min, so players can run a stale build. Fetch the
+// latest build tag (uncached); if this page is older, reload to a fresh cache-key URL — no manual
+// hard-refresh needed. Disabled in the native app (App Store updates handle versioning).
+if(!IS_NATIVE){
+  fetch('version.txt?cb='+Date.now(), {cache:'no-store'}).then(r=>r.ok?r.text():null).then(v=>{
+    v=v&&v.trim(); if(v && v!==BUILD && location.search.indexOf('b='+v)<0) location.replace(location.pathname+'?b='+v);
+  }).catch(()=>{});
+}
 
 function resize() {
   const vvp = window.visualViewport;

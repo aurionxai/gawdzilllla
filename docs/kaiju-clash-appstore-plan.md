@@ -21,18 +21,19 @@ parallel and should start immediately because it can be the long pole.
 - [ ] Accept the latest Program License Agreement and **Paid/Free Apps agreements** in App Store Connect.
 - **Blocker:** nothing can be submitted until this clears. The D-U-N-S step is why this is Phase 0.
 
-## Phase 1 — Make the game iOS-playable & self-contained  *(CLAUDE builds; biggest dev item)*
+## Phase 1 — Make the game iOS-playable & self-contained  ✅ COMPLETE (code) — device-tuning at TestFlight
 - [x] **On-screen touch controls (CRITICAL).** ~Done (BUILD 45): `drawTouchControls`/`touchInBtn` give
       ◀ ▶ + ▲ jump/RISE + ▼ duck/DIVE + 💨 ATK, wired through the action helpers (`isMoveL/isJump/isDuck/
       isFart`), context labels (swim vs land), portrait rotate hint, and menu/overworld tap-nav. **Remaining:**
       real on-device tuning (button size/placement, multi-touch, not overlapping the bottom-right HUD).
-- [ ] **Fully offline.** Capacitor serves the bundled `index.html`; the game must run with **no network**.
-      Audit every `fetch`/asset URL: the leaderboard/quiz API is the only network use and must be optional
-      (already "no-op gracefully offline" — verify).
-- [ ] **Remove web-only behaviors that look like "remote code/content"** (Guideline 2.5.2 / 4.2):
-      - The **stale-page auto-reload** (`fetch('version.txt')` → reload) — disable in the app build; App Store
-        updates handle versioning. Loading remote HTML/JS after review is a rejection risk.
-      - Confirm **no remote `<script>`** / no eval of fetched code. Everything ships in the bundle.
+- [x] **Fully offline.** ~Done (BUILD 47): audited — head has **no CDN/web-fonts/analytics**, all
+      sound/sprite/bg load via relative `_av()` paths (bundled), and the leaderboard/quiz API no-ops offline
+      (try/catch). The game runs with no network.
+- [x] **Remove web-only behaviors / "remote content"** (Guideline 2.5.2 / 4.2). ~Done (BUILD 47): added
+      **`IS_NATIVE`** (true only in the Capacitor shell). The **version.txt stale-page auto-reload is gated to
+      web** (`!IS_NATIVE`) — verified: web fetches it, native does NOT. No remote `<script>`, no eval of
+      fetched code; everything ships in the bundle. **ONE codebase → web (kaijukids.co) + native app diverge
+      only at this runtime flag.**
 - [ ] **Viewport / safe areas / notch.** Letterbox the 640×360 canvas cleanly, respect safe-area insets, lock
       orientation (landscape recommended for a side-scroller), disable text-selection/zoom/callouts.
 - [ ] **iOS audio.** Web Audio already has the iOS unlock dance — re-verify inside WKWebView and with the
