@@ -9,3 +9,4 @@ ios/DerivedData/
 *.xcuserstate
 
 assets/splash.png
+store/screenshots/*.png

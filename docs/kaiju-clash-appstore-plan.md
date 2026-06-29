@@ -92,18 +92,18 @@ Kids Category (Guideline 1.3 + 5.1.4) is strict. For THIS app:
       Railway leaderboard host) must match. Checklist in `kaiju-clash-privacy-labels.md`. Also **purge test
       rows** from the Railway DB before launch.
 
-## Phase 5 — Store assets & metadata  *(CLAUDE produces; can reuse the game's art pipeline)*
-- [ ] **App icon** — full set, no transparency, no rounded corners (Apple rounds it). Generate from the kaiju art.
-- [ ] **Screenshots** — **6.9-inch iPhone** set is mandatory (primary); add **13-inch iPad** set **if** the app
-      runs on iPad (decide iPhone-only vs universal). Must show **real gameplay UI** (we can capture from the
-      game), kid-appealing. 1–10 each.
-- [ ] **App name ≤30 chars** (e.g., "Kaiju Kids: Learn Japanese"), **subtitle ≤30**, **keywords ≤100 chars**
-      comma-separated no-spaces, **description** with no prices and **no "also on Android."**
-- [ ] **Age rating questionnaire** → should land **4+ / 9+** (cartoon "stomp," no real violence/scary content —
-      answer honestly; mild cartoon action).
-- [ ] Support URL, marketing URL, privacy-policy URL, category = **Education** (Kids Category is a secondary
-      flag set in App Information).
-- [ ] Optional: a ≤30s **App Preview** video captured from real gameplay.
+## Phase 5 — Store assets & metadata  ✅ DRAFTED (CLAUDE) — BUILD 49
+- [x] **App icon** — 1024² (`kaiju-clash-app/assets/icon.png`, both mascots on an underwater gradient,
+      no transparency/rounding). `npm run icons` generates the full set.
+- [x] **Screenshots** — six **2868×1320** (6.9-inch iPhone) framed captures of real gameplay in
+      `kaiju-clash-app/store/screenshots/` (title, city, swim, learn, mini-games, leaderboard). Regenerate
+      via `scratchpad/storeshots.js`. **If universal:** add a 13-inch iPad set.
+- [x] **Name / subtitle / keywords / description / promo / category / age** — all drafted in
+      `docs/kaiju-clash-appstore-metadata.md` (compliance-checked: ≤30/≤30/≤100, no prices, no other-platform
+      mentions, no trademarks). **Decision flagged:** store name "Kaiju Kids" vs in-game "Kaiju Clash" logo.
+- [ ] **USER:** paste metadata + upload icon/screenshots in App Store Connect; answer the age questionnaire
+      (expect 4+; disclose the mild cartoon "fart" humor).
+- [ ] Optional: a ≤30s **App Preview** video from real gameplay.
 
 ## Phase 6 — Build, TestFlight, submit, iterate  *(USER on the Mac; CLAUDE preps everything)*
 - [ ] Open the `ios/` project in **Xcode 26+**, set bundle ID, signing (auto-managed with the new account),
