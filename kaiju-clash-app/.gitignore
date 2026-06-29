@@ -1,0 +1,11 @@
+node_modules/
+www/
+.DS_Store
+# Capacitor generates the native project; CocoaPods + build output are not committed
+ios/App/Pods/
+ios/App/App/public/
+ios/App/build/
+ios/DerivedData/
+*.xcuserstate
+
+assets/splash.png

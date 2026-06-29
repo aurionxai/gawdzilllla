@@ -70,7 +70,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '8';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '47';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '48';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // ── ONE codebase, TWO distributions ──────────────────────────────────────────────────────────
 // IS_NATIVE is true only inside the packaged iOS/Android app (Capacitor shell). The WEB build
@@ -90,6 +90,9 @@ if(!IS_NATIVE){
     v=v&&v.trim(); if(v && v!==BUILD && location.search.indexOf('b='+v)<0) location.replace(location.pathname+'?b='+v);
   }).catch(()=>{});
 }
+// Native haptics (App build only — adds real native value for App Review 4.2). No-op on web.
+function _haptic(style){ try{ const H=IS_NATIVE && window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics;
+  if(H) H.impact({style:style||'MEDIUM'}); }catch(e){} }
 
 function resize() {
   const vvp = window.visualViewport;
@@ -1450,7 +1453,7 @@ function finishLevel(){
     ? { from: beforeStage, to: meta.growthStage, char: s.charKey } : null;
   lastResult = { rank, orbsEarned: meta.orbs - before, stars: earnedStars, timeSec, saved: s.savedCitizens, total, objectives, evolved };
   _evoStart = evolved ? Date.now() : 0;
-  scene='victory'; sndVictory();
+  scene='victory'; sndVictory(); _haptic('HEAVY');   // celebratory thump on the app
   if(evolved){ sndRoar(); playSample('cheer', 0.9, 0.25, true); }   // roar + cheer as the kaiju grows
   _lbSubmit(s.levelId, Math.round((tick - s.startTick)/60*1000)); _lbSyncWords();   // leaderboard: best time + words
 }
@@ -1607,7 +1610,7 @@ function updatePlayer(dt, s){
         state.score += base * mult;
         pushNum(state, pl.x, pl.y, '-25', '#ff8844');
         pl.vy = -8 - Math.min(mult,5)*0.4;  // bounce a touch higher each chain
-        sndJump(); if(mult>1) sndCombo(mult);   // only ring on a real chain (x2+), not every single stomp
+        sndJump(); _haptic(e.hp<=0?'HEAVY':'MEDIUM'); if(mult>1) sndCombo(mult);   // only ring on a real chain (x2+), not every single stomp
         pushMsg(state, mult>1 ? ('👊 STOMP x'+mult+'!') : '👊 STOMP!', 700, '#ffee44', 'md');
         // Save nearby citizen
         state.level.citizens.forEach(c=>{

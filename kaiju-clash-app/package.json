@@ -1,0 +1,27 @@
+{
+  "name": "kaiju-kids-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Kaiju Kids — native iOS app (Capacitor wrapper of the kaiju-clash web game)",
+  "type": "module",
+  "scripts": {
+    "sync:www": "node scripts/sync-www.mjs",
+    "build": "npm run sync:www",
+    "ios:add": "npm run sync:www && npx cap add ios",
+    "ios:sync": "npm run sync:www && npx cap sync ios",
+    "ios:open": "npx cap open ios",
+    "icons": "npx @capacitor/assets generate --ios"
+  },
+  "dependencies": {
+    "@capacitor/app": "^8.1.0",
+    "@capacitor/cli": "^8.4.1",
+    "@capacitor/core": "^8.4.1",
+    "@capacitor/haptics": "^8.0.2",
+    "@capacitor/ios": "^8.4.1",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.2"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5"
+  }
+}

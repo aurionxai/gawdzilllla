@@ -39,15 +39,19 @@ parallel and should start immediately because it can be the long pole.
 - [ ] **iOS audio.** Web Audio already has the iOS unlock dance — re-verify inside WKWebView and with the
       hardware mute switch.
 
-## Phase 2 — Capacitor native wrapper + native value  *(CLAUDE scaffolds; USER runs Xcode on the Mac)*
-- [ ] `npm i @capacitor/core @capacitor/cli @capacitor/ios`; `npx cap init`; set `webDir` to the game,
-      `npx cap add ios`. Bundle the game as offline web assets.
-- [ ] **Add native value so it isn't "a WKWebView of a website"** (Guideline 4.2): offline play (done above),
-      **haptics** on stomp/level-win (`@capacitor/haptics`), native **splash + app icon**, status-bar hiding,
-      and **prevent the in-app browser from showing a URL bar / web chrome**. Optional but strong: **Game
-      Center** for the speedrun leaderboard (very native, and sidesteps some kids-privacy concerns vs a custom
-      backend — see Phase 3).
-- [ ] Keep the existing kaijukids.co web build as-is; the iOS app is a separate packaged target of the same code.
+## Phase 2 — Capacitor native wrapper + native value  ✅ SCAFFOLDED (CLAUDE) — USER runs `cap add ios` on the Mac
+- [x] **Scaffold built** in `kaiju-clash-app/` (BUILD 48): `package.json` (Capacitor **8.x** + ios/splash/
+      status-bar/haptics/app + @capacitor/assets, installed & locked), `capacitor.config.json`
+      (appId `co.kaijukids.game`, appName "Kaiju Kids", webDir `www`, `iosScheme:"capacitor"` → drives
+      `IS_NATIVE`), `scripts/sync-www.mjs` (bundles the game runtime into `www/`), `.gitignore`,
+      `BUILD-IOS.md` (step-by-step), and **app `icon.png` 1024 + `splash.png` 2732** generated from the hero
+      art. Capacitor CLI 8.4.1 verified reading the config.
+- [x] **Native value (Guideline 4.2):** offline play + **haptics** on stomp/level-win (`_haptic`, app-only) +
+      native icon/splash + status-bar config. (Optional later: **Game Center** for the speedrun board — also
+      de-risks kids-privacy vs the custom backend.)
+- [ ] **USER, on the Mac:** `npm run ios:add` (= sync www + `npx cap add ios`, needs Xcode 26+ & CocoaPods)
+      → `npm run icons` → `npm run ios:open`; set Team/signing, lock **Landscape** orientation, archive.
+- [x] Web build (kaijukids.co) unchanged — the app re-bundles the same code via `IS_NATIVE`.
 
 ## Phase 3 — Kids Category & COPPA compliance  *(the highest rejection-risk area)*
 Kids Category (Guideline 1.3 + 5.1.4) is strict. For THIS app:

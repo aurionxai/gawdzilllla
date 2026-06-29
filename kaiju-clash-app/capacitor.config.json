@@ -1,0 +1,21 @@
+{
+  "appId": "co.kaijukids.game",
+  "appName": "Kaiju Kids",
+  "webDir": "www",
+  "backgroundColor": "#000000",
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#000000",
+    "scrollEnabled": false
+  },
+  "server": {
+    "iosScheme": "capacitor"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1200,
+      "backgroundColor": "#04030f",
+      "showSpinner": false
+    }
+  }
+}
