@@ -70,7 +70,7 @@ let _baseTransform = null;   // declared here: resize() assigns it before the li
 // Cache-busting: GitHub Pages serves assets with max-age=600, so an overwritten sound/sprite is
 // replayed stale from the browser cache. Versioned URLs force a fresh fetch. BUMP on asset change.
 const ASSET_VER = '8';   // bump ONLY when a sound/sprite/bg asset changes (busts those URLs)
-const BUILD = '49';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
+const BUILD = '50';       // bump EVERY deploy — drives the stale-page auto-reload below; keep version.txt == BUILD
 const _av = u => u + (u.indexOf('?')<0?'?':'&') + 'v=' + ASSET_VER;
 // ── ONE codebase, TWO distributions ──────────────────────────────────────────────────────────
 // IS_NATIVE is true only inside the packaged iOS/Android app (Capacitor shell). The WEB build
@@ -338,11 +338,13 @@ const SFX_NAMES = ['jump','chomp','fart','fart1','fart2','fart3','giggle','hurt'
   'enemy_squish_die','enemy_clank_die','enemy_thud_die','music','boss_music'];
 const loadedSfx = {};
 function loadSfx(){
-  return Promise.all(SFX_NAMES.flatMap(n => ['mp3','wav'].map(ext =>
-    fetch(_av('sounds/'+n+'.'+ext)).then(r => r.ok ? r.arrayBuffer() : Promise.reject())
+  // Only .mp3 (all real samples are mp3 — probing .wav was 31 wasted 404s/load). Names without a
+  // sample simply fall back to the procedural synth via the `if(playSample('x'))return;` guards.
+  return Promise.all(SFX_NAMES.map(n =>
+    fetch(_av('sounds/'+n+'.mp3')).then(r => r.ok ? r.arrayBuffer() : Promise.reject())
       .then(b => new Promise((res,rej)=>AC.decodeAudioData(b,res,rej)))
       .then(buf => { if(!loadedSfx[n]) loadedSfx[n]=buf; }).catch(()=>{})
-  )));
+  ));
 }
 // Spoken Japanese vocab clips, male + female (sounds/jp/<key>_<g>.mp3) -> loadedSfx['jp_<key>_<g>']
 function loadJpVoices(){
@@ -861,8 +863,11 @@ const FOOD_TYPES = [
   { key:'ramune',   emoji:'🥤', name:'RAMUNE',    jp:'ラムネ',       ro:'Ramune',     en:'soda',            gain:19, clr:'#5ad6ff' },
   { key:'donut',    emoji:'🍩', name:'DONUT',     jp:'ドーナツ',     ro:'Dōnatsu',    en:'donut',           gain:21, clr:'#deb887' },
 ];
+// Only these foods have real PNG sprites; the rest render as their emoji (via _mgItemImg / drawFood).
+// Loading only these avoids 18 wasted 404s/load.
+const FOOD_PNG = new Set(['yakitori','pizza','sushi','hotdog','icecream','banana']);
 function loadFood(){
-  return Promise.all(FOOD_TYPES.map(f => new Promise(res => {
+  return Promise.all(FOOD_TYPES.filter(f=>FOOD_PNG.has(f.key)).map(f => new Promise(res => {
     const img = new Image();
     img.onload  = () => { loadedSprites['food_'+f.key] = img; res(); };
     img.onerror = () => { res(); };
